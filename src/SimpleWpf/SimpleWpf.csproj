@@ -22,4 +22,10 @@
 		<Version>1.0.1</Version>
 	</PropertyGroup>
 
+	<ItemGroup>
+	  <Compile Remove="RecursiveSerializer\obj\**" />
+	  <EmbeddedResource Remove="RecursiveSerializer\obj\**" />
+	  <None Remove="RecursiveSerializer\obj\**" />
+	</ItemGroup>
+
 </Project>

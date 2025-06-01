@@ -3,14 +3,16 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Runtime.Serialization;
 
+using SimpleWpf.RecursiveSerializer.Component.Interface;
+using SimpleWpf.RecursiveSerializer.Interface;
+
 namespace SimpleWpf.Extensions.ObservableCollection
 {
     /// <summary>
     /// A simple ordered list implementation - sorts items when inserted and removed. NOTE*** The binding views seemed to "want"
     /// the IList implementation (!!!?) It must've been required for bindings to operate.
     /// </summary>
-    [Serializable]
-    public class SortedObservableCollection<T> : IList<T>, IList, INotifyPropertyChanged, INotifyCollectionChanged, ISerializable
+    public class SortedObservableCollection<T> : IList<T>, IList, INotifyPropertyChanged, INotifyCollectionChanged, IRecursiveSerializable
     {
         public event NotifyCollectionChangedEventHandler CollectionChanged;
         public event PropertyChangedEventHandler PropertyChanged;
@@ -55,16 +57,16 @@ namespace SimpleWpf.Extensions.ObservableCollection
             this.ItemComparer = itemComparer;
         }
 
-        public SortedObservableCollection(SerializationInfo info, StreamingContext context)
+        public SortedObservableCollection(IPropertyReader reader)
         {
-            this.ItemList = (List<T>)info.GetValue("List", typeof(List<T>));
-            this.ItemComparer = (Comparer<T>)info.GetValue("Comparer", typeof(Comparer<T>));
+            this.ItemList = reader.Read<List<T>>("List");
+            this.ItemComparer = reader.Read<Comparer<T>>("Comparer");
         }
 
-        public void GetObjectData(SerializationInfo info, StreamingContext context)
+        public void GetProperties(IPropertyWriter writer)
         {
-            info.AddValue("List", this.ItemList);
-            info.AddValue("Comparer", this.ItemComparer);
+            writer.Write("List", this.ItemList);
+            writer.Write("Comparer", this.ItemComparer);
         }
 
         public void AddRange(IEnumerable<T> items)
