@@ -15,6 +15,11 @@
 		<GenerateAssemblyInformationVersionAttribute>false</GenerateAssemblyInformationVersionAttribute>
 		<GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
 		<GenerateAssemblyInformationalVersionAttribute>false</GenerateAssemblyInformationalVersionAttribute>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<Title>SimpleWpf</Title>
+		<Description>SimpleWpf class library.</Description>
+		<PackageOutputPath>$(NugetLocalPath)</PackageOutputPath>
+		<Version>1.0.1</Version>
 	</PropertyGroup>
 
 </Project>
