@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net8.0</TargetFramework>
+		<TargetFramework>net8.0-windows</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 
@@ -19,13 +19,20 @@
 		<Title>SimpleWpf</Title>
 		<Description>SimpleWpf class library.</Description>
 		<PackageOutputPath>$(NugetLocalPath)</PackageOutputPath>
-		<Version>1.0.1</Version>
+		<Version>0.0.1</Version>
+
+		<UseWPF>true</UseWPF>
 	</PropertyGroup>
 
 	<ItemGroup>
 	  <Compile Remove="RecursiveSerializer\obj\**" />
 	  <EmbeddedResource Remove="RecursiveSerializer\obj\**" />
 	  <None Remove="RecursiveSerializer\obj\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" />
+	  <PackageReference Include="System.Security.Permissions" Version="9.0.5" />
 	</ItemGroup>
 
 </Project>

@@ -1,10 +1,10 @@
 ﻿using System.Collections;
 using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Runtime.Serialization;
 
 using SimpleWpf.RecursiveSerializer.Component.Interface;
 using SimpleWpf.RecursiveSerializer.Interface;
+using SimpleWpf.SimpleCollections.Collection;
 
 namespace SimpleWpf.Extensions.ObservableCollection
 {
@@ -12,10 +12,20 @@ namespace SimpleWpf.Extensions.ObservableCollection
     /// A simple ordered list implementation - sorts items when inserted and removed. NOTE*** The binding views seemed to "want"
     /// the IList implementation (!!!?) It must've been required for bindings to operate.
     /// </summary>
-    public class SortedObservableCollection<T> : IList<T>, IList, INotifyPropertyChanged, INotifyCollectionChanged, IRecursiveSerializable
+    public class SortedObservableCollection<T> : IList<T>, INotifyPropertyChanged, INotifyCollectionChanged, IRecursiveSerializable
     {
         public event NotifyCollectionChangedEventHandler CollectionChanged;
         public event PropertyChangedEventHandler PropertyChanged;
+
+        /// <summary>
+        /// Item hash table used for fast reference checking. Example:  "Contains", or "IndexOf" must 
+        /// lookup the item using the provided comparer. This comparer will assume that the item will be
+        /// used during the BinarySearch procedure; but it may not be a part of the collection. So, for
+        /// reference we need to know if the user's item is a part of our collection or not. Then, it
+        /// we will need a hash table to look it up; or else the point of this collection would be lost
+        /// to linear searches.
+        /// </summary>
+        protected SimpleDictionary<T, T> ItemHash { get; private set; }
 
         /// <summary>
         /// Protected list of items
@@ -33,6 +43,7 @@ namespace SimpleWpf.Extensions.ObservableCollection
         {
             this.ItemList = new List<T>();
             this.ItemComparer = Comparer<T>.Default;
+            this.ItemHash = new SimpleDictionary<T, T>();
 
             OnPropertyChanged("Count");
         }
@@ -41,6 +52,7 @@ namespace SimpleWpf.Extensions.ObservableCollection
         {
             this.ItemList = new List<T>();
             this.ItemComparer = comparer;
+            this.ItemHash = new SimpleDictionary<T, T>();
 
             OnPropertyChanged("Count");
         }
@@ -49,18 +61,30 @@ namespace SimpleWpf.Extensions.ObservableCollection
         {
             this.ItemList = new List<T>(items);
             this.ItemComparer = Comparer<T>.Default;
+            this.ItemHash = new SimpleDictionary<T, T>();
+
+            foreach (var item in items)
+                this.ItemHash.Add(item, item);
         }
 
         public SortedObservableCollection(IEnumerable<T> items, Comparer<T> itemComparer)
         {
             this.ItemList = new List<T>(items);
             this.ItemComparer = itemComparer;
+            this.ItemHash = new SimpleDictionary<T, T>();
+
+            foreach (var item in items)
+                this.ItemHash.Add(item, item);
         }
 
         public SortedObservableCollection(IPropertyReader reader)
         {
             this.ItemList = reader.Read<List<T>>("List");
             this.ItemComparer = reader.Read<Comparer<T>>("Comparer");
+            this.ItemHash = new SimpleDictionary<T, T>();
+
+            foreach (var item in this.ItemList)
+                this.ItemHash.Add(item, item);
         }
 
         public void GetProperties(IPropertyWriter writer)
@@ -149,24 +173,13 @@ namespace SimpleWpf.Extensions.ObservableCollection
             get { return this; }
         }
 
-        object IList.this[int index]
-        {
-            get
-            {
-                return this.ItemList[(int)index];
-            }
-            set
-            {
-                this.Insert(index, value);
-            }
-        }
-
         // O(log n)
         public void Add(T item)
         {
             var index = GetInsertIndex(item);
 
             this.ItemList.Insert(index, item);
+            this.ItemHash.Add(item, item);
 
             OnCollectionChanged_Add(item, index);
         }
@@ -176,14 +189,15 @@ namespace SimpleWpf.Extensions.ObservableCollection
             var list = this.ItemList.ToArray(); // Copy the list to pass on to listeners
 
             this.ItemList.Clear();
+            this.ItemHash.Clear();
 
             OnCollectionChanged_Clear(list);
         }
 
-        // O(log n)
+        // O(1)
         public bool Contains(T item)
         {
-            return GetInsertIndex(item) != UNSUCCESSFUL_SEARCH;
+            return this.ItemHash.ContainsKey(item);
         }
 
         public void CopyTo(T[] array, int arrayIndex)
@@ -199,6 +213,9 @@ namespace SimpleWpf.Extensions.ObservableCollection
         // O(log n)
         public int IndexOf(T item)
         {
+            if (!this.Contains(item))
+                return -1;
+
             return GetInsertIndex(item);
         }
 
@@ -210,12 +227,17 @@ namespace SimpleWpf.Extensions.ObservableCollection
         // O(log n)
         public bool Remove(T item)
         {
+            if (!this.Contains(item))
+                throw new Exception("Item not found in collection SimpleOrderedList.cs");
+
+            // Still need index to remove from the list
             var index = GetInsertIndex(item);
 
             if (index == UNSUCCESSFUL_SEARCH)
                 throw new Exception("Item not found in collection SimpleOrderedList.cs");
 
             this.ItemList.RemoveAt(index);
+            this.ItemHash.Remove(item);
 
             OnCollectionChanged_Remove(item, index);
 
@@ -227,6 +249,7 @@ namespace SimpleWpf.Extensions.ObservableCollection
             var item = this.ItemList[index];
 
             this.ItemList.RemoveAt(index);
+            this.ItemHash.Remove(item);
 
             OnCollectionChanged_Remove(item, index);
         }
@@ -236,59 +259,11 @@ namespace SimpleWpf.Extensions.ObservableCollection
             return this.ItemList.GetEnumerator();
         }
 
-        // O(log n)
-        public int Add(object value)
-        {
-            if (!(value is T))
-                throw new Exception("Trying to insert non-template type:  SimpleOrderedList");
-
-            var index = GetInsertIndex((T)value);
-
-            this.ItemList.Insert(index, (T)value);
-
-            OnCollectionChanged_Add((T)value, index);
-
-            return index;
-        }
-
-        // O(log n)
-        public bool Contains(object value)
-        {
-            if (!(value is T))
-                throw new Exception("Trying to operate on non-template type:  SimpleOrderedList");
-
-            return GetInsertIndex((T)value) != UNSUCCESSFUL_SEARCH;
-        }
-
-        // O(log n)
-        public int IndexOf(object value)
-        {
-            if (!(value is T))
-                throw new Exception("Trying to operate on non-template type:  SimpleOrderedList");
-
-            return GetInsertIndex((T)value);
-        }
-
         public void Insert(int index, object value)
         {
             throw new NotSupportedException("Manual insertion not allowed for SimpleOrderedList<>");
         }
 
-        // O(log n)
-        public void Remove(object value)
-        {
-            if (!(value is T))
-                throw new Exception("Trying to operate on non-template type:  SimpleOrderedList");
-
-            var index = GetInsertIndex((T)value);
-
-            if (index == UNSUCCESSFUL_SEARCH)
-                throw new Exception("Item not found in collection SimpleOrderedList.cs");
-
-            this.ItemList.RemoveAt(index);
-
-            OnCollectionChanged_Remove((T)value, index);
-        }
 
         public void CopyTo(Array array, int index)
         {
