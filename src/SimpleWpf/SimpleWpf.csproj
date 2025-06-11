@@ -22,6 +22,8 @@
 		<Version>0.0.1</Version>
 
 		<UseWPF>true</UseWPF>
+
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
 
 	<ItemGroup>

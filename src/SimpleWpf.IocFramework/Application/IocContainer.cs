@@ -282,7 +282,7 @@ namespace SimpleWpf.IocFramework.Application
                     var constructor = exportKey.ReflectedType.GetConstructor(dependencies.Select(x => x.GetType()).ToArray());
 
                     // Invoke CTOR
-                    return constructor.Invoke(new object[] { });
+                    return constructor.Invoke(dependencies);
                 }
 
             }

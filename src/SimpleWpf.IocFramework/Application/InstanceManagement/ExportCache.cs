@@ -117,8 +117,8 @@ namespace SimpleWpf.IocFramework.Application.InstanceManagement
             var exports = _exports.Values.Where(export =>
             {
                 return export.ExportedType.Equals(exportType) &&
-                       (export.ExportKey == exportKey && export.IsExportKeyed) &&       // Does the key apply
-                       export.IsExportKeyed == isKeyed;
+                       ((export.ExportKey == exportKey) || !export.IsExportKeyed) &&       // Does the key apply
+                       export.IsExportKeyed == isKeyed;                                    // Check this to be sure (explicit)
 
             }).Actualize();
 

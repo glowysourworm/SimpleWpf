@@ -120,11 +120,11 @@ namespace SimpleWpf.Extensions.ObservableCollection
             // Also -> Property Changed (Count)
             OnPropertyChanged("Count");
         }
-        private void OnCollectionChanged_Clear(IList<T> removedItems)
+        private void OnCollectionChanged_Clear()
         {
             if (this.CollectionChanged != null)
             {
-                this.CollectionChanged(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset, removedItems));
+                this.CollectionChanged(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
             }
 
             // Also -> Property Changed (Count)
@@ -186,12 +186,10 @@ namespace SimpleWpf.Extensions.ObservableCollection
 
         public void Clear()
         {
-            var list = this.ItemList.ToArray(); // Copy the list to pass on to listeners
-
             this.ItemList.Clear();
             this.ItemHash.Clear();
 
-            OnCollectionChanged_Clear(list);
+            OnCollectionChanged_Clear();
         }
 
         // O(1)
