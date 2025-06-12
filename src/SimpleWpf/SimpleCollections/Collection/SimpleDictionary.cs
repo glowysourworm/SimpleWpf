@@ -46,5 +46,31 @@ namespace SimpleWpf.SimpleCollections.Collection
                 counter++;
             }
         }
+
+        public V GetFirstValue()
+        {
+            if (this.Count > 0)
+                return this.First().Value;
+
+            return default(V);
+        }
+
+        /// <summary>
+        /// Removes element at the head of the collection
+        /// </summary>
+        public void RemoveFirst()
+        {
+            if (this.Count > 0)
+                this.Remove(this.First().Key);
+        }
+
+        /// <summary>
+        /// Removes the element at the end of the collection
+        /// </summary>
+        public void RemoveLast()
+        {
+            if (this.Count > 0)
+                this.Remove(this.Last().Key);
+        }
     }
 }

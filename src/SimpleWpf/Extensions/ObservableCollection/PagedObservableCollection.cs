@@ -45,6 +45,14 @@ namespace SimpleWpf.Extensions.ObservableCollection
         }
 
         /// <summary>
+        /// Returns the page size of the collection
+        /// </summary>
+        public int PageSize
+        {
+            get { return _pageSize; }
+        }
+
+        /// <summary>
         /// Returns total number of pages
         /// </summary>
         public int PageCount

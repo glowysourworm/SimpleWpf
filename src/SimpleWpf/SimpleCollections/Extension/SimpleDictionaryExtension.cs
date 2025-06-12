@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Windows.Media.Converters;
 
 using SimpleWpf.SimpleCollections.Collection;
 
@@ -46,6 +48,14 @@ namespace SimpleWpf.SimpleCollections.Extension
                 result.Add(keySelector(element), valueSelector(element));
 
             return result;
+        }
+
+        public static V GetValue<K, V>(this SimpleDictionary<K, V> dictionary,  K key)
+        {
+            if (dictionary.ContainsKey(key))
+                return dictionary[key];
+
+            return default(V);
         }
     }
 }
