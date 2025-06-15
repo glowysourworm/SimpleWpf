@@ -30,6 +30,30 @@ namespace SimpleWpf.Extensions
             return Math.Abs(number);
         }
 
+        public static double Max(params double[] parameters)
+        {
+            if (parameters.Length > 2)
+                return Math.Max(parameters[0], NumberExtension.Max(parameters.Skip(1).ToArray()));
+
+            else if (parameters.Length == 2)
+                return Math.Max(parameters[0], parameters[1]);
+
+            else
+                return parameters[0];
+        }
+
+        public static double Min(params double[] parameters)
+        {
+            if (parameters.Length > 2)
+                return Math.Min(parameters[0], NumberExtension.Min(parameters.Skip(1).ToArray()));
+
+            else if (parameters.Length == 2)
+                return Math.Min(parameters[0], parameters[1]);
+
+            else
+                return parameters[0];
+        }
+
         public static int Clip(this int number, int lowLimit = 0, int highLimit = 1)
         {
             if (lowLimit > highLimit)
