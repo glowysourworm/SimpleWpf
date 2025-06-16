@@ -21,7 +21,7 @@ namespace SimpleWpf.UI.Converter
             if (!value.GetType().IsEnum)
                 throw new Exception("Enum must be specified for EnumDisplayAttributeNameConverter");
 
-            return (value as Enum).GetAttribute<DisplayAttribute>().Description;
+            return value.GetAttribute<DisplayAttribute>().Description;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

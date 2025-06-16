@@ -1,5 +1,4 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
@@ -21,7 +20,7 @@ namespace SimpleWpf.UI.Converter
             if (!value.GetType().IsEnum)
                 throw new Exception("Enum must be specified for EnumDisplayAttributeNameConverter");
 
-            return (value as Enum).GetAttribute<DisplayAttribute>().Name;
+            return value.GetAttribute<DisplayAttribute>().Name;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

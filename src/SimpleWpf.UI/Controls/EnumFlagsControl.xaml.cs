@@ -1,10 +1,12 @@
 ﻿using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Windows;
 using System.Windows.Controls;
 
 using SimpleWpf.Extensions;
 using SimpleWpf.Extensions.Collection;
+using SimpleWpf.UI.Controls.Model;
 
 namespace SimpleWpf.UI.Controls
 {
@@ -67,41 +69,6 @@ namespace SimpleWpf.UI.Controls
             set { SetValue(EnumValueProperty, value); }
         }
 
-        public class EnumItem : ViewModelBase
-        {
-            string _name;
-            string _displayName;
-            string _description;
-            object _value;
-            bool _isChecked;
-
-            public string Name
-            {
-                get { return _name; }
-                set { this.RaiseAndSetIfChanged(ref _name, value); }
-            }
-            public string DisplayName
-            {
-                get { return _displayName; }
-                set { this.RaiseAndSetIfChanged(ref _displayName, value); }
-            }
-            public string Description
-            {
-                get { return _description; }
-                set { this.RaiseAndSetIfChanged(ref _description, value); }
-            }
-            public object Value
-            {
-                get { return _value; }
-                set { this.RaiseAndSetIfChanged(ref _value, value); }
-            }
-            public bool IsChecked
-            {
-                get { return _isChecked; }
-                set { this.RaiseAndSetIfChanged(ref _isChecked, value); }
-            }
-        }
-
         bool _initializing = false;
 
         public EnumFlagsControl()
@@ -124,7 +91,7 @@ namespace SimpleWpf.UI.Controls
                     Name = enumName,
                     Value = enumValue,
                     Description = enumValue.GetAttribute<DisplayAttribute>()?.Description ?? "",
-                    DisplayName = enumValue.GetAttribute<DisplayAttribute>()?.Name ?? "",
+                    DisplayName = enumValue.GetAttribute<DisplayAttribute>()?.Name ?? enumName,
                     IsChecked = this.EnumValue != null ? Enum.GetName(this.EnumType, this.EnumValue) == enumName : false
                 });
             }
@@ -140,7 +107,7 @@ namespace SimpleWpf.UI.Controls
             var items = this.EnumItemsControl.ItemsSource as ObservableCollection<EnumItem>;
 
             // Enum Flags are set using the bitwise & operator
-            items?.ForEach(item => item.IsChecked = ((int)item.Value & (int)this.EnumValue) != 0);
+            items?.ForEach(item => item.IsChecked = ((item.Value as Enum).HasFlag(this.EnumValue as Enum)));
 
             _initializing = false;
         }
