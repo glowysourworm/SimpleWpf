@@ -186,6 +186,23 @@ namespace SimpleWpf.Extensions.Collection
             return result;
         }
 
+        /// <summary>
+        /// Returns the index of the specified item
+        /// </summary>
+        public static int IndexOf<T>(this IEnumerable<T> collection, T item)
+        {
+            int index = 0;
+            foreach (var otherItem in collection)
+            {
+                if (otherItem.Equals(item))
+                    return index;
+
+                index++;
+            }
+
+            return -1;
+        }
+
         public static bool None<T>(this IEnumerable<T> collection)
         {
             return !collection.Any();

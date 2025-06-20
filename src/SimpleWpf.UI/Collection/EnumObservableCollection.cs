@@ -13,7 +13,7 @@ namespace SimpleWpf.UI.Collection
     /// this collection is to allow the binding of an enum property to a collection that is displayable like a list; and to provide
     /// two-way binding using a converter.
     /// </summary>
-    public class EnumObservableCollection<TEnum> : IList<EnumItem>, INotifyPropertyChanged, INotifyCollectionChanged where TEnum : Enum
+    public class EnumObservableCollection<TEnum> : IList<EnumItem>, IList, INotifyPropertyChanged, INotifyCollectionChanged where TEnum : Enum
     {
         public event PropertyChangedEventHandler? PropertyChanged;
         public event NotifyCollectionChangedEventHandler? CollectionChanged;
@@ -50,9 +50,18 @@ namespace SimpleWpf.UI.Collection
             get { return _list[index]; }
             set { this.Insert(index, value); }
         }
+        object? IList.this[int index] 
+        {
+            get { return _list[index]; }
+            set { this.Insert(index, value); }
+        }
 
         public int Count { get { return _list.Count; } }
         public bool IsReadOnly { get { return true; } }
+
+        public bool IsFixedSize { get; }
+        public bool IsSynchronized { get; }
+        public object SyncRoot { get; }
 
         public EnumObservableCollection()
         {
@@ -151,6 +160,36 @@ namespace SimpleWpf.UI.Collection
         IEnumerator IEnumerable.GetEnumerator()
         {
             return _list.GetEnumerator();
+        }
+
+        public int Add(object? value)
+        {
+            throw new NotSupportedException("Add method is not supported for EnumObservableCollection");
+        }
+
+        public bool Contains(object? value)
+        {
+            return _list.Contains(value);
+        }
+
+        public int IndexOf(object? value)
+        {
+            return _list.IndexOf((EnumItem)value);
+        }
+
+        public void Insert(int index, object? value)
+        {
+            throw new NotSupportedException("Insert method is not supported for EnumObservableCollection");
+        }
+
+        public void Remove(object? value)
+        {
+            throw new NotSupportedException("Remove method is not supported for EnumObservableCollection");
+        }
+
+        public void CopyTo(Array array, int index)
+        {
+            throw new NotSupportedException("CopyTo(Array array, int index) method is not supported for EnumObservableCollection");
         }
     }
 }

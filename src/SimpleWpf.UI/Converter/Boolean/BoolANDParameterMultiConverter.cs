@@ -10,7 +10,7 @@ namespace SimpleWpf.UI.Converter
     /// Converter that returns the specified parameter if all the boolean values evaluate to true. Else
     /// returns Binding.DoNothing.
     /// </summary>
-    public class BoolANDParameterConverter : IMultiValueConverter
+    public class BoolANDParameterMultiConverter : IMultiValueConverter
     {
         public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
         {
