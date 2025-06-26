@@ -468,6 +468,30 @@ namespace SimpleWpf.Extensions.Collection
                 throw new Exception("Item in collection not found EnumerableExtension.Next()");
         }
 
+        /// <summary>
+        /// Returns the previous item in the collection before the specified one. If it's the first item, then
+        /// the last item is returned.
+        /// </summary>
+        public static T Previous<T>(this IEnumerable<T> collection, T item) where T : class
+        {
+            var found = false;
+
+            foreach (var otherItem in collection.Reverse())
+            {
+                if (found)
+                    return otherItem;
+
+                else if (otherItem == item)
+                    found = true;
+            }
+
+            if (found)
+                return collection.Last();
+
+            else
+                throw new Exception("Item in collection not found EnumerableExtension.Previous()");
+        }
+
         public static IEnumerable<V> OfType<T, V>(this IEnumerable<T> collection)
         {
             return collection.Where(item => item is V).Cast<V>();

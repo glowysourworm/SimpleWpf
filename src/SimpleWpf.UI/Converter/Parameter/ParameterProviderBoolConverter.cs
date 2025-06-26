@@ -13,12 +13,16 @@ namespace SimpleWpf.UI.Converter
     /// </summary>
     public class ParameterProviderBoolConverter : IValueConverter
     {
+        private object _originalParameter;
+
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value == null)
+            if (value == null || parameter == null)
                 return Binding.DoNothing;
 
-            if ((bool)value) 
+            _originalParameter = parameter;
+
+            if ((bool)value)
                 return parameter;
 
             return Binding.DoNothing;
@@ -26,7 +30,7 @@ namespace SimpleWpf.UI.Converter
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            throw new NotImplementedException();
+            return _originalParameter;
         }
     }
 }
