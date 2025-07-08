@@ -203,6 +203,20 @@ namespace SimpleWpf.Extensions.Collection
             return -1;
         }
 
+        public static int IndexOf<T>(this IEnumerable<T> collection, Func<T, bool> predicate)
+        {
+            int index = 0;
+            foreach (var item in collection)
+            {
+                if (predicate(item))
+                    return index;
+
+                index++;
+            }
+
+            return -1;
+        }
+
         public static bool None<T>(this IEnumerable<T> collection)
         {
             return !collection.Any();
