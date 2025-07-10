@@ -4,9 +4,9 @@ using System.Windows.Data;
 namespace SimpleWpf.UI.Converter
 {
     /// <summary>
-    /// Provides the parameter if the boolean value is true. Otherwise, returns Binding.DoNothing.
+    /// Provides the parameter if the boolean value is false. Otherwise, returns Binding.DoNothing.
     /// </summary>
-    public class ParameterProviderBoolConverter : IValueConverter
+    public class ParameterProviderBoolInverseConverter : IValueConverter
     {
         private object _originalParameter;
 
@@ -17,7 +17,7 @@ namespace SimpleWpf.UI.Converter
 
             _originalParameter = parameter;
 
-            if ((bool)value)
+            if (!(bool)value)
                 return parameter;
 
             return Binding.DoNothing;
