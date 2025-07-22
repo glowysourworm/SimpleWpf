@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Windows;
 
 using SimpleWpf.RecursiveSerializer.Component.Interface;
 using SimpleWpf.RecursiveSerializer.Interface;
@@ -58,10 +59,19 @@ namespace SimpleWpf.SimpleCollections.Collection
         /// <summary>
         /// Removes element at the head of the collection
         /// </summary>
-        public void RemoveFirst()
+        public KeyValuePair<K, V> RemoveFirst()
         {
-            if (this.Count > 0)
+            if (this.Count <= 0)
+                throw new Exception("Cannot remove from an empty collection:  SimpleDictionary.RemoveFirst");
+
+            else
+            {
+                var pair = this.First();
+
                 this.Remove(this.First().Key);
+
+                return pair;
+            }                
         }
 
         /// <summary>
