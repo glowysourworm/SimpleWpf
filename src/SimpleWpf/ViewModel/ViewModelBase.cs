@@ -3,19 +3,19 @@ using System.ComponentModel;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 
-namespace SimpleWpf.Extensions
+namespace SimpleWpf.ViewModel
 {
     public abstract class ViewModelBase : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
-        protected void OnPropertyChanged(string name)
+        protected virtual void OnPropertyChanged(string name)
         {
             if (PropertyChanged != null)
                 PropertyChanged(this, new PropertyChangedEventArgs(name));
         }
 
-        protected void OnPropertyChanged<T>(Expression<Func<T>> expression)
+        protected virtual void OnPropertyChanged<T>(Expression<Func<T>> expression)
         {
             var memberExpression = expression.Body as MemberExpression;
 

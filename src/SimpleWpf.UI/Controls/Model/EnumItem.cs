@@ -1,4 +1,4 @@
-﻿using SimpleWpf.Extensions;
+﻿using SimpleWpf.ViewModel;
 
 namespace SimpleWpf.UI.Controls.Model
 {

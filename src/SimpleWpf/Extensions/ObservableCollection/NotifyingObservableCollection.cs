@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 
 using SimpleWpf.Extensions.Event;
@@ -12,7 +11,7 @@ namespace SimpleWpf.Extensions.ObservableCollection
     /// </summary>
     public class NotifyingObservableCollection<T> : ObservableCollection<T> where T : INotifyPropertyChanged
     {
-        public event SimpleEventHandler<NotifyingObservableCollection<T>, T, PropertyChangedEventArgs> ItemPropertyChanged;
+        public event CollectionItemChangedHandler<T> ItemPropertyChanged;
 
         public NotifyingObservableCollection()
         {
@@ -65,7 +64,7 @@ namespace SimpleWpf.Extensions.ObservableCollection
         private void OnItemChanged(object sender, PropertyChangedEventArgs e)
         {
             if (this.ItemPropertyChanged != null)
-                this.ItemPropertyChanged(this, (T)sender, e);
+                this.ItemPropertyChanged((T)sender, e);
         }
     }
 }

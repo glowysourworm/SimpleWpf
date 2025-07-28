@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Windows.Input;
 
+using SimpleWpf.ViewModel;
+
 namespace SimpleWpf.Extensions.Command
 {
     public class SimpleCommand : ViewModelBase, ICommand

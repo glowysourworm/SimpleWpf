@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleWpf.IocFramework", "S
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleWpf.UI", "SimpleWpf.UI\SimpleWpf.UI.csproj", "{838F0BD0-4DCA-4DE8-B6F6-1C8DDD4B107B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleWpf.UnitTest", "SimpleWpf.UnitTest\SimpleWpf.UnitTest.csproj", "{32118E45-F78B-40D3-9DCC-FDF72FAA16BB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -55,6 +57,18 @@ Global
 		{838F0BD0-4DCA-4DE8-B6F6-1C8DDD4B107B}.Release|x64.Build.0 = Release|Any CPU
 		{838F0BD0-4DCA-4DE8-B6F6-1C8DDD4B107B}.Release|x86.ActiveCfg = Release|Any CPU
 		{838F0BD0-4DCA-4DE8-B6F6-1C8DDD4B107B}.Release|x86.Build.0 = Release|Any CPU
+		{32118E45-F78B-40D3-9DCC-FDF72FAA16BB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{32118E45-F78B-40D3-9DCC-FDF72FAA16BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{32118E45-F78B-40D3-9DCC-FDF72FAA16BB}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{32118E45-F78B-40D3-9DCC-FDF72FAA16BB}.Debug|x64.Build.0 = Debug|Any CPU
+		{32118E45-F78B-40D3-9DCC-FDF72FAA16BB}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{32118E45-F78B-40D3-9DCC-FDF72FAA16BB}.Debug|x86.Build.0 = Debug|Any CPU
+		{32118E45-F78B-40D3-9DCC-FDF72FAA16BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{32118E45-F78B-40D3-9DCC-FDF72FAA16BB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{32118E45-F78B-40D3-9DCC-FDF72FAA16BB}.Release|x64.ActiveCfg = Release|Any CPU
+		{32118E45-F78B-40D3-9DCC-FDF72FAA16BB}.Release|x64.Build.0 = Release|Any CPU
+		{32118E45-F78B-40D3-9DCC-FDF72FAA16BB}.Release|x86.ActiveCfg = Release|Any CPU
+		{32118E45-F78B-40D3-9DCC-FDF72FAA16BB}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

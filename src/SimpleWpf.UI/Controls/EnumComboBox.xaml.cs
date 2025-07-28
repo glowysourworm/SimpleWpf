@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 
 using SimpleWpf.Extensions;
+using SimpleWpf.ViewModel;
 
 namespace SimpleWpf.UI.Controls
 {

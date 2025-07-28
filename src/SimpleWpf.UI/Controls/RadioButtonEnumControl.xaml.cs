@@ -3,8 +3,8 @@ using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 
-using SimpleWpf.Extensions;
 using SimpleWpf.Extensions.Collection;
+using SimpleWpf.ViewModel;
 
 namespace SimpleWpf.UI.Controls
 {

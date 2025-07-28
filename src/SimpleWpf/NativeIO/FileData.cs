@@ -76,15 +76,21 @@ namespace SimpleWpf.NativeIO
         {
             Attributes = FindData.dwFileAttributes;
 
+            // It's likely that the reason .NET takes so much longer to go through files has to do with how much
+            // memory is being loaded. The difference is very big:  ~100x - ~1000x slower; and perhaps for all 600
+            // or so attributes for a file!
 
-            CreationTimeUtc = ConvertDateTime(FindData.ftCreationTime_dwHighDateTime,
-                FindData.ftCreationTime_dwLowDateTime);
+            // Last Creation Time UTC
+            //
+            CreationTimeUtc = ConvertDateTime(FindData.ftCreationTime_dwHighDateTime, FindData.ftCreationTime_dwLowDateTime);
 
-            LastAccessTimeUtc = ConvertDateTime(FindData.ftLastAccessTime_dwHighDateTime,
-                FindData.ftLastAccessTime_dwLowDateTime);
+            // Last Access Time UTC
+            //
+            LastAccessTimeUtc = ConvertDateTime(FindData.ftLastAccessTime_dwHighDateTime, FindData.ftLastAccessTime_dwLowDateTime);
 
-            LastWriteTimeUtc = ConvertDateTime(FindData.ftLastWriteTime_dwHighDateTime,
-                FindData.ftLastWriteTime_dwLowDateTime);
+            // Last Write Time UTC
+            //
+            LastWriteTimeUtc = ConvertDateTime(FindData.ftLastWriteTime_dwHighDateTime, FindData.ftLastWriteTime_dwLowDateTime);
 
             Size = CombineHighLowInts(FindData.nFileSizeHigh, FindData.nFileSizeLow);
 
