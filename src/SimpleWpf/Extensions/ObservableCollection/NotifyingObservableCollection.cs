@@ -61,7 +61,7 @@ namespace SimpleWpf.Extensions.ObservableCollection
                 item.PropertyChanged += OnItemChanged;
         }
 
-        private void OnItemChanged(object sender, PropertyChangedEventArgs e)
+        private void OnItemChanged(object? sender, PropertyChangedEventArgs e)
         {
             if (this.ItemPropertyChanged != null)
                 this.ItemPropertyChanged((T)sender, e);
