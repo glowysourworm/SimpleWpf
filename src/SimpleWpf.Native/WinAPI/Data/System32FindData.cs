@@ -2,7 +2,7 @@
 using System.IO;
 using System.Runtime.InteropServices;
 
-namespace SimpleWpf.NativeIO
+namespace SimpleWpf.Native.WinAPI.Data
 {
     /// <summary>
     /// Contains information about the file that is found 
@@ -68,6 +68,11 @@ namespace SimpleWpf.NativeIO
         NONE = 0,
         CANNOT_FIND_FILE = 2,
         NO_MORE_FILES = 18
+    }
+
+    public enum WIN32_API_HR_FILE_ERROR
+    {
+        NONE = 0
     }
 
     public enum FINDEX_INFO_LEVELS

@@ -6,7 +6,7 @@ using JetBrains.Annotations;
 
 using Microsoft.Win32.SafeHandles;
 
-namespace SimpleWpf.NativeIO
+namespace SimpleWpf.Native.WinAPI.Handle
 {
     /// <summary>
     /// Wraps a FindFirstFile handle.
@@ -21,7 +21,7 @@ namespace SimpleWpf.NativeIO
         /// <summary> </summary>
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
         [DllImport("kernel32.dll")]
-        static extern bool FindClose(IntPtr Handle);
+        static extern bool FindClose(nint Handle);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SafeFindHandle"/> class.

@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using SimpleWpf.NativeIO;
-using SimpleWpf.ViewModel;
+﻿using SimpleWpf.Native.IO;
 
 namespace SimpleWpf.UnitTest.SimpleWpf.NativeIO
 {
@@ -78,7 +71,7 @@ namespace SimpleWpf.UnitTest.SimpleWpf.NativeIO
                 Assert.IsTrue(result.Count(x => x.FileName == _testSubFolder) == 0);
                 Assert.IsTrue(result.Count(x => x.FileName == TEST_FILE1) == 1);
                 Assert.IsTrue(result.Count(x => x.FileName == TEST_FILE2) == 1);
-                
+
                 // Path
                 Assert.IsTrue(result.Count(x => x.Path == _testSubFolder) == 1);
                 Assert.IsTrue(result.Count(x => x.Path == _testFilePath1) == 1);

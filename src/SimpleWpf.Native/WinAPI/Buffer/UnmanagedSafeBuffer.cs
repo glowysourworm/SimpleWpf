@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 using Microsoft.Win32.SafeHandles;
 
-namespace SimpleWpf.NativeIO
+namespace SimpleWpf.Native.WinAPI.Buffer
 {
     /*  https://stackoverflow.com/questions/3652386/how-to-use-a-safebuffer-in-c-sharp
 

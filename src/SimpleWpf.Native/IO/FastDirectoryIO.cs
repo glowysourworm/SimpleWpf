@@ -1,30 +1,16 @@
 ﻿using System.IO;
-using System.Runtime.InteropServices;
 using System.Security;
 using System.Security.Permissions;
 
-namespace SimpleWpf.NativeIO
+using SimpleWpf.Native.WinAPI;
+using SimpleWpf.Native.WinAPI.Data;
+using SimpleWpf.Native.WinAPI.Handle;
+
+namespace SimpleWpf.Native.IO
 {
     [SuppressUnmanagedCodeSecurity]
     public class FastDirectoryIO : IDisposable
     {
-        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-        static extern SafeFindHandle FindFirstFile(string filePath, [In][Out] System32FindData lpFindFileData);
-
-        //[DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-        //static extern SafeFindHandle FindFirstFileEx([In] string lpFileName,
-        //                                             [In] FINDEX_INFO_LEVELS fInfoLevelId,
-        //                                             [In][Out] System32FindData lpFindFileData,
-        //                                             [In] FINDEX_SEARCH_OPS fSearchOp,
-        //                                             IntPtr lpSearchFilter,
-        //                                             [In] FIND_FIRST_EX_ADDITIONAL_FLAGS dwAdditionalFlags);
-
-        /// <summary>
-        /// Native call for finding "next file" given the "first file". The handle is the previous file handle.
-        /// </summary>
-        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-        static extern bool FindNextFile(SafeFindHandle handleFindFile, [In][Out][MarshalAs(UnmanagedType.LPStruct)] System32FindData LpFindFileData);
-
         private class DirectoryContext
         {
             public SafeFindHandle? Handle { get; set; }
@@ -51,7 +37,7 @@ namespace SimpleWpf.NativeIO
             _win32FindData = new System32FindData();
         }
 
-        public IEnumerable<FastFileResult> GetFiles()
+        public IEnumerable<FastDirectoryResult> GetFiles()
         {
             // Procedure:
             //
@@ -59,7 +45,7 @@ namespace SimpleWpf.NativeIO
             // 2) Iterate Directories:  Get Files (flat-ly)
             //
 
-            var result = new List<FastFileResult>();
+            var result = new List<FastDirectoryResult>();
 
             // Flattened Directories
             //
@@ -72,7 +58,7 @@ namespace SimpleWpf.NativeIO
             //
             var directories = Directory.GetDirectories(_baseDirectory, "*", new EnumerationOptions()
             {
-                RecurseSubdirectories = (_searchOption == SearchOption.AllDirectories),
+                RecurseSubdirectories = _searchOption == SearchOption.AllDirectories,
                 MatchType = MatchType.Simple
 
             }).ToList();
@@ -82,7 +68,7 @@ namespace SimpleWpf.NativeIO
 
             // Add Results During Iteration (performance)
             //
-            foreach (var directory in directories.Select(x => new FastFileResult(x)))
+            foreach (var directory in directories.Select(x => new FastDirectoryResult(x)))
             {
                 // Exclude the base directory from results
                 if (directory.Path != _baseDirectory)
@@ -114,9 +100,9 @@ namespace SimpleWpf.NativeIO
         /// Returns all files in CURRENT directory regardless of type. Then, they may be iterated
         /// recursively to detail the folder tree.
         /// </summary>
-        private IEnumerable<FastFileResult> GetFromDirectory(string directory)
+        private IEnumerable<FastDirectoryResult> GetFromDirectory(string directory)
         {
-            var result = new List<FastFileResult>();
+            var result = new List<FastDirectoryResult>();
             var firstRead = true;
             DirectoryContext context = null;
 
@@ -133,7 +119,7 @@ namespace SimpleWpf.NativeIO
                         // File (we already have directories)
                         if (!_win32FindData.dwFileAttributes.HasFlag(FileAttributes.Directory))
                         {
-                            result.Add(new FastFileResult(directory, _win32FindData));
+                            result.Add(new FastDirectoryResult(directory, _win32FindData));
                         }
                     }
 
@@ -151,7 +137,7 @@ namespace SimpleWpf.NativeIO
                         // File (we already have directories)
                         if (!_win32FindData.dwFileAttributes.HasFlag(FileAttributes.Directory))
                         {
-                            result.Add(new FastFileResult(directory, _win32FindData));
+                            result.Add(new FastDirectoryResult(directory, _win32FindData));
                         }
                     }
 
@@ -170,10 +156,10 @@ namespace SimpleWpf.NativeIO
 
         private bool NextNativeCall(DirectoryContext currentContext)
         {
-            var result = FindNextFile(currentContext.Handle, _win32FindData);
+            var result = FileIO.FindNextFile(currentContext.Handle, _win32FindData);
 
             // Error Check
-            HandleLastWinApiError();
+            FileIO.HandleLastWinAPIError();
 
             return result;
         }
@@ -191,31 +177,12 @@ namespace SimpleWpf.NativeIO
             var searchPath = Path.Combine(currentDirectory, _filter);
 
             // Native Call: Directory + (some sort of wildcard search)
-            var handle = FindFirstFile(searchPath, _win32FindData);
+            var handle = FileIO.FindFirstFile(searchPath, _win32FindData);
 
             // Error Check
-            HandleLastWinApiError();
+            FileIO.HandleLastWinAPIError();
 
             return new DirectoryContext(handle, currentDirectory);
-        }
-
-        private void HandleLastWinApiError()
-        {
-            var error = (WIN32_API_FILE_ERROR)Marshal.GetLastWin32Error();
-            var errorMessage = Marshal.GetLastPInvokeErrorMessage();
-
-            switch (error)
-            {
-                case WIN32_API_FILE_ERROR.NONE:
-                    break;
-                case WIN32_API_FILE_ERROR.CANNOT_FIND_FILE:
-                    break;
-                case WIN32_API_FILE_ERROR.NO_MORE_FILES:
-                    //throw new IOException("Error in FastGetFiles Native Call:  " + errorMessage);
-                    break;
-                default:
-                    throw new ApplicationException("Unhandled FastGetFiles Native Error Code:  " + errorMessage);
-            }
         }
 
         public void Dispose()

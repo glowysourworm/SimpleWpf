@@ -18,6 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\SimpleWpf.Native\SimpleWpf.Native.csproj" />
     <ProjectReference Include="..\SimpleWpf\SimpleWpf.csproj" />
   </ItemGroup>
 

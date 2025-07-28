@@ -3,7 +3,7 @@ using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Runtime.InteropServices;
 
-namespace SimpleWpf.NativeIO
+namespace SimpleWpf.Native.IO
 {
     /// <summary>
     /// Manages a MemoryMappedStream to take small pieces of a file; and read lines without much other 

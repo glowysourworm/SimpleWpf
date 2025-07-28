@@ -1,9 +1,11 @@
 ﻿using System.IO;
 using System.Xml.Linq;
 
-namespace SimpleWpf.NativeIO
+using SimpleWpf.Native.WinAPI.Data;
+
+namespace SimpleWpf.Native.IO
 {
-    public struct FastFileResult
+    public struct FastDirectoryResult
     {
         public string FileName;
         public string Path;
@@ -18,14 +20,14 @@ namespace SimpleWpf.NativeIO
         /// Creates a directory-only result. These results may be filled in with another API call. Maybe just the
         /// .NET managed call.
         /// </summary>
-        public FastFileResult(string directory)
+        public FastDirectoryResult(string directory)
         {
             this.Path = directory;
             this.IsDirectory = true;
             this.Attributes = FileAttributes.Directory;
         }
 
-        public FastFileResult(string directory, WIN32_FIND_DATA findData)
+        public FastDirectoryResult(string directory, WIN32_FIND_DATA findData)
         {
             this.Size = CombineHighLowInts(findData.nFileSizeHigh, findData.nFileSizeLow);
             this.FileName = findData.cFileName;
@@ -38,7 +40,7 @@ namespace SimpleWpf.NativeIO
             this.LastWriteTimeUTC = ConvertDateTime((uint)findData.ftLastWriteTime.dwHighDateTime, (uint)findData.ftLastWriteTime.dwLowDateTime);
         }
 
-        public FastFileResult(string directory, System32FindData findData)
+        public FastDirectoryResult(string directory, System32FindData findData)
         {
             this.Size = CombineHighLowInts(findData.nFileSizeHigh, findData.nFileSizeLow);
             this.FileName = findData.cFileName;
