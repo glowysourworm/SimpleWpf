@@ -37,9 +37,9 @@ namespace SimpleWpf.UnitTest.SimpleWpf.ViewModel
             // -> Root -> Test (Dir) -> Test (File)
             var fileNode = testDirectoryNode.Add(new PathViewModel(_rootDirectory, _testFilePath));
 
-            Assert.IsTrue(rootNode.NodeValue.Path == _rootDirectory);
-            Assert.IsTrue(testDirectoryNode.NodeValue.Path == _testDirectory);
-            Assert.IsTrue(fileNode.NodeValue.Path == _testFilePath);
+            Assert.IsTrue(rootNode.NodeValue.FullPath == _rootDirectory);
+            Assert.IsTrue(testDirectoryNode.NodeValue.FullPath == _testDirectory);
+            Assert.IsTrue(fileNode.NodeValue.FullPath == _testFilePath);
 
             Assert.IsTrue(rootNode.NodeValue.BaseDirectory == _rootDirectory);
             Assert.IsTrue(testDirectoryNode.NodeValue.BaseDirectory == _rootDirectory);

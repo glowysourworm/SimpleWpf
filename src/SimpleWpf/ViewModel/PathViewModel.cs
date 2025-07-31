@@ -8,7 +8,8 @@ namespace SimpleWpf.ViewModel
     public class PathViewModel : RecursiveViewModelBase
     {
         private readonly string _baseDirectory;
-        private readonly string _path;
+        private readonly string _fullPath;
+        private readonly string _shortPath;
 
         private bool _isDirectory;
 
@@ -21,9 +22,13 @@ namespace SimpleWpf.ViewModel
         {
             get { return _baseDirectory; }
         }
-        public string Path
+        public string FullPath
         {
-            get { return _path; }
+            get { return _fullPath; }
+        }
+        public string ShortPath
+        {
+            get { return _shortPath; }
         }
 
         public PathViewModel(string baseDirectory, string path)
@@ -41,12 +46,18 @@ namespace SimpleWpf.ViewModel
             _isDirectory = Directory.Exists(path);
 
             _baseDirectory = baseDirectory;
-            _path = path;
+            _fullPath = path;
+
+            if (_isDirectory)
+                _shortPath = new DirectoryInfo(path).Name;
+
+            else
+                _shortPath = System.IO.Path.GetFileName(path);
         }
 
         public override string ToString()
         {
-            return this.Path;
+            return this.FullPath;
         }
     }
 }
