@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Specialized;
+﻿using System.Collections.Specialized;
 
 using SimpleWpf.Extensions.Event;
 
@@ -11,7 +10,7 @@ namespace SimpleWpf.ViewModel
     /// Base class for a recursive view model which handles recursive iteration using IList (IEnumerable).
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public abstract class RecursiveNodeViewModel<T> : ViewModelBase, IDisposable, INotifyCollectionChanged where T : RecursiveViewModelBase
+    public abstract class RecursiveDispatcherViewModel<T> : ViewModelBase, IDisposable, INotifyCollectionChanged where T : DispatcherViewModelBase
     {
         /// <summary>
         /// (RECURSIVE!) Event that fires when collection has changed. This should be
@@ -34,20 +33,20 @@ namespace SimpleWpf.ViewModel
         }
 
         // Parent Node
-        RecursiveNodeViewModel<T> _parent;
+        RecursiveDispatcherViewModel<T> _parent;
 
         // Primary collection
-        NotifyingObservableCollection<RecursiveNodeViewModel<T>> _children;
+        NotifyingObservableCollection<RecursiveDispatcherViewModel<T>> _children;
 
         // Current node's value
         T _nodeValue;
 
-        public RecursiveNodeViewModel<T> Parent
+        public RecursiveDispatcherViewModel<T> Parent
         {
             get { return _parent; }
             set { this.RaiseAndSetIfChanged(ref _parent, value); }
         }
-        public NotifyingObservableCollection<RecursiveNodeViewModel<T>> Children
+        public NotifyingObservableCollection<RecursiveDispatcherViewModel<T>> Children
         {
             get { return _children; }
         }
@@ -56,9 +55,9 @@ namespace SimpleWpf.ViewModel
             get { return _nodeValue; }
         }
 
-        public RecursiveNodeViewModel(T nodeValue, RecursiveNodeViewModel<T> parent = null)
+        public RecursiveDispatcherViewModel(T nodeValue, RecursiveDispatcherViewModel<T> parent = null)
         {
-            _children = new NotifyingObservableCollection<RecursiveNodeViewModel<T>>();
+            _children = new NotifyingObservableCollection<RecursiveDispatcherViewModel<T>>();
             _nodeValue = nodeValue;
             _parent = parent;
             _nodeValue = nodeValue;
@@ -68,10 +67,10 @@ namespace SimpleWpf.ViewModel
         /// <summary>
         /// Constructs instance of the tree's node for the child collection
         /// </summary>
-        protected abstract RecursiveNodeViewModel<T> Construct(T nodeValue);
+        protected abstract RecursiveDispatcherViewModel<T> Construct(T nodeValue);
 
         // Method used for recursive members (includes current node for action)
-        private void Recurse(Action<RecursiveNodeViewModel<T>> action)
+        private void Recurse(Action<RecursiveDispatcherViewModel<T>> action)
         {
             action(this);
 
@@ -83,7 +82,7 @@ namespace SimpleWpf.ViewModel
         }
 
         // Method used for recursive members (excludes current node for action)
-        private void RecurseChildren(Action<RecursiveNodeViewModel<T>> action)
+        private void RecurseChildren(Action<RecursiveDispatcherViewModel<T>> action)
         {
             // Recursive Iterator
             foreach (var item in _children)
@@ -100,13 +99,11 @@ namespace SimpleWpf.ViewModel
         /// </summary>
         public void RecursiveForEach(Action<T> action)
         {
-            using (var iterator = new RecursiveEnumerator<T>(this))
-            {
-                while (iterator.MoveNext())
-                {
-                    action(iterator.Current);
-                }
-            }
+            Recurse(node => action(node.NodeValue));
+        }
+        public void RecurseForEachNode(Action<RecursiveDispatcherViewModel<T>> action)
+        {
+            Recurse(action);
         }
         public int RecursiveCount()
         {
@@ -141,7 +138,7 @@ namespace SimpleWpf.ViewModel
         /// (Non-Recursive Method!) Adds an item to CURRENT DEPTH of the tree ONLY. Returns the new node.
         /// </summary>
         /// <exception cref="ArgumentException">Depths do not match for inserted item</exception>
-        public RecursiveNodeViewModel<T> Add(T item)
+        public RecursiveDispatcherViewModel<T> Add(T item)
         {
             if (item == null)
                 throw new NullReferenceException("Trying to insert null value into recursive tree view model");

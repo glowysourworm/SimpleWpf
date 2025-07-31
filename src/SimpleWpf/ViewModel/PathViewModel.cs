@@ -1,35 +1,70 @@
 ﻿using System.IO;
+using System.Windows;
 
 namespace SimpleWpf.ViewModel
 {
     /// <summary>
     /// View model for directory to support RecursiveNodeViewModel directory tree implementation
     /// </summary>
-    public class PathViewModel : RecursiveViewModelBase
+    public class PathViewModel : DispatcherViewModelBase
     {
-        private readonly string _baseDirectory;
-        private readonly string _fullPath;
-        private readonly string _shortPath;
+        public static readonly DependencyProperty BaseDirectoryProperty =
+            DependencyProperty.Register("BaseDirectory", typeof(string), typeof(PathViewModel));
 
-        private bool _isDirectory;
+        public static readonly DependencyProperty FullPathProperty =
+            DependencyProperty.Register("FullPath", typeof(string), typeof(PathViewModel));
 
-        public bool IsDirectory
-        {
-            get { return _isDirectory; }
-            set { this.RaiseAndSetIfChanged(ref _isDirectory, value); }
-        }
+        public static readonly DependencyProperty ShortPathProperty =
+            DependencyProperty.Register("ShortPath", typeof(string), typeof(PathViewModel));
+
+        public static readonly DependencyProperty IsDirectoryProperty =
+            DependencyProperty.Register("IsDirectory", typeof(bool), typeof(PathViewModel));
+
+        public static readonly DependencyProperty RecursionDepthProperty =
+            DependencyProperty.Register("RecursionDepth", typeof(int), typeof(PathViewModel));
+
+        public static readonly DependencyProperty IsExpandedProperty =
+            DependencyProperty.Register("IsExpanded", typeof(bool), typeof(PathViewModel));
+
+        public static readonly DependencyProperty IsSelectedProperty =
+            DependencyProperty.Register("IsSelected", typeof(bool), typeof(PathViewModel));
+
         public string BaseDirectory
         {
-            get { return _baseDirectory; }
+            get { return (string)GetValue(BaseDirectoryProperty); }
+            set { SetValueOverride(BaseDirectoryProperty, value); }
         }
         public string FullPath
         {
-            get { return _fullPath; }
+            get { return (string)GetValue(FullPathProperty); }
+            set { SetValueOverride(FullPathProperty, value); }
         }
         public string ShortPath
         {
-            get { return _shortPath; }
+            get { return (string)GetValue(ShortPathProperty); }
+            set { SetValueOverride(ShortPathProperty, value); }
         }
+        public bool IsDirectory
+        {
+            get { return (bool)GetValue(IsDirectoryProperty); }
+            set { SetValueOverride(IsDirectoryProperty, value); }
+        }
+        public int RecursionDepth
+        {
+            get { return (int)GetValue(RecursionDepthProperty); }
+            set { SetValueOverride(RecursionDepthProperty, value); }
+        }
+        public bool IsExpanded
+        {
+            get { return (bool)GetValue(IsExpandedProperty); }
+            set { SetValueOverride(IsExpandedProperty, value); }
+        }
+        public bool IsSelected
+        {
+            get { return (bool)GetValue(IsSelectedProperty); }
+            set { SetValueOverride(IsSelectedProperty, value); }
+        }
+
 
         public PathViewModel(string baseDirectory, string path)
         {
@@ -43,16 +78,28 @@ namespace SimpleWpf.ViewModel
                 throw new ArgumentException("Path must be relative to base directory:  PathViewModel.cs");
 
             // Is Directory?
-            _isDirectory = Directory.Exists(path);
+            this.IsDirectory = Directory.Exists(path);
 
-            _baseDirectory = baseDirectory;
-            _fullPath = path;
+            this.BaseDirectory = baseDirectory;
+            this.FullPath = path;
 
-            if (_isDirectory)
-                _shortPath = new DirectoryInfo(path).Name;
+            if (this.IsDirectory)
+                this.ShortPath = new DirectoryInfo(path).Name;
 
             else
-                _shortPath = System.IO.Path.GetFileName(path);
+                this.ShortPath = System.IO.Path.GetFileName(path);
+
+            var baseDepth = GetDirectoryDepth(this.BaseDirectory);
+            var pathDepth = GetDirectoryDepth(this.FullPath);
+
+            this.RecursionDepth = pathDepth - baseDepth;
+        }
+
+        private int GetDirectoryDepth(string path)
+        {
+            var directory = System.IO.Path.GetDirectoryName(path);
+
+            return directory.Split("\\", StringSplitOptions.RemoveEmptyEntries).Length;
         }
 
         public override string ToString()
