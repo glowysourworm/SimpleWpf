@@ -43,5 +43,10 @@ namespace SimpleWpf.ViewModel
             _baseDirectory = baseDirectory;
             _path = path;
         }
+
+        public override string ToString()
+        {
+            return this.Path;
+        }
     }
 }

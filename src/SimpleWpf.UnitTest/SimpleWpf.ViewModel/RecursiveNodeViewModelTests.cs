@@ -50,6 +50,47 @@ namespace SimpleWpf.UnitTest.SimpleWpf.ViewModel
             Assert.IsFalse(fileNode.NodeValue.IsDirectory);
         }
 
+        [Test]
+        public void RecursiveIteration()
+        {
+            // Test Folder
+            var root = new PathViewModel(Environment.CurrentDirectory, _rootDirectory);
+
+            // -> Root
+            var rootNode = new PathNodeViewModel("*.txt", root);
+            var testNodeValue = new PathViewModel(_rootDirectory, _testDirectory);
+            var testFileNodeValue = new PathViewModel(_rootDirectory, _testFilePath);
+
+            // -> Root -> Test (Dir)
+            var testDirectoryNode = rootNode.Add(testNodeValue);
+
+            // -> Root -> Test (Dir) -> Test (File)
+            var fileNode = testDirectoryNode.Add(testFileNodeValue);
+
+            var rootFound = false;
+            var testFound = false;
+            var fileFound = false;
+
+            rootNode.RecursiveForEach(nodeValue =>
+            {
+                if (nodeValue == root)
+                    rootFound = true;
+
+                else if (nodeValue == testNodeValue)
+                    testFound = true;
+
+                else if (nodeValue == testFileNodeValue)
+                    fileFound = true;
+
+                else
+                    Assert.Fail("Missing node from recursive iterator");
+            });
+
+            Assert.IsTrue(rootFound);
+            Assert.IsTrue(testFound);
+            Assert.IsTrue(fileFound);
+        }
+
         [TearDown]
         public void Teardown()
         {

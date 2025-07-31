@@ -1,4 +1,6 @@
-﻿namespace SimpleWpf.ViewModel
+﻿using System.Windows.Navigation;
+
+namespace SimpleWpf.ViewModel
 {
     public class PathNodeViewModel : RecursiveNodeViewModel<PathViewModel>
     {
@@ -15,6 +17,11 @@
         protected override RecursiveNodeViewModel<PathViewModel> Construct(PathViewModel nodeValue)
         {
             return new PathNodeViewModel(_searchPattern, nodeValue, this);
+        }
+
+        public override string ToString()
+        {
+            return this.NodeValue.ToString();
         }
     }
 }
