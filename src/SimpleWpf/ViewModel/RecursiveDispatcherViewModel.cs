@@ -18,8 +18,8 @@ namespace SimpleWpf.ViewModel
         /// </summary>
         public event NotifyCollectionChangedEventHandler? CollectionChanged
         {
-            add { RecurseChildren(x => x.CollectionChanged += value); }
-            remove { RecurseChildren(x => x.CollectionChanged -= value); }
+            add { Recurse(x => x.CollectionChanged += value); }
+            remove { Recurse(x => x.CollectionChanged -= value); }
         }
 
         /// <summary>
@@ -28,8 +28,8 @@ namespace SimpleWpf.ViewModel
         /// </summary>
         public event CollectionItemChangedHandler<T> ItemPropertyChanged
         {
-            add { RecurseChildren(x => x.ItemPropertyChanged += value); }
-            remove { RecurseChildren(x => x.ItemPropertyChanged -= value); }
+            add { Recurse(x => x.ItemPropertyChanged += value); }
+            remove { Recurse(x => x.ItemPropertyChanged -= value); }
         }
 
         // Parent Node
@@ -70,25 +70,19 @@ namespace SimpleWpf.ViewModel
         protected abstract RecursiveDispatcherViewModel<T> Construct(T nodeValue);
 
         // Method used for recursive members (includes current node for action)
-        private void Recurse(Action<RecursiveDispatcherViewModel<T>> action)
+        private void Recurse(Action<RecursiveDispatcherViewModel<T>> action, bool leafFirst = false)
         {
-            action(this);
+            if (!leafFirst) 
+                action(this);
 
             // Recursive Iterator
             foreach (var item in _children)
             {
-                action(item);
+                item.Recurse(action);
             }
-        }
 
-        // Method used for recursive members (excludes current node for action)
-        private void RecurseChildren(Action<RecursiveDispatcherViewModel<T>> action)
-        {
-            // Recursive Iterator
-            foreach (var item in _children)
-            {
-                action(item);
-            }
+            if (leafFirst)
+                action(this);
         }
 
         #region IList Methods
@@ -97,11 +91,7 @@ namespace SimpleWpf.ViewModel
         /// Recursively iterates the collection. This method must not overlap with IEnumerable due to framework
         /// usage. e.g. is the HierarchicalDataTemplate - which will then treat the tree as a flat list.
         /// </summary>
-        public void RecursiveForEach(Action<T> action)
-        {
-            Recurse(node => action(node.NodeValue));
-        }
-        public void RecurseForEachNode(Action<RecursiveDispatcherViewModel<T>> action)
+        public void RecurseForEach(Action<RecursiveDispatcherViewModel<T>> action)
         {
             Recurse(action);
         }
@@ -155,7 +145,8 @@ namespace SimpleWpf.ViewModel
         /// </summary>
         public void Clear()
         {
-            Recurse(x => x.ClearImpl());
+            // Leaf First:  Runs the delegate after iterating the children (recursively)
+            Recurse(x => x.ClearImpl(), true);
         }
 
         private void ClearImpl()
@@ -204,7 +195,7 @@ namespace SimpleWpf.ViewModel
         {
             if (_children != null)
             {
-                Recurse(x => x.DisposeImpl());
+                Recurse(x => x.DisposeImpl(), true);
             }
         }
         private void DisposeImpl()

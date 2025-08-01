@@ -71,15 +71,15 @@ namespace SimpleWpf.UnitTest.SimpleWpf.ViewModel
             var testFound = false;
             var fileFound = false;
 
-            rootNode.RecursiveForEach(nodeValue =>
+            rootNode.RecurseForEach(node =>
             {
-                if (nodeValue == root)
+                if (node.NodeValue == root)
                     rootFound = true;
 
-                else if (nodeValue == testNodeValue)
+                else if (node.NodeValue == testNodeValue)
                     testFound = true;
 
-                else if (nodeValue == testFileNodeValue)
+                else if (node.NodeValue == testFileNodeValue)
                     fileFound = true;
 
                 else

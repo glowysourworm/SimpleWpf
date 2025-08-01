@@ -1,8 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Linq.Expressions;
-using System.Runtime.CompilerServices;
 using System.Windows;
-using System.Windows.Threading;
 
 namespace SimpleWpf.ViewModel
 {
@@ -15,11 +13,21 @@ namespace SimpleWpf.ViewModel
         /// </summary>
         protected virtual void SetValueOverride(DependencyProperty property, object value)
         {
-            SetValue(property, value);
+            var changed = false;
+            var field = GetValue(property);
 
-            var newValue = GetValue(property);
+            if (field == null)
+                changed = value != null;
+            else
+                changed = !field.Equals(value);
 
-            RaiseAndSetIfChanged(ref newValue, value, property.Name);
+            if (changed)
+            {
+                SetValue(property, value);
+
+                if (PropertyChanged != null)
+                    PropertyChanged(this, new PropertyChangedEventArgs(property.Name));
+            }
         }
 
         protected virtual void OnPropertyChanged(string name)
@@ -37,29 +45,6 @@ namespace SimpleWpf.ViewModel
 
             else
                 throw new Exception("Invalid Member Expression OnPropertyChanged<T>");
-        }
-
-        /// <summary>
-        /// Raised INotifyPropertyChanged event if there's a change to the property. Returns true if there was
-        /// a change
-        /// </summary>
-        protected virtual bool RaiseAndSetIfChanged<T>(ref T field, T value, [CallerMemberName] string memberName = "")
-        {
-            var changed = false;
-            if (field == null)
-                changed = value != null;
-            else
-                changed = !field.Equals(value);
-
-            if (changed)
-            {
-                field = value;
-
-                if (PropertyChanged != null)
-                    PropertyChanged(this, new PropertyChangedEventArgs(memberName));
-            }
-
-            return changed;
         }
     }
 }
