@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
 using System.Windows;
 
 namespace SimpleWpf.ViewModel
@@ -28,6 +29,29 @@ namespace SimpleWpf.ViewModel
                 if (PropertyChanged != null)
                     PropertyChanged(this, new PropertyChangedEventArgs(property.Name));
             }
+        }
+
+        /// <summary>
+        /// Raised INotifyPropertyChanged event if there's a change to the property. Returns true if there was
+        /// a change
+        /// </summary>
+        protected virtual bool SetValueOverride<T>(ref T field, T value, [CallerMemberName] string memberName = "")
+        {
+            var changed = false;
+            if (field == null)
+                changed = value != null;
+            else
+                changed = !field.Equals(value);
+
+            if (changed)
+            {
+                field = value;
+
+                if (PropertyChanged != null)
+                    PropertyChanged(this, new PropertyChangedEventArgs(memberName));
+            }
+
+            return changed;
         }
 
         protected virtual void OnPropertyChanged(string name)

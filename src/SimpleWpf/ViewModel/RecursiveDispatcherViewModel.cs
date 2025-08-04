@@ -1,4 +1,5 @@
 ﻿using System.Collections.Specialized;
+using System.ComponentModel;
 
 using SimpleWpf.Extensions.Event;
 
@@ -13,24 +14,16 @@ namespace SimpleWpf.ViewModel
     public abstract class RecursiveDispatcherViewModel<T> : ViewModelBase, IDisposable, INotifyCollectionChanged where T : DispatcherViewModelBase
     {
         /// <summary>
-        /// (RECURSIVE!) Event that fires when collection has changed. This should be
-        ///              set on the ROOT of the tree only!
+        /// (Bubble Up Event) Event that fires when collection has changed. This bubbles
+        ///                   up the tree. So, setting this at the root will forward all tree collection events.
         /// </summary>
-        public event NotifyCollectionChangedEventHandler? CollectionChanged
-        {
-            add { Recurse(x => x.CollectionChanged += value); }
-            remove { Recurse(x => x.CollectionChanged -= value); }
-        }
+        public event NotifyCollectionChangedEventHandler CollectionChanged;
 
         /// <summary>
-        /// (RECURSIVE!) Event that fires when collection's item property has changed. This should be
-        ///              set on the ROOT of the tree only!
+        /// (Bubble Up Event) Event that fires when collection's item property has changed. This bubbles
+        ///                   up the tree. So, setting this at the root will forward all tree item events.
         /// </summary>
-        public event CollectionItemChangedHandler<T> ItemPropertyChanged
-        {
-            add { Recurse(x => x.ItemPropertyChanged += value); }
-            remove { Recurse(x => x.ItemPropertyChanged -= value); }
-        }
+        public event CollectionItemChangedHandler<T> ItemPropertyChanged;
 
         // Parent Node
         RecursiveDispatcherViewModel<T> _parent;
@@ -61,8 +54,11 @@ namespace SimpleWpf.ViewModel
             _nodeValue = nodeValue;
             _parent = parent;
             _nodeValue = nodeValue;
-        }
 
+            _children.ItemPropertyChanged += OnItemPropertyChanged;
+            _children.CollectionChanged += OnItemCollectionChanged;
+            _nodeValue.PropertyChanged += OnNodeValuePropertyChanged;
+        }
 
         /// <summary>
         /// Constructs instance of the tree's node for the child collection
@@ -70,9 +66,9 @@ namespace SimpleWpf.ViewModel
         protected abstract RecursiveDispatcherViewModel<T> Construct(T nodeValue);
 
         // Method used for recursive members (includes current node for action)
-        private void Recurse(Action<RecursiveDispatcherViewModel<T>> action, bool leafFirst = false)
+        private void Recurse(Action<RecursiveDispatcherViewModel<T>> action, bool leafFirst = false, bool childrenOnly = false)
         {
-            if (!leafFirst) 
+            if (!leafFirst && !childrenOnly)
                 action(this);
 
             // Recursive Iterator
@@ -81,7 +77,7 @@ namespace SimpleWpf.ViewModel
                 item.Recurse(action);
             }
 
-            if (leafFirst)
+            if (leafFirst && !childrenOnly)
                 action(this);
         }
 
@@ -133,7 +129,12 @@ namespace SimpleWpf.ViewModel
             if (item == null)
                 throw new NullReferenceException("Trying to insert null value into recursive tree view model");
 
+            // NEW NODE:  Use this opportunity to hook tree events
             var node = Construct(item);
+
+            node.ItemPropertyChanged += OnItemPropertyChanged;
+            node.NodeValue.PropertyChanged += OnNodeValuePropertyChanged;
+            node.CollectionChanged += OnItemCollectionChanged;
 
             _children.Add(node);
 
@@ -151,6 +152,14 @@ namespace SimpleWpf.ViewModel
 
         private void ClearImpl()
         {
+            // Unhook Events
+            foreach (var node in _children)
+            {
+                node.ItemPropertyChanged -= OnItemPropertyChanged;
+                node.NodeValue.PropertyChanged -= OnNodeValuePropertyChanged;
+                node.CollectionChanged -= OnItemCollectionChanged;
+            }
+
             _children.Clear();
         }
 
@@ -180,6 +189,13 @@ namespace SimpleWpf.ViewModel
             {
                 if (_children[index].NodeValue == item)
                 {
+                    var itemNode = _children[index];
+
+                    // Unhook Events
+                    itemNode.ItemPropertyChanged -= OnItemPropertyChanged;
+                    itemNode.NodeValue.PropertyChanged -= OnNodeValuePropertyChanged;
+                    itemNode.CollectionChanged -= OnItemCollectionChanged;
+
                     _children.RemoveAt(index);
                     return true;
                 }
@@ -190,6 +206,30 @@ namespace SimpleWpf.ViewModel
         }
 
         #endregion
+
+        private void OnItemCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (this.CollectionChanged != null)
+                this.CollectionChanged(sender, e);
+        }
+
+        private void OnItemPropertyChanged(T item, PropertyChangedEventArgs propertyArgs)
+        {
+            if (this.ItemPropertyChanged != null)
+                this.ItemPropertyChanged(item, propertyArgs);
+        }
+
+        private void OnItemPropertyChanged(RecursiveDispatcherViewModel<T> item, PropertyChangedEventArgs propertyArgs)
+        {
+            if (this.ItemPropertyChanged != null)
+                this.ItemPropertyChanged(item.NodeValue, propertyArgs);
+        }
+
+        private void OnNodeValuePropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (this.ItemPropertyChanged != null)
+                this.ItemPropertyChanged(sender as T, e);
+        }
 
         public void Dispose()
         {
@@ -202,7 +242,10 @@ namespace SimpleWpf.ViewModel
         {
             if (_children != null)
             {
-                _children.Clear();
+                Clear();
+                _children.ItemPropertyChanged -= OnItemPropertyChanged;
+                _children.CollectionChanged -= OnItemCollectionChanged;
+                _nodeValue.PropertyChanged -= OnNodeValuePropertyChanged;
                 _children = null;
             }
         }

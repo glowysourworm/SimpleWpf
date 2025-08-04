@@ -1,3 +1,5 @@
+using JetBrains.Annotations;
+
 using SimpleWpf.ViewModel;
 
 namespace SimpleWpf.UnitTest.SimpleWpf.ViewModel
@@ -89,6 +91,50 @@ namespace SimpleWpf.UnitTest.SimpleWpf.ViewModel
             Assert.IsTrue(rootFound);
             Assert.IsTrue(testFound);
             Assert.IsTrue(fileFound);
+        }
+
+        [Test]
+        public void RecursiveNodeEvents()
+        {
+            // Test Folder
+            var root = new PathViewModel(Environment.CurrentDirectory, _rootDirectory);
+
+            // -> Root
+            var rootNode = new PathNodeViewModel("*.txt", root);
+            var testNodeValue = new PathViewModel(_rootDirectory, _testDirectory);
+            var testFileNodeValue = new PathViewModel(_rootDirectory, _testFilePath);
+
+            // -> Root -> Test (Dir)
+            var testDirectoryNode = rootNode.Add(testNodeValue);
+
+            // -> Root -> Test (Dir) -> Test (File)
+            var fileNode = testDirectoryNode.Add(testFileNodeValue);
+
+            var eventFired = false;
+
+            rootNode.ItemPropertyChanged += (sender, e) =>
+            {
+                eventFired = true;
+            };
+
+            // -> Root Event Fired
+            rootNode.NodeValue.IsSelected = true;
+
+            Assert.IsTrue(eventFired);
+
+            eventFired = false;
+
+            // -> Test Event Fired
+            testDirectoryNode.NodeValue.IsSelected = true;
+
+            Assert.IsTrue(eventFired);
+
+            eventFired = false;
+
+            // -> Leaf Event Fired
+            fileNode.NodeValue.IsSelected = true;
+
+            Assert.IsTrue(eventFired);
         }
 
         [TearDown]
