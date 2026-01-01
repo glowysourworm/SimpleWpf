@@ -1,18 +1,26 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-
-using SimpleWpf.Extensions.Collection;
+﻿using SimpleWpf.Extensions.Collection;
 using SimpleWpf.IocFramework.Application.IocException;
 
 namespace SimpleWpf.IocFramework.Application
 {
     public abstract class IocBootstrapper
     {
+        readonly bool _runIsAsync;
+
         // Modules for the application
         IEnumerable<ModuleInstance> _modules;
 
         // Initialized flag
         bool _initialized = false;
+
+        /// <summary>
+        /// Primary constructor for the base bootstrapper. This will choose a run method to
+        /// execute as the last step:  Run, or RunAsync.
+        /// </summary>
+        public IocBootstrapper(bool runIsAsync)
+        {
+            _runIsAsync = runIsAsync;
+        }
 
         /// <summary>
         /// Defines module types for the application. This will tell the bootstrapper where
@@ -97,7 +105,18 @@ namespace SimpleWpf.IocFramework.Application
             var definition = _modules.FirstOrDefault(x => x.Definition.IsEntryPoint);
 
             // START THE APPLICATION!
-            definition.Instance.Run();
+            if (_runIsAsync)
+            {
+                definition.Instance
+                          .RunAsync()
+                          .ConfigureAwait(false)
+                          .GetAwaiter()
+                          .GetResult();
+            }
+            else
+            {
+                definition.Instance.Run();
+            }
         }
     }
 }

@@ -35,9 +35,19 @@ namespace SimpleWpf.IocFramework.Application
         }
 
         /// <summary>
-        /// Override this to create an entry point for the module
+        /// Override this to create an entry point for the module. For async method, must set IocBootstrapper
+        /// to use RunAsync its constructor.
         /// </summary>
         public virtual void Run()
+        {
+
+        }
+
+        /// <summary>
+        /// Override this to create an entry point for the module. For async method, must set IocBootstrapper
+        /// to use RunAsync its constructor.
+        /// </summary>
+        public virtual async Task RunAsync()
         {
 
         }

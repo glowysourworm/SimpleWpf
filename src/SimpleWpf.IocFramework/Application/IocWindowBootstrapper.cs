@@ -1,5 +1,4 @@
-﻿using System;
-using System.Windows;
+﻿using System.Windows;
 
 using SimpleWpf.IocFramework.Application.IocException;
 
@@ -11,6 +10,12 @@ namespace SimpleWpf.IocFramework.Application
         /// Defines type for the shell window to be created
         /// </summary>
         public abstract Type DefineShell();
+
+        /// <summary>
+        /// Set runIsAsync to true to use RunAsync method of the ModuleBase, and the bootstrapper
+        /// </summary>
+        /// <param name="runIsAsync"></param>
+        public IocWindowBootstrapper(bool runIsAsync) : base(runIsAsync) { }
 
         protected override void UserPreModuleInitialize()
         {
