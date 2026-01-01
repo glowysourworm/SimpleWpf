@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.13.35919.96
+# Visual Studio Version 18
+VisualStudioVersion = 18.1.11312.151 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleWpf", "SimpleWpf\SimpleWpf.csproj", "{E7205856-80A6-4ACA-87A1-CDD05708CDFC}"
 EndProject
@@ -12,6 +12,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleWpf.UnitTest", "SimpleWpf.UnitTest\SimpleWpf.UnitTest.csproj", "{32118E45-F78B-40D3-9DCC-FDF72FAA16BB}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleWpf.Native", "SimpleWpf.Native\SimpleWpf.Native.csproj", "{C98615CB-6767-4177-8B83-578C097B3FE8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleWpf.Utilities", "SimpleWpf.Utilities\SimpleWpf.Utilities.csproj", "{0A739438-3AFC-4D09-A1BC-74231F17823A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -83,6 +85,18 @@ Global
 		{C98615CB-6767-4177-8B83-578C097B3FE8}.Release|x64.Build.0 = Release|Any CPU
 		{C98615CB-6767-4177-8B83-578C097B3FE8}.Release|x86.ActiveCfg = Release|Any CPU
 		{C98615CB-6767-4177-8B83-578C097B3FE8}.Release|x86.Build.0 = Release|Any CPU
+		{0A739438-3AFC-4D09-A1BC-74231F17823A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0A739438-3AFC-4D09-A1BC-74231F17823A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0A739438-3AFC-4D09-A1BC-74231F17823A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{0A739438-3AFC-4D09-A1BC-74231F17823A}.Debug|x64.Build.0 = Debug|Any CPU
+		{0A739438-3AFC-4D09-A1BC-74231F17823A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0A739438-3AFC-4D09-A1BC-74231F17823A}.Debug|x86.Build.0 = Debug|Any CPU
+		{0A739438-3AFC-4D09-A1BC-74231F17823A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0A739438-3AFC-4D09-A1BC-74231F17823A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0A739438-3AFC-4D09-A1BC-74231F17823A}.Release|x64.ActiveCfg = Release|Any CPU
+		{0A739438-3AFC-4D09-A1BC-74231F17823A}.Release|x64.Build.0 = Release|Any CPU
+		{0A739438-3AFC-4D09-A1BC-74231F17823A}.Release|x86.ActiveCfg = Release|Any CPU
+		{0A739438-3AFC-4D09-A1BC-74231F17823A}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
