@@ -1,10 +1,12 @@
 ﻿using System.Collections;
 
 using SimpleWpf.Extensions.Collection;
+using SimpleWpf.RecursiveSerializer.Component.Interface;
+using SimpleWpf.RecursiveSerializer.Interface;
 
 namespace SimpleWpf.SimpleCollections.Collection
 {
-    public class SimpleList<T> : IList<T>, IEnumerable<T>
+    public class SimpleList<T> : IList<T>, IEnumerable<T>, IRecursiveSerializable
     {
         T[] _array;
         int _listCurrentLength;
@@ -53,6 +55,36 @@ namespace SimpleWpf.SimpleCollections.Collection
             _array = new T[count];
             this.ListResizeAmount = listResizeAmount;
         }
+
+        #region Serialization
+        public SimpleList(IPropertyReader reader)
+        {
+            var capacity = reader.Read<int>("Capacity");
+            var count = reader.Read<int>("Count");
+
+            _array = new T[capacity];
+            _listCurrentLength = count;
+
+            this.ListResizeAmount = 10;
+
+            for (int index = 0; index < count; index++)
+            {
+                var item = reader.Read<T>("Element" + index.ToString());
+
+                _array[index] = item;
+            }
+        }
+        public void GetProperties(IPropertyWriter writer)
+        {
+            writer.Write("Capacity", _array.Length);
+            writer.Write("Count", _listCurrentLength);
+
+            for (int index = 0; index < _listCurrentLength; index++)
+            {
+                writer.Write("Element" + index.ToString(), _array[index]);
+            }
+        }
+        #endregion
 
         public void Add(T item)
         {

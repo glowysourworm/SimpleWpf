@@ -1,6 +1,4 @@
-﻿using System;
-
-using SimpleWpf.RecursiveSerializer.Interface;
+﻿using SimpleWpf.RecursiveSerializer.Interface;
 using SimpleWpf.RecursiveSerializer.IO.Data;
 using SimpleWpf.RecursiveSerializer.IO.Formatter.PrimitiveArray;
 
@@ -27,6 +25,11 @@ namespace RecursiveSerializer.Formatter
 
         internal static IBaseFormatter CreatePrimitiveFormatter(Type type)
         {
+            // Primitive Type Checks:  Be aware of type equivalence. MSFT may provide a chart with
+            //                         what type is == to what typeof(); but a unit test will be 
+            //                         needed as part of the build process to determine that these
+            //                         are set up correctly, since order will matter.
+
             // HASHED TYPE - AS PRIMITIVE
             if (type == typeof(HashedType))
                 return new HashedTypeFormatter();
@@ -42,6 +45,12 @@ namespace RecursiveSerializer.Formatter
 
             else if (type == typeof(double))
                 return new DoubleFormatter();
+
+            else if (type == typeof(ushort))
+                return new UnsignedShortFormatter();
+
+            else if (type == typeof(short))
+                return new ShortFormatter();
 
             else if (type == typeof(uint))
                 return new UnsignedIntegerFormatter();
@@ -69,6 +78,8 @@ namespace RecursiveSerializer.Formatter
                    (type == typeof(byte)) ||
                    (type == typeof(DateTime)) ||
                    (type == typeof(double)) ||
+                   (type == typeof(ushort)) ||
+                   (type == typeof(short)) ||
                    (type == typeof(uint)) ||
                    (type == typeof(int)) ||
                    (type == typeof(string)) ||
