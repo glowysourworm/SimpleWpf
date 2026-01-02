@@ -107,11 +107,18 @@ namespace SimpleWpf.IocFramework.Application
             // START THE APPLICATION!
             if (_runIsAsync)
             {
+                // Going to use fire-and-forget to prevent issues with other libraries during
+                // initialization. (this could be managed better)
+
+                /*
                 definition.Instance
                           .RunAsync()
                           .ConfigureAwait(false)
                           .GetAwaiter()
                           .GetResult();
+                */
+
+                definition.Instance.RunAsync();
             }
             else
             {
