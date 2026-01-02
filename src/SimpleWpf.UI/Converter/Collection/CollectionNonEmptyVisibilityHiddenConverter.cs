@@ -1,0 +1,24 @@
+﻿using System.Collections;
+using System.Globalization;
+using System.Windows;
+using System.Windows.Data;
+
+namespace SimpleWpf.UI.Converter
+{
+    public class CollectionNonEmptyVisibilityHiddenConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            var collection = value as ICollection;
+            if (collection == null)
+                return Visibility.Hidden;
+
+            return collection.Count <= 0 ? Visibility.Hidden : Visibility.Visible;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+}
