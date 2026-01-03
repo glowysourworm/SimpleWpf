@@ -30,5 +30,19 @@ namespace SimpleWpf.Utilities
 
             return Regex.Match(target, pattern, RegexOptions.IgnoreCase).Success;
         }
+
+        public static bool RegexMatchIC(string? pattern, string? target, out int matchCount)
+        {
+            matchCount = 0;
+
+            if (pattern == null || target == null)
+                return false;
+
+            var regex = Regex.Match(target, pattern, RegexOptions.IgnoreCase);
+
+            matchCount = regex.Captures.Count;
+
+            return regex.Success;
+        }
     }
 }
