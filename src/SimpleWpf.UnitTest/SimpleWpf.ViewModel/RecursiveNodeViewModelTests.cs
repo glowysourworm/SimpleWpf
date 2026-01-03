@@ -1,5 +1,3 @@
-using JetBrains.Annotations;
-
 using SimpleWpf.ViewModel;
 
 namespace SimpleWpf.UnitTest.SimpleWpf.ViewModel
@@ -39,17 +37,17 @@ namespace SimpleWpf.UnitTest.SimpleWpf.ViewModel
             // -> Root -> Test (Dir) -> Test (File)
             var fileNode = testDirectoryNode.Add(new PathViewModel(_rootDirectory, _testFilePath));
 
-            Assert.IsTrue(rootNode.NodeValue.FullPath == _rootDirectory);
-            Assert.IsTrue(testDirectoryNode.NodeValue.FullPath == _testDirectory);
-            Assert.IsTrue(fileNode.NodeValue.FullPath == _testFilePath);
+            Assert.That(rootNode.NodeValue.FullPath == _rootDirectory);
+            Assert.That(testDirectoryNode.NodeValue.FullPath == _testDirectory);
+            Assert.That(fileNode.NodeValue.FullPath == _testFilePath);
 
-            Assert.IsTrue(rootNode.NodeValue.BaseDirectory == _rootDirectory);
-            Assert.IsTrue(testDirectoryNode.NodeValue.BaseDirectory == _rootDirectory);
-            Assert.IsTrue(fileNode.NodeValue.BaseDirectory == _rootDirectory);
+            Assert.That(rootNode.NodeValue.BaseDirectory == _rootDirectory);
+            Assert.That(testDirectoryNode.NodeValue.BaseDirectory == _rootDirectory);
+            Assert.That(fileNode.NodeValue.BaseDirectory == _rootDirectory);
 
-            Assert.IsTrue(rootNode.NodeValue.IsDirectory);
-            Assert.IsTrue(testDirectoryNode.NodeValue.IsDirectory);
-            Assert.IsFalse(fileNode.NodeValue.IsDirectory);
+            Assert.That(rootNode.NodeValue.IsDirectory);
+            Assert.That(testDirectoryNode.NodeValue.IsDirectory);
+            Assert.That(fileNode.NodeValue.IsDirectory);
         }
 
         [Test]
@@ -88,9 +86,9 @@ namespace SimpleWpf.UnitTest.SimpleWpf.ViewModel
                     Assert.Fail("Missing node from recursive iterator");
             });
 
-            Assert.IsTrue(rootFound);
-            Assert.IsTrue(testFound);
-            Assert.IsTrue(fileFound);
+            Assert.That(rootFound);
+            Assert.That(testFound);
+            Assert.That(fileFound);
         }
 
         [Test]
@@ -120,21 +118,21 @@ namespace SimpleWpf.UnitTest.SimpleWpf.ViewModel
             // -> Root Event Fired
             rootNode.NodeValue.IsSelected = true;
 
-            Assert.IsTrue(eventFired);
+            Assert.That(eventFired);
 
             eventFired = false;
 
             // -> Test Event Fired
             testDirectoryNode.NodeValue.IsSelected = true;
 
-            Assert.IsTrue(eventFired);
+            Assert.That(eventFired);
 
             eventFired = false;
 
             // -> Leaf Event Fired
             fileNode.NodeValue.IsSelected = true;
 
-            Assert.IsTrue(eventFired);
+            Assert.That(eventFired);
         }
 
         [TearDown]

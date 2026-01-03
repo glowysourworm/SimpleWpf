@@ -39,17 +39,17 @@ namespace SimpleWpf.UnitTest.SimpleWpf.NativeIO
                 var result = fileIO.GetFiles();
 
                 // Includes Directories / Files
-                Assert.IsTrue(result.Count() == 1);
+                Assert.That(result.Count() == 1);
 
                 // Directory Flag
-                Assert.IsTrue(result.Count(x => x.Attributes.HasFlag(FileAttributes.Directory)) == 1);
-                Assert.IsTrue(result.Count(x => x.IsDirectory) == 1);
+                Assert.That(result.Count(x => x.Attributes.HasFlag(FileAttributes.Directory)) == 1);
+                Assert.That(result.Count(x => x.IsDirectory) == 1);
 
                 // FileName
-                Assert.IsTrue(result.Count(x => x.FileName == _testSubFolder) == 0);
+                Assert.That(result.Count(x => x.FileName == _testSubFolder) == 0);
 
                 // Path
-                Assert.IsTrue(result.Count(x => x.Path == _testSubFolder) == 1);
+                Assert.That(result.Count(x => x.Path == _testSubFolder) == 1);
             }
         }
 
@@ -61,21 +61,21 @@ namespace SimpleWpf.UnitTest.SimpleWpf.NativeIO
                 var result = fileIO.GetFiles();
 
                 // Includes Directories / Files
-                Assert.IsTrue(result.Count() == 3);
+                Assert.That(result.Count() == 3);
 
                 // Directory Flag
-                Assert.IsTrue(result.Count(x => x.Attributes.HasFlag(FileAttributes.Directory)) == 1);
-                Assert.IsTrue(result.Count(x => x.IsDirectory) == 1);
+                Assert.That(result.Count(x => x.Attributes.HasFlag(FileAttributes.Directory)) == 1);
+                Assert.That(result.Count(x => x.IsDirectory) == 1);
 
                 // FileName
-                Assert.IsTrue(result.Count(x => x.FileName == _testSubFolder) == 0);
-                Assert.IsTrue(result.Count(x => x.FileName == TEST_FILE1) == 1);
-                Assert.IsTrue(result.Count(x => x.FileName == TEST_FILE2) == 1);
+                Assert.That(result.Count(x => x.FileName == _testSubFolder) == 0);
+                Assert.That(result.Count(x => x.FileName == TEST_FILE1) == 1);
+                Assert.That(result.Count(x => x.FileName == TEST_FILE2) == 1);
 
                 // Path
-                Assert.IsTrue(result.Count(x => x.Path == _testSubFolder) == 1);
-                Assert.IsTrue(result.Count(x => x.Path == _testFilePath1) == 1);
-                Assert.IsTrue(result.Count(x => x.Path == _testFilePath2) == 1);
+                Assert.That(result.Count(x => x.Path == _testSubFolder) == 1);
+                Assert.That(result.Count(x => x.Path == _testFilePath1) == 1);
+                Assert.That(result.Count(x => x.Path == _testFilePath2) == 1);
             }
         }
 
