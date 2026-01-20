@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-
-using SimpleWpf.SimpleCollections.Collection;
+﻿using SimpleWpf.SimpleCollections.Collection;
 
 namespace SimpleWpf.Extensions.Collection
 {
@@ -89,6 +84,33 @@ namespace SimpleWpf.Extensions.Collection
         public static IEnumerable<T> Include<T>(this IEnumerable<T> collection, params T[] items)
         {
             return collection.Union(items);
+        }
+
+        /// <summary>
+        /// Returns the sum of an element property inside of a certain range of indices
+        /// </summary>
+        public static double Sum<T>(this IEnumerable<T> collection, int startIndex, int endIndex, Func<T, double> selector)
+        {
+            if (startIndex > endIndex)
+                throw new ArgumentException("Start index must not be greater than the end index!");
+
+            var index = 0;
+            var result = 0D;
+
+            foreach (var element in collection)
+            {
+                if (index >= startIndex &&
+                    index <= endIndex)
+                {
+                    result += selector(element);
+                }
+                else if (index > endIndex)
+                    break;
+
+                index++;
+            }
+
+            return result;
         }
 
         public static string Join<T>(this IEnumerable<T> collection, string separator, Func<T, string> transform)
