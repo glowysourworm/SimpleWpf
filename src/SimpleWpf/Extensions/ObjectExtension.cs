@@ -1,6 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using System.Reflection;
 
 namespace SimpleWpf.Extensions
@@ -42,6 +40,58 @@ namespace SimpleWpf.Extensions
                 throw new Exception("Invalid use of property selector ObjectExtension.GetPropertyInfo<T, V>");
 
             return propertyInfo;
+        }
+
+        public static object GetProperty<T>(this T theObject, string propertyPath)
+        {
+            if (string.IsNullOrWhiteSpace(propertyPath))
+                throw new Exception("Invalid use of property selector ObjectExtension.GetProperty<T>");
+
+            if (theObject == null)
+                throw new Exception("Invalid use of property selector ObjectExtension.GetProperty<T>");
+
+            // Property selection for generics behaves better if you work with it in pieces
+            //
+            var propertyPathPieces = propertyPath.Split('.', StringSplitOptions.RemoveEmptyEntries);
+
+            PropertyInfo? propertyInfo = null;
+            object? propertyValue = null;
+
+            foreach (var part in propertyPathPieces)
+            {
+                if (propertyInfo == null)
+                {
+                    propertyInfo = theObject.GetType().GetProperty(part);
+                    propertyValue = propertyInfo?.GetValue(theObject) ?? null;
+                }
+
+                else if (propertyValue != null)
+                {
+                    propertyInfo = propertyValue.GetType().GetProperty(part);
+
+                    if (propertyInfo == null)
+                        throw new Exception("Property path not found");
+
+                    propertyValue = propertyInfo.GetValue(propertyValue);
+                }
+            }
+
+            if (propertyInfo == null)
+                throw new Exception("Invalid use of property selector ObjectExtension.GetProperty<T>");
+
+            return propertyValue;
+        }
+
+        public static object TryGetProperty<T>(this T theObject, string propertyPath)
+        {
+            try
+            {
+                return ObjectExtension.GetProperty(theObject, propertyPath);
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
         }
 
         /// <summary>

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Globalization;
+﻿using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 
@@ -9,6 +8,10 @@ namespace SimpleWpf.UI.Converter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
+            if (ReferenceEquals(value, null) ||
+                value == DependencyProperty.UnsetValue)
+                return Binding.DoNothing;
+
             if ((bool)value)
                 return Visibility.Collapsed;
 

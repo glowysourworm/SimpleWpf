@@ -1,4 +1,6 @@
-﻿using SimpleWpf.SimpleCollections.Collection;
+﻿using System.Collections;
+
+using SimpleWpf.SimpleCollections.Collection;
 
 namespace SimpleWpf.Extensions.Collection
 {
@@ -238,6 +240,16 @@ namespace SimpleWpf.Extensions.Collection
             }
 
             return -1;
+        }
+
+        public static bool None(this IEnumerable collection)
+        {
+            foreach (var item in collection)
+            {
+                return false;
+            }
+
+            return true;
         }
 
         public static bool None<T>(this IEnumerable<T> collection)
