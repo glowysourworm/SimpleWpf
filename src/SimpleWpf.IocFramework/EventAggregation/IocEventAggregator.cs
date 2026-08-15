@@ -1,7 +1,4 @@
-﻿using System;
-using System.Linq;
-
-using SimpleWpf.IocFramework.Application.Attribute;
+﻿using SimpleWpf.IocFramework.Application.Attribute;
 using SimpleWpf.SimpleCollections.Collection;
 
 namespace SimpleWpf.IocFramework.EventAggregation
@@ -14,6 +11,17 @@ namespace SimpleWpf.IocFramework.EventAggregation
         public IocEventAggregator()
         {
             _eventDict = new SimpleDictionary<Type, IocEventBase>();
+        }
+
+        public void Exhaust<TEventType>(int timeoutMilliseconds = 1000) where TEventType : IocEventBase
+        {
+            var type = typeof(TEventType);
+            var counter = 0;
+
+            while (counter++ < timeoutMilliseconds && _eventDict[type].IsRunning())
+            {
+                Thread.Sleep(1);
+            }
         }
 
         public TEventType GetEvent<TEventType>() where TEventType : IocEventBase

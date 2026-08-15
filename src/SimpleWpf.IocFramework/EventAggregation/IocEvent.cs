@@ -1,7 +1,4 @@
-﻿using System;
-using System.Linq;
-
-using SimpleWpf.Extensions.Collection;
+﻿using SimpleWpf.Extensions.Collection;
 using SimpleWpf.SimpleCollections.Collection;
 
 namespace SimpleWpf.IocFramework.EventAggregation
@@ -9,6 +6,8 @@ namespace SimpleWpf.IocFramework.EventAggregation
     public class IocEvent<T> : IocEventBase
     {
         readonly SimpleDictionary<IocEventKey, Action<T>> _actions;
+
+        bool _isRunning;
 
         public IocEvent()
         {
@@ -42,17 +41,29 @@ namespace SimpleWpf.IocFramework.EventAggregation
                                   .Select(x => x.Value)
                                   .Actualize();
 
+            _isRunning = true;
+
             foreach (var action in actions)
                 action.Invoke(payload);
+
+            _isRunning = false;
+        }
+
+        public override bool IsRunning()
+        {
+            return _isRunning;
         }
     }
     public class IocEvent : IocEventBase
     {
         readonly SimpleDictionary<IocEventKey, Action> _actions;
 
+        bool _isRunning;
+
         public IocEvent()
         {
             _actions = new SimpleDictionary<IocEventKey, Action>();
+            _isRunning = false;
         }
 
         public string Subscribe(Action action, IocEventPriority priority = IocEventPriority.None)
@@ -82,8 +93,17 @@ namespace SimpleWpf.IocFramework.EventAggregation
                                   .Select(x => x.Value)
                                   .Actualize();
 
+            _isRunning = true;
+
             foreach (var action in actions)
                 action.Invoke();
+
+            _isRunning = false;
+        }
+
+        public override bool IsRunning()
+        {
+            return _isRunning;
         }
     }
 }

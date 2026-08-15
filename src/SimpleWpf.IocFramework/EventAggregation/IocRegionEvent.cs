@@ -1,6 +1,4 @@
-﻿using System;
-
-using SimpleWpf.Extensions.Collection;
+﻿using SimpleWpf.Extensions.Collection;
 using SimpleWpf.IocFramework.RegionManagement;
 using SimpleWpf.SimpleCollections.Collection;
 
@@ -15,9 +13,12 @@ namespace SimpleWpf.IocFramework.EventAggregation
     {
         readonly SimpleDictionary<string, Action<IocRegion>> _actions;
 
+        bool _isRunning;
+
         public IocRegionEvent()
         {
             _actions = new SimpleDictionary<string, Action<IocRegion>>();
+            _isRunning = false;
         }
 
         public string Subscribe(Action<IocRegion> action)
@@ -38,8 +39,17 @@ namespace SimpleWpf.IocFramework.EventAggregation
         {
             var actions = _actions.Values.Copy();
 
+            _isRunning = true;
+
             foreach (var action in actions)
                 action.Invoke(region);
+
+            _isRunning = false;
+        }
+
+        public override bool IsRunning()
+        {
+            return _isRunning;
         }
     }
 
@@ -52,9 +62,12 @@ namespace SimpleWpf.IocFramework.EventAggregation
     {
         readonly SimpleDictionary<string, Action<IocRegion, T>> _actions;
 
+        bool _isRunning;
+
         public IocRegionEvent()
         {
             _actions = new SimpleDictionary<string, Action<IocRegion, T>>();
+            _isRunning = false;
         }
 
         public string Subscribe(Action<IocRegion, T> action)
@@ -70,13 +83,22 @@ namespace SimpleWpf.IocFramework.EventAggregation
         {
             var actions = _actions.Values.Copy();
 
+            _isRunning = true;
+
             foreach (var action in actions)
                 action.Invoke(region, payload);
+
+            _isRunning = false;
         }
 
         public void UnSubscribe(string token)
         {
             _actions.Remove(token);
+        }
+
+        public override bool IsRunning()
+        {
+            return _isRunning;
         }
     }
 }

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
-
-using SimpleWpf.Extensions.Collection;
+﻿using SimpleWpf.Extensions.Collection;
 using SimpleWpf.SimpleCollections.Collection;
 
 namespace SimpleWpf.IocFramework.EventAggregation
@@ -11,9 +7,12 @@ namespace SimpleWpf.IocFramework.EventAggregation
     {
         readonly SimpleDictionary<IocEventKey, Func<T, Task>> _functions;
 
+        bool _isRunning;
+
         public IocAsyncEvent()
         {
             _functions = new SimpleDictionary<IocEventKey, Func<T, Task>>();
+            _isRunning = false;
         }
 
         public string Subscribe(Func<T, Task> func, IocEventPriority priority = IocEventPriority.None)
@@ -43,8 +42,17 @@ namespace SimpleWpf.IocFramework.EventAggregation
                                       .Select(x => x.Value)
                                       .Actualize();
 
+            _isRunning = true;
+
             foreach (var function in functions)
                 await function(payload);
+
+            _isRunning = false;
+        }
+
+        public override bool IsRunning()
+        {
+            return _isRunning;
         }
     }
 }

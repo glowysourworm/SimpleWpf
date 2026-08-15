@@ -22,6 +22,24 @@ namespace SimpleWpf.Extensions
                         .Any(type => type.Equals(typeof(T)));
         }
 
+        public static string[] GetPropertyPath(this object theObject, string propertyPath)
+        {
+            if (theObject == null)
+                throw new NullReferenceException("Argument set to null!");
+
+            if (string.IsNullOrWhiteSpace(propertyPath))
+                throw new ArgumentException("Invalid use of property path ObjectExtension.GetPropertyPath");
+
+            // Property selection for generics behaves better if you work with it in pieces
+            //
+            var propertyPathPieces = propertyPath.Split('.', StringSplitOptions.RemoveEmptyEntries);
+
+            if (propertyPathPieces.Length < 1)
+                throw new ArgumentException("Invalid use of property path ObjectExtension.GetPropertyPath");
+
+            return propertyPathPieces;
+        }
+
         public static PropertyInfo GetPropertyInfo<T, V>(this T theObject, Expression<Func<T, V>> propertySelector)
         {
             var unaryExpression = propertySelector.Body as UnaryExpression;
@@ -42,18 +60,44 @@ namespace SimpleWpf.Extensions
             return propertyInfo;
         }
 
-        public static object GetProperty<T>(this T theObject, string propertyPath)
+        /// <summary>
+        /// Returns property info for nested object instance
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="theObject"></param>
+        /// <param name="propertyPath"></param>
+        /// <param name="nextObject"></param>
+        /// <returns></returns>
+        /// <exception cref="NullReferenceException"></exception>
+        public static PropertyInfo GetPropertyInfo<T>(this T theObject, string propertyPath, out object? nextObject)
         {
-            if (string.IsNullOrWhiteSpace(propertyPath))
-                throw new Exception("Invalid use of property selector ObjectExtension.GetProperty<T>");
+            // -> Validation
+            var propertyPathPieces = GetPropertyPath(theObject, propertyPath);
 
-            if (theObject == null)
-                throw new Exception("Invalid use of property selector ObjectExtension.GetProperty<T>");
+            // Start Object
+            nextObject = theObject;
+            PropertyInfo? nextPropertyInfo = null;
 
-            // Property selection for generics behaves better if you work with it in pieces
-            //
-            var propertyPathPieces = propertyPath.Split('.', StringSplitOptions.RemoveEmptyEntries);
+            for (int index = 0; index < propertyPathPieces.Length; index++)
+            {
+                if (nextObject == null)
+                    throw new NullReferenceException("Property reflection failure due to null reference in property recovery");
 
+                nextPropertyInfo = nextObject.GetType().GetProperty(propertyPathPieces[index]);
+
+                if (nextPropertyInfo == null)
+                    throw new NullReferenceException("Property reflection failure due to improper path");
+
+                // -> Next Property (object)
+                if (index < propertyPathPieces.Length - 1)
+                    nextObject = nextPropertyInfo.GetValue(nextObject);
+            }
+
+            return nextPropertyInfo;
+        }
+
+        public static object GetProperty<T>(this T theObject, string[] propertyPathPieces)
+        {
             PropertyInfo? propertyInfo = null;
             object? propertyValue = null;
 
@@ -81,6 +125,28 @@ namespace SimpleWpf.Extensions
 
             return propertyValue;
         }
+
+        public static object GetProperty<T>(this T theObject, string propertyPath)
+        {
+            // Property selection for generics behaves better if you work with it in pieces
+            //
+            var propertyPathPieces = GetPropertyPath(theObject, propertyPath);
+
+            return GetProperty(theObject, propertyPathPieces);
+        }
+
+        public static void SetProperty<T>(this T theObject, string propertyPath, object propertyValue)
+        {
+            // -> Validation
+            object? propertyOwner = null;
+            var propertyInfo = GetPropertyInfo(theObject, propertyPath, out propertyOwner);
+
+            if (propertyInfo == null)
+                throw new Exception("Unable to set property value - unable to recover property info for the provided path and object");
+
+            propertyInfo.SetValue(propertyOwner, propertyValue);
+        }
+
 
         public static object TryGetProperty<T>(this T theObject, string propertyPath)
         {

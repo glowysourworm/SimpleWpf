@@ -13,10 +13,12 @@ namespace SimpleWpf.Utilities
     public static class BasicHelpers
     {
         private readonly static SimpleRecursiveComparer Comparer;
+        private readonly static Dispatcher MainThread;
 
         static BasicHelpers()
         {
             Comparer = new SimpleRecursiveComparer();
+            MainThread = Application.Current.Dispatcher;
         }
 
         public static IEnumerable<string> FastGetFiles(string baseDirectory, string searchPattern, SearchOption option)
@@ -57,34 +59,164 @@ namespace SimpleWpf.Utilities
                 return ApplicationIsDispatcherResult.False;
         }
 
+        /*
+        
+            Invoking the Dispatcher:  Different methods are needed depending on the situation. There are a couple pitfalls:
+
+                                      1) The application's pointer goes null before the application exits
+                                      2) DynamicInvoke does NOT ensure same thread will be called before it executes the Delegate!!!
+
+        */
+
         public static void BeginInvokeDispatcher(Delegate method, DispatcherPriority priority, params object[] parameters)
         {
-            if (IsDispatcher() == ApplicationIsDispatcherResult.False)
-                Application.Current.Dispatcher.BeginInvoke(method, priority, parameters);
-
-            // Dispatcher (SYNCHRONOUS!)
-            else
-                method.DynamicInvoke(parameters);
+            MainThread.BeginInvoke(method, priority, parameters);
         }
-
-        public static async Task BeginInvokeDispatcherAsync(Delegate method, DispatcherPriority priority, params object[] parameters)
+        public static void BeginInvokeDispatcher(Action method, DispatcherPriority priority)
         {
             if (IsDispatcher() == ApplicationIsDispatcherResult.False)
-                await Application.Current.Dispatcher.BeginInvoke(method, priority, parameters);
+                Application.Current.Dispatcher.BeginInvoke(method, priority);
 
-            // Dispatcher (SYNCHRONOUS!)
+            // Dispatcher (Must invoke this thread!)(DynamicInvoke does not guarantee invoke thread is the same!!!)
             else
-                method.DynamicInvoke(parameters);
+                method.BeginInvoke(null, null);
+        }
+        public static void BeginInvokeDispatcher<T1>(Action<T1> method, DispatcherPriority priority, T1 parameter1)
+        {
+            if (IsDispatcher() == ApplicationIsDispatcherResult.False)
+                Application.Current.Dispatcher.BeginInvoke(method, priority, parameter1);
+
+            // Dispatcher (Must invoke this thread!)(DynamicInvoke does not guarantee invoke thread is the same!!!)
+            else
+                method.BeginInvoke(parameter1, null, null);
+        }
+        public static void BeginInvokeDispatcher<T1, T2>(Action<T1, T2> method, DispatcherPriority priority, T1 parameter1, T2 parameter2)
+        {
+            if (IsDispatcher() == ApplicationIsDispatcherResult.False)
+                Application.Current.Dispatcher.BeginInvoke(method, priority, parameter1, parameter2);
+
+            // Dispatcher (Must invoke this thread!)(DynamicInvoke does not guarantee invoke thread is the same!!!)
+            else
+                method.BeginInvoke(parameter1, parameter2, null, null);
+        }
+        public static void BeginInvokeDispatcher<T1, T2, T3>(Action<T1, T2, T3> method, DispatcherPriority priority, T1 parameter1, T2 parameter2, T3 parameter3)
+        {
+            if (IsDispatcher() == ApplicationIsDispatcherResult.False)
+                Application.Current.Dispatcher.BeginInvoke(method, priority, parameter1, parameter2, parameter3);
+
+            // Dispatcher (Must invoke this thread!)(DynamicInvoke does not guarantee invoke thread is the same!!!)
+            else
+                method.BeginInvoke(parameter1, parameter2, parameter3, null, null);
         }
 
         public static void InvokeDispatcher(Delegate method, DispatcherPriority priority, params object[] parameters)
         {
+            MainThread.Invoke(method, priority, parameters);
+        }
+        public static void InvokeDispatcher(Action method, DispatcherPriority priority)
+        {
             if (IsDispatcher() == ApplicationIsDispatcherResult.False)
-                Application.Current.Dispatcher.Invoke(method, priority, parameters);
+                Application.Current.Dispatcher.Invoke(method, priority);
 
             // Dispatcher
             else
-                method.DynamicInvoke(parameters);
+                method.Invoke();
+        }
+        public static void InvokeDispatcher<T1>(Action<T1> method, DispatcherPriority priority, T1 parameter1)
+        {
+            if (IsDispatcher() == ApplicationIsDispatcherResult.False)
+                Application.Current.Dispatcher.Invoke(method, priority, parameter1);
+
+            // Dispatcher
+            else
+                method.Invoke(parameter1);
+        }
+        public static void InvokeDispatcher<T1, T2>(Action<T1, T2> method, DispatcherPriority priority, T1 parameter1, T2 parameter2)
+        {
+            if (IsDispatcher() == ApplicationIsDispatcherResult.False)
+                Application.Current.Dispatcher.Invoke(method, priority, parameter1, parameter2);
+
+            // Dispatcher
+            else
+                method.Invoke(parameter1, parameter2);
+        }
+        public static void InvokeDispatcher<T1, T2, T3>(Action<T1, T2, T3> method, DispatcherPriority priority, T1 parameter1, T2 parameter2, T3 parameter3)
+        {
+            if (IsDispatcher() == ApplicationIsDispatcherResult.False)
+                Application.Current.Dispatcher.Invoke(method, priority, parameter1, parameter2, parameter3);
+
+            // Dispatcher
+            else
+                method.Invoke(parameter1, parameter2, parameter3);
+        }
+
+        public static async void BeginInvokeDispatcherAsyncAwait(Delegate method, DispatcherPriority priority, params object[] parameters)
+        {
+            await MainThread.BeginInvoke(method, priority, parameters);
+        }
+        public static async void BeginInvokeDispatcherAsyncAwait(Action method, DispatcherPriority priority)
+        {
+            if (IsDispatcher() == ApplicationIsDispatcherResult.False)
+                await Application.Current.Dispatcher.BeginInvoke(method, priority);
+
+            // Dispatcher
+            else
+            {
+                var wait = method.BeginInvoke(null, null);
+
+                while (!wait.IsCompleted)
+                {
+                    Thread.Sleep(1);
+                }
+            }
+        }
+        public static async void BeginInvokeDispatcherAsyncAwait<T1>(Action<T1> method, DispatcherPriority priority, T1 parameter1)
+        {
+            if (IsDispatcher() == ApplicationIsDispatcherResult.False)
+                await Application.Current.Dispatcher.BeginInvoke(method, priority, parameter1);
+
+            // Dispatcher
+            else
+            {
+                var wait = method.BeginInvoke(parameter1, null, null);
+
+                while (!wait.IsCompleted)
+                {
+                    Thread.Sleep(1);
+                }
+            }
+        }
+        public static async void BeginInvokeDispatcherAsyncAwait<T1, T2>(Action<T1, T2> method, DispatcherPriority priority, T1 parameter1, T2 parameter2)
+        {
+            if (IsDispatcher() == ApplicationIsDispatcherResult.False)
+                await Application.Current.Dispatcher.BeginInvoke(method, priority, parameter1, parameter2);
+
+            // Dispatcher
+            else
+            {
+                var wait = method.BeginInvoke(parameter1, parameter2, null, null);
+
+                while (!wait.IsCompleted)
+                {
+                    Thread.Sleep(1);
+                }
+            }
+        }
+        public static async void BeginInvokeDispatcherAsyncAwait<T1, T2, T3>(Action<T1, T2, T3> method, DispatcherPriority priority, T1 parameter1, T2 parameter2, T3 parameter3)
+        {
+            if (IsDispatcher() == ApplicationIsDispatcherResult.False)
+                Application.Current.Dispatcher.Invoke(method, priority, parameter1, parameter2, parameter3);
+
+            // Dispatcher
+            else
+            {
+                var wait = method.BeginInvoke(parameter1, parameter2, parameter3, null, null);
+
+                while (!wait.IsCompleted)
+                {
+                    Thread.Sleep(1);
+                }
+            }
         }
 
         public static TDest Map<TSource, TDest>(TSource source)

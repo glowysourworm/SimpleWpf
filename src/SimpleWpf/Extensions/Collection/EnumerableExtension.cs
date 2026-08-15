@@ -321,6 +321,36 @@ namespace SimpleWpf.Extensions.Collection
         }
 
         /// <summary>
+        /// Returns collection of items with duplicate property using the selector
+        /// </summary>
+        public static IEnumerable<T> WithDuplicate<T, V>(this IEnumerable<T> collection, Func<T, V> selector)
+        {
+            var result = new List<T>();
+            var valueMap = new Dictionary<V, List<T>>();
+
+            foreach (var item in collection)
+            {
+                var value = selector(item);
+
+                // New
+                if (!valueMap.ContainsKey(value))
+                    valueMap.Add(value, new List<T>() { item });
+
+                // Duplicate
+                else
+                    valueMap[value].Add(item);
+            }
+
+            foreach (var key in valueMap.Keys)
+            {
+                if (valueMap[key].Count > 1)
+                    result.AddRange(valueMap[key]);
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// Returns minimum of a collection by a given selector
         /// </summary>
         public static T MinBy<T, V>(this IEnumerable<T> collection, Func<T, V> selector) where V : IComparable
