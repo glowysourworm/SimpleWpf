@@ -6,6 +6,13 @@ namespace SimpleWpf.IocFramework.Application
 {
     public abstract class IocWindowBootstrapper : IocBootstrapper
     {
+        bool _windowBeforeRun;
+
+        public IocWindowBootstrapper(bool windowBeforeRun, bool runIsAsync) : base(runIsAsync)
+        {
+            _windowBeforeRun = windowBeforeRun;
+        }
+
         /// <summary>
         /// Defines type for the shell window to be created
         /// </summary>
@@ -33,9 +40,18 @@ namespace SimpleWpf.IocFramework.Application
 
         public override void Run()
         {
+            // This matters during dialog related initialization, typically
+            //
+            if (_windowBeforeRun)
+                System.Windows.Application.Current.MainWindow.Show();
+
+            // User may need to attach dialog window to main window. Other WPF related
+            // UI issues may be involved with initializing the UI and handling data binding.
+            //
             base.Run();
 
-            System.Windows.Application.Current.MainWindow.Show();
+            if (!_windowBeforeRun)
+                System.Windows.Application.Current.MainWindow.Show();
         }
     }
 }
