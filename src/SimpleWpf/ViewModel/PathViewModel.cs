@@ -17,6 +17,15 @@ namespace SimpleWpf.ViewModel
         public static readonly DependencyProperty ShortPathProperty =
             DependencyProperty.Register("ShortPath", typeof(string), typeof(PathViewModel));
 
+        public static readonly DependencyProperty CreationUtcProperty =
+            DependencyProperty.Register("CreationUtc", typeof(DateTime), typeof(PathViewModel));
+
+        public static readonly DependencyProperty LastAccessUtcProperty =
+            DependencyProperty.Register("LastAccessUtc", typeof(DateTime), typeof(PathViewModel));
+
+        public static readonly DependencyProperty LastWriteUtcProperty =
+            DependencyProperty.Register("LastWriteUtc", typeof(DateTime), typeof(PathViewModel));
+
         public static readonly DependencyProperty IsDirectoryProperty =
             DependencyProperty.Register("IsDirectory", typeof(bool), typeof(PathViewModel));
 
@@ -43,6 +52,21 @@ namespace SimpleWpf.ViewModel
         {
             get { return (string)GetValue(ShortPathProperty); }
             set { SetValueOverride(ShortPathProperty, value); }
+        }
+        public DateTime CreationUtc
+        {
+            get { return (DateTime)GetValue(CreationUtcProperty); }
+            set { SetValueOverride(CreationUtcProperty, value); }
+        }
+        public DateTime LastAccessUtc
+        {
+            get { return (DateTime)GetValue(LastAccessUtcProperty); }
+            set { SetValueOverride(LastAccessUtcProperty, value); }
+        }
+        public DateTime LastWriteUtc
+        {
+            get { return (DateTime)GetValue(LastWriteUtcProperty); }
+            set { SetValueOverride(LastWriteUtcProperty, value); }
         }
         public bool IsDirectory
         {
@@ -87,7 +111,13 @@ namespace SimpleWpf.ViewModel
                 this.ShortPath = new DirectoryInfo(path).Name;
 
             else
+            {
                 this.ShortPath = System.IO.Path.GetFileName(path);
+                this.CreationUtc = System.IO.File.GetCreationTimeUtc(path);
+                this.LastAccessUtc = System.IO.File.GetLastAccessTimeUtc(path);
+                this.LastWriteUtc = System.IO.File.GetLastWriteTimeUtc(path);
+            }
+
 
             var baseDepth = GetDirectoryDepth(this.BaseDirectory);
             var pathDepth = GetDirectoryDepth(this.FullPath);
