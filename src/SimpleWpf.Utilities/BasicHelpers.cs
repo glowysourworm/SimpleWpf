@@ -68,10 +68,6 @@ namespace SimpleWpf.Utilities
 
         */
 
-        public static void BeginInvokeDispatcher(Delegate method, DispatcherPriority priority, params object[] parameters)
-        {
-            MainThread.BeginInvoke(method, priority, parameters);
-        }
         public static void BeginInvokeDispatcher(Action method, DispatcherPriority priority)
         {
             if (IsDispatcher() == ApplicationIsDispatcherResult.False)
@@ -109,10 +105,6 @@ namespace SimpleWpf.Utilities
                 method.BeginInvoke(parameter1, parameter2, parameter3, null, null);
         }
 
-        public static void InvokeDispatcher(Delegate method, DispatcherPriority priority, params object[] parameters)
-        {
-            MainThread.Invoke(method, priority, parameters);
-        }
         public static void InvokeDispatcher(Action method, DispatcherPriority priority)
         {
             if (IsDispatcher() == ApplicationIsDispatcherResult.False)
@@ -148,6 +140,43 @@ namespace SimpleWpf.Utilities
             // Dispatcher
             else
                 method.Invoke(parameter1, parameter2, parameter3);
+        }
+
+        public static TResult InvokeDispatcher<TResult>(Func<TResult> method, DispatcherPriority priority)
+        {
+            if (IsDispatcher() == ApplicationIsDispatcherResult.False)
+                return Application.Current.Dispatcher.Invoke<TResult>(method, priority);
+
+            // Dispatcher
+            else
+                return (TResult)method.Invoke();
+        }
+        public static TResult InvokeDispatcher<T1, TResult>(Func<T1, TResult> method, DispatcherPriority priority, T1 parameter1)
+        {
+            if (IsDispatcher() == ApplicationIsDispatcherResult.False)
+                return (TResult)Application.Current.Dispatcher.Invoke(method, priority, parameter1);
+
+            // Dispatcher
+            else
+                return (TResult)method.Invoke(parameter1);
+        }
+        public static TResult InvokeDispatcher<T1, T2, TResult>(Func<T1, T2, TResult> method, DispatcherPriority priority, T1 parameter1, T2 parameter2)
+        {
+            if (IsDispatcher() == ApplicationIsDispatcherResult.False)
+                return (TResult)Application.Current.Dispatcher.Invoke(method, priority, parameter1);
+
+            // Dispatcher
+            else
+                return (TResult)method.Invoke(parameter1, parameter2);
+        }
+        public static TResult InvokeDispatcher<T1, T2, T3, TResult>(Func<T1, T2, T3, TResult> method, DispatcherPriority priority, T1 parameter1, T2 parameter2, T3 parameter3)
+        {
+            if (IsDispatcher() == ApplicationIsDispatcherResult.False)
+                return (TResult)Application.Current.Dispatcher.Invoke(method, priority, parameter1);
+
+            // Dispatcher
+            else
+                return (TResult)method.Invoke(parameter1, parameter2, parameter3);
         }
 
         public static async void BeginInvokeDispatcherAsyncAwait(Delegate method, DispatcherPriority priority, params object[] parameters)
