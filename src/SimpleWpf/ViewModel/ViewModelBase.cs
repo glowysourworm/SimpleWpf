@@ -1,5 +1,4 @@
-﻿using System;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 
@@ -42,8 +41,8 @@ namespace SimpleWpf.ViewModel
             {
                 field = value;
 
-                if (PropertyChanged != null)
-                    PropertyChanged(this, new PropertyChangedEventArgs(memberName));
+                // -> User Code (or) Above code
+                OnPropertyChanged(memberName);
             }
 
             return changed;

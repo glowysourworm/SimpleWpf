@@ -1,8 +1,6 @@
 ﻿using System.Collections;
 using System.Reflection;
 
-using AutoMapper.Internal;
-
 using SimpleWpf.Extensions;
 using SimpleWpf.Utilities.RecursiveComparer.Attribute;
 using SimpleWpf.Utilities.RecursiveComparer.Interface;
@@ -143,7 +141,7 @@ namespace SimpleWpf.Utilities.RecursiveComparer
 
         private bool IsNullable(Type type)
         {
-            return type.IsGenericType(typeof(Nullable<>));
+            return Nullable.GetUnderlyingType(type) != null;
         }
 
         private bool IsPrimitive(Type type)
