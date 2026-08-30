@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections.ObjectModel;
+using System.ComponentModel.DataAnnotations;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -30,7 +31,7 @@ namespace SimpleWpf.UI.Controls
         public Type EnumType
         {
             get { return (Type)GetValue(EnumTypeProperty); }
-            set { SetValue(EnumTypeProperty, value); SetItemSource(); }
+            set { SetValue(EnumTypeProperty, value); }
         }
         public object EnumValue
         {
@@ -71,29 +72,28 @@ namespace SimpleWpf.UI.Controls
                 set { this.RaiseAndSetIfChanged(ref _description, value); }
             }
 
-            public EnumItem() { }
+            public EnumItem()
+            {
+                this.Value = null;
+                this.Name = string.Empty;
+                this.DisplayName = string.Empty;
+                this.Description = string.Empty;
+            }
         }
 
         public EnumComboBox()
         {
             InitializeComponent();
 
-            this.TheComboBox.SelectionChanged += (obj, e) =>
-            {
-                if (e.AddedItems.Count > 0)
-                {
-                    this.EnumValue = (e.AddedItems[0] as EnumItem).Value;
-                }
-            };
-
             RaiseEvent(new RoutedEventArgs(EnumValueChangedEvent, this));
         }
+
         protected virtual void SetItemSource()
         {
             if (this.EnumType != null &&
                 this.EnumType.IsEnum)
             {
-                var itemSource = new List<EnumItem>();
+                var itemSource = new ObservableCollection<EnumItem>();
 
                 foreach (Enum enumValue in Enum.GetValues(this.EnumType))
                 {
@@ -101,37 +101,63 @@ namespace SimpleWpf.UI.Controls
                     var displayAttribute = enumValue.GetAttribute<DisplayAttribute>();
 
                     item.Value = enumValue;
-                    item.Name = Enum.GetName(this.EnumType, enumValue);
-                    item.DisplayName = displayAttribute?.Name ?? item.Name;
-                    item.Description = displayAttribute?.Description ?? null;
+                    item.Name = Enum.GetName(this.EnumType, enumValue) ?? string.Empty;
+                    item.DisplayName = displayAttribute?.Name ?? item.Name ?? string.Empty;
+                    item.Description = displayAttribute?.Description ?? string.Empty;
 
                     itemSource.Add(item);
                 }
 
+                // Sets initial selected item
                 this.TheComboBox.ItemsSource = itemSource;
             }
         }
 
+        // Binding -> ComboBox
         private static void OnEnumTypeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             var instance = d as EnumComboBox;
-            instance?.SetItemSource();
+
+            if (instance != null)
+            {
+                instance.SetItemSource();
+            }
         }
+
+        // Binding -> ComboBox
         private static void OnEnumValueChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             var instance = d as EnumComboBox;
 
             if (instance != null &&
-                e.NewValue != null)
+                e.NewValue != null &&
+                instance.EnumType != null)
             {
-                var itemSource = instance.TheComboBox.ItemsSource as IEnumerable<EnumItem>;
+                // Binding -> Enum Name
+                var enumName = Enum.GetName(instance.EnumType, e.NewValue);
 
-                if (itemSource != null)
+                var itemsSource = instance.TheComboBox.ItemsSource as IEnumerable<EnumItem>;
+
+                if (itemsSource != null)
                 {
-                    // NOTE*** Matching by enum name because value didn't show a match (!!!) (Not sure why)
-                    instance.TheComboBox.SelectedItem = itemSource.FirstOrDefault(item => item.Name == e.NewValue.ToString());
+                    // UI -> Set Selected Item
+                    instance.TheComboBox.SelectedItem = itemsSource.FirstOrDefault(x => x.Name == enumName);
+
+                    // Listeners
                     instance.RaiseEvent(new RoutedEventArgs(EnumValueChangedEvent, instance));
                 }
+            }
+        }
+
+        // ComboBox -> Binding
+        private void TheComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var enumItem = this.TheComboBox.SelectedItem as EnumItem;
+
+            if (enumItem != null)
+            {
+                // -> OnEnumValueChanged
+                this.EnumValue = enumItem.Value;
             }
         }
     }
