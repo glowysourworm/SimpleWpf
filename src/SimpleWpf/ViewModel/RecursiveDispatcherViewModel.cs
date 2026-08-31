@@ -1,4 +1,5 @@
-﻿using System.Collections.Specialized;
+﻿using System.Collections;
+using System.Collections.Specialized;
 using System.ComponentModel;
 
 using SimpleWpf.Extensions.Event;
@@ -11,7 +12,7 @@ namespace SimpleWpf.ViewModel
     /// Base class for a recursive view model which handles recursive iteration using IList (IEnumerable).
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public abstract class RecursiveDispatcherViewModel<T> : ViewModelBase, IDisposable, INotifyCollectionChanged where T : DispatcherViewModelBase
+    public abstract class RecursiveDispatcherViewModel<T> : ViewModelBase, IDisposable, IEnumerable, INotifyCollectionChanged where T : DispatcherViewModelBase
     {
         /// <summary>
         /// (Bubble Up Event) Event that fires when collection has changed. This bubbles
@@ -80,6 +81,13 @@ namespace SimpleWpf.ViewModel
             if (leafFirst && !childrenOnly)
                 action(this);
         }
+
+        #region IEnumerable Methods
+        public IEnumerator GetEnumerator()
+        {
+            return this.Children.GetEnumerator();
+        }
+        #endregion
 
         #region IList Methods
 
@@ -211,24 +219,44 @@ namespace SimpleWpf.ViewModel
         {
             if (this.CollectionChanged != null)
                 this.CollectionChanged(sender, e);
+
+            // -> Bubble Up
+            //
+            //if (this.Parent != null)
+            //    this.Parent.OnItemCollectionChanged(sender, e);
         }
 
         private void OnItemPropertyChanged(T item, PropertyChangedEventArgs propertyArgs)
         {
             if (this.ItemPropertyChanged != null)
                 this.ItemPropertyChanged(item, propertyArgs);
+
+            // -> Bubble Up
+            //
+            //if (this.Parent != null)
+            //    this.Parent.OnItemPropertyChanged(item, propertyArgs);
         }
 
         private void OnItemPropertyChanged(RecursiveDispatcherViewModel<T> item, PropertyChangedEventArgs propertyArgs)
         {
             if (this.ItemPropertyChanged != null)
                 this.ItemPropertyChanged(item.NodeValue, propertyArgs);
+
+            // -> Bubble Up
+            //
+            //if (this.Parent != null)
+            //    this.Parent.OnItemPropertyChanged(item, propertyArgs);
         }
 
         private void OnNodeValuePropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
             if (this.ItemPropertyChanged != null)
                 this.ItemPropertyChanged(sender as T, e);
+
+            // -> Bubble Up
+            //
+            //if (this.Parent != null)
+            //    this.Parent.OnNodeValuePropertyChanged(sender, e);
         }
 
         public void Dispose()

@@ -29,6 +29,12 @@ namespace SimpleWpf.ViewModel
         public static readonly DependencyProperty IsDirectoryProperty =
             DependencyProperty.Register("IsDirectory", typeof(bool), typeof(PathViewModel));
 
+        public static readonly DependencyProperty IsLoadedProperty =
+            DependencyProperty.Register("IsLoaded", typeof(bool), typeof(PathViewModel));
+
+        public static readonly DependencyProperty DirectoryFileCountProperty =
+            DependencyProperty.Register("DirectoryFileCount", typeof(int), typeof(PathViewModel));
+
         public static readonly DependencyProperty RecursionDepthProperty =
             DependencyProperty.Register("RecursionDepth", typeof(int), typeof(PathViewModel));
 
@@ -73,10 +79,24 @@ namespace SimpleWpf.ViewModel
             get { return (bool)GetValue(IsDirectoryProperty); }
             set { SetValueOverride(IsDirectoryProperty, value); }
         }
+        public int DirectoryFileCount
+        {
+            get { return (int)GetValue(DirectoryFileCountProperty); }
+            set { SetValueOverride(DirectoryFileCountProperty, value); }
+        }
         public int RecursionDepth
         {
             get { return (int)GetValue(RecursionDepthProperty); }
             set { SetValueOverride(RecursionDepthProperty, value); }
+        }
+
+        /// <summary>
+        /// Property for handling lazy loading
+        /// </summary>
+        public bool IsLoaded
+        {
+            get { return (bool)GetValue(IsLoadedProperty); }
+            set { SetValueOverride(IsLoadedProperty, value); }
         }
         public bool IsExpanded
         {
@@ -90,7 +110,7 @@ namespace SimpleWpf.ViewModel
         }
 
 
-        public PathViewModel(string baseDirectory, string path)
+        public PathViewModel(string baseDirectory, string path, int directoryFileCount)
         {
             if (!Directory.Exists(baseDirectory))
                 throw new ArgumentException("Directory does not exist! Must create PathViewModel with valid directory");
@@ -103,6 +123,10 @@ namespace SimpleWpf.ViewModel
 
             // Is Directory?
             this.IsDirectory = Directory.Exists(path);
+
+            // This is sent in for performance purposes (also lazy loading)
+            this.DirectoryFileCount = this.IsDirectory ? directoryFileCount : 0;
+            this.IsLoaded = false;
 
             this.BaseDirectory = baseDirectory;
             this.FullPath = path;
