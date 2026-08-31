@@ -8,6 +8,28 @@ using SimpleWpf.Extensions.ObservableCollection;
 
 namespace SimpleWpf.ViewModel
 {
+    public class RecursiveDispatcherDelegates<T> where T : DispatcherViewModelBase
+    {
+        /// <summary>
+        /// (Bubble Up Event) Delegate to handle tree events. The intended use is to hook this up at the top level of the tree to listen for tree
+        ///                   events. The data will be forwarded from the tree level where the event took place.
+        /// </summary>
+        /// <param name="treeSender">Sender for sub-tree view model where the event was fired</param>
+        /// <param name="sender">The child collection for INotifyCollectionChanged typical events</param>
+        /// <param name="eventArgs">Event data for the change</param>
+        public delegate void CollectionChangedTreeEventHandler(RecursiveDispatcherViewModel<T> treeSender, object sender, NotifyCollectionChangedEventArgs eventArgs);
+
+        /// <summary>
+        /// (Bubble Up Event) Delegate to handle tree events. The intended use is to hook this up at the top level of the tree to listen for tree
+        ///                   events. The data will be forwarded from the tree level where the event took place.
+        /// </summary>
+        /// <param name="treeSender">Sender for sub-tree view model where the event was fired</param>
+        /// <param name="item">The child item for the sub-tree's children</param>
+        /// <param name="eventArgs">Event data for the change</param>
+        public delegate void ItemPropertyChangedTreeEventHandler(RecursiveDispatcherViewModel<T> treeSender, T item, PropertyChangedEventArgs eventArgs);
+    }
+
+
     /// <summary>
     /// Base class for a recursive view model which handles recursive iteration using IList (IEnumerable).
     /// </summary>
@@ -15,16 +37,26 @@ namespace SimpleWpf.ViewModel
     public abstract class RecursiveDispatcherViewModel<T> : ViewModelBase, IDisposable, IEnumerable, INotifyCollectionChanged where T : DispatcherViewModelBase
     {
         /// <summary>
+        /// Event that fires when collection has changed. This fires only on this level of the tree
+        /// </summary>
+        public event NotifyCollectionChangedEventHandler CollectionChanged;
+
+        /// <summary>
+        /// Event that fires when collection's item property has changed. This event fires only at this level of the tree
+        /// </summary>
+        public event CollectionItemChangedHandler<T> ItemPropertyChanged;
+
+        /// <summary>
         /// (Bubble Up Event) Event that fires when collection has changed. This bubbles
         ///                   up the tree. So, setting this at the root will forward all tree collection events.
         /// </summary>
-        public event NotifyCollectionChangedEventHandler CollectionChanged;
+        public event RecursiveDispatcherDelegates<T>.CollectionChangedTreeEventHandler CollectionChangedTreeEvent;
 
         /// <summary>
         /// (Bubble Up Event) Event that fires when collection's item property has changed. This bubbles
         ///                   up the tree. So, setting this at the root will forward all tree item events.
         /// </summary>
-        public event CollectionItemChangedHandler<T> ItemPropertyChanged;
+        public event RecursiveDispatcherDelegates<T>.ItemPropertyChangedTreeEventHandler ItemPropertyChangedTreeEvent;
 
         // Parent Node
         RecursiveDispatcherViewModel<T> _parent;
@@ -215,6 +247,33 @@ namespace SimpleWpf.ViewModel
 
         #endregion
 
+        // Tree Collection Events
+        private void OnTreeItemCollectionChanged(RecursiveDispatcherViewModel<T> treeSender, object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            // (There may be listeners at this level)
+            if (this.CollectionChangedTreeEvent != null)
+                this.CollectionChangedTreeEvent(treeSender, sender, e);
+
+            // -> Bubble Up
+            //
+            if (this.Parent != null)
+                this.Parent.OnTreeItemCollectionChanged(treeSender, sender, e);
+        }
+
+        // Tree Item Events
+        private void OnTreeItemPropertyChanged(RecursiveDispatcherViewModel<T> treeSender, T item, PropertyChangedEventArgs e)
+        {
+            // (There may be listeners at this level)
+            if (this.ItemPropertyChangedTreeEvent != null)
+                this.ItemPropertyChangedTreeEvent(treeSender, item, e);
+
+            // -> Bubble Up
+            //
+            if (this.Parent != null)
+                this.Parent.OnTreeItemPropertyChanged(treeSender, item, e);
+        }
+
+        // Item Events
         private void OnItemCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
             if (this.CollectionChanged != null)
@@ -222,10 +281,10 @@ namespace SimpleWpf.ViewModel
 
             // -> Bubble Up
             //
-            //if (this.Parent != null)
-            //    this.Parent.OnItemCollectionChanged(sender, e);
+            OnTreeItemCollectionChanged(this, sender, e);
         }
 
+        // Item Events
         private void OnItemPropertyChanged(T item, PropertyChangedEventArgs propertyArgs)
         {
             if (this.ItemPropertyChanged != null)
@@ -233,10 +292,10 @@ namespace SimpleWpf.ViewModel
 
             // -> Bubble Up
             //
-            //if (this.Parent != null)
-            //    this.Parent.OnItemPropertyChanged(item, propertyArgs);
+            OnTreeItemPropertyChanged(this, item, propertyArgs);
         }
 
+        // Item Events
         private void OnItemPropertyChanged(RecursiveDispatcherViewModel<T> item, PropertyChangedEventArgs propertyArgs)
         {
             if (this.ItemPropertyChanged != null)
@@ -244,10 +303,10 @@ namespace SimpleWpf.ViewModel
 
             // -> Bubble Up
             //
-            //if (this.Parent != null)
-            //    this.Parent.OnItemPropertyChanged(item, propertyArgs);
+            OnTreeItemPropertyChanged(this, item.NodeValue, propertyArgs);
         }
 
+        // Item Events
         private void OnNodeValuePropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
             if (this.ItemPropertyChanged != null)
@@ -255,8 +314,7 @@ namespace SimpleWpf.ViewModel
 
             // -> Bubble Up
             //
-            //if (this.Parent != null)
-            //    this.Parent.OnNodeValuePropertyChanged(sender, e);
+            OnTreeItemPropertyChanged(this, sender as T, e);
         }
 
         public void Dispose()
