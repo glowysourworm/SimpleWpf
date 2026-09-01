@@ -1,4 +1,4 @@
-using SimpleWpf.ViewModel;
+using SimpleWpf.UI.ViewModel.FileTreeView;
 
 namespace SimpleWpf.UnitTest.SimpleWpf.ViewModel
 {
@@ -26,16 +26,16 @@ namespace SimpleWpf.UnitTest.SimpleWpf.ViewModel
         public void InstantiatePathNode()
         {
             // Test Folder
-            var root = new PathViewModel(Environment.CurrentDirectory, _rootDirectory, 0);
+            var root = new FileTreeNodeViewModel(Environment.CurrentDirectory, _rootDirectory, 0);
 
             // -> Root
-            var rootNode = new PathNodeViewModel("*.txt", root);
+            var rootNode = new FileTreeViewModel("*.txt", root);
 
             // -> Root -> Test (Dir)
-            var testDirectoryNode = rootNode.Add(new PathViewModel(_rootDirectory, _testDirectory, 0));
+            var testDirectoryNode = rootNode.Add(new FileTreeNodeViewModel(_rootDirectory, _testDirectory, 0));
 
             // -> Root -> Test (Dir) -> Test (File)
-            var fileNode = testDirectoryNode.Add(new PathViewModel(_rootDirectory, _testFilePath, 0));
+            var fileNode = testDirectoryNode.Add(new FileTreeNodeViewModel(_rootDirectory, _testFilePath, 0));
 
             Assert.That(rootNode.NodeValue.FullPath == _rootDirectory);
             Assert.That(testDirectoryNode.NodeValue.FullPath == _testDirectory);
@@ -54,12 +54,12 @@ namespace SimpleWpf.UnitTest.SimpleWpf.ViewModel
         public void RecursiveIteration()
         {
             // Test Folder
-            var root = new PathViewModel(Environment.CurrentDirectory, _rootDirectory, 0);
+            var root = new FileTreeNodeViewModel(Environment.CurrentDirectory, _rootDirectory, 0);
 
             // -> Root
-            var rootNode = new PathNodeViewModel("*.txt", root);
-            var testNodeValue = new PathViewModel(_rootDirectory, _testDirectory, 0);
-            var testFileNodeValue = new PathViewModel(_rootDirectory, _testFilePath, 0);
+            var rootNode = new FileTreeViewModel("*.txt", root);
+            var testNodeValue = new FileTreeNodeViewModel(_rootDirectory, _testDirectory, 0);
+            var testFileNodeValue = new FileTreeNodeViewModel(_rootDirectory, _testFilePath, 0);
 
             // -> Root -> Test (Dir)
             var testDirectoryNode = rootNode.Add(testNodeValue);
@@ -95,12 +95,12 @@ namespace SimpleWpf.UnitTest.SimpleWpf.ViewModel
         public void RecursiveNodeEvents()
         {
             // Test Folder
-            var root = new PathViewModel(Environment.CurrentDirectory, _rootDirectory, 0);
+            var root = new FileTreeNodeViewModel(Environment.CurrentDirectory, _rootDirectory, 0);
 
             // -> Root
-            var rootNode = new PathNodeViewModel("*.txt", root);
-            var testNodeValue = new PathViewModel(_rootDirectory, _testDirectory, 0);
-            var testFileNodeValue = new PathViewModel(_rootDirectory, _testFilePath, 0);
+            var rootNode = new FileTreeViewModel("*.txt", root);
+            var testNodeValue = new FileTreeNodeViewModel(_rootDirectory, _testDirectory, 0);
+            var testFileNodeValue = new FileTreeNodeViewModel(_rootDirectory, _testFilePath, 0);
 
             // -> Root -> Test (Dir)
             var testDirectoryNode = rootNode.Add(testNodeValue);

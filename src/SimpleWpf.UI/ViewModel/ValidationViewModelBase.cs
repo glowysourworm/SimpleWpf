@@ -1,6 +1,6 @@
 ﻿using SimpleWpf.Extensions.Interface;
 
-namespace SimpleWpf.ViewModel
+namespace SimpleWpf.UI.ViewModel
 {
     public abstract class ValidationViewModelBase : ViewModelBase
     {

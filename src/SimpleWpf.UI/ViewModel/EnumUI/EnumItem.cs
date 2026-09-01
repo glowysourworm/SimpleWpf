@@ -1,6 +1,4 @@
-﻿using SimpleWpf.ViewModel;
-
-namespace SimpleWpf.UI.Controls.Model
+﻿namespace SimpleWpf.UI.ViewModel.EnumUI
 {
     public class EnumItem : ViewModelBase
     {

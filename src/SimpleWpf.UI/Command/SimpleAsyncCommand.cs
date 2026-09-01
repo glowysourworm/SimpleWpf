@@ -1,7 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-
-namespace SimpleWpf.Extensions.Command
+﻿namespace SimpleWpf.UI.Command
 {
     public class SimpleAsyncCommand : ISimpleAsyncCommand
     {

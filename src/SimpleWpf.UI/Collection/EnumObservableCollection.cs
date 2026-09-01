@@ -4,7 +4,7 @@ using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 using SimpleWpf.Extensions;
-using SimpleWpf.UI.Controls.Model;
+using SimpleWpf.UI.ViewModel.EnumUI;
 
 namespace SimpleWpf.UI.Collection
 {

@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="SimpleWpf.UI.Controls.EnumFlagsControl"
+﻿<UserControl x:Class="SimpleWpf.UI.Controls.EnumUI.SimpleEnumFlagsControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Name="EnumFlagsUC">

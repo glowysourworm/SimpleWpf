@@ -2,7 +2,7 @@
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 
-namespace SimpleWpf.ViewModel
+namespace SimpleWpf.UI.ViewModel
 {
     public abstract class ViewModelBase : INotifyPropertyChanged
     {

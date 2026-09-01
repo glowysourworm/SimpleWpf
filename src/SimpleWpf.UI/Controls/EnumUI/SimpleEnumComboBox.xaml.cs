@@ -4,29 +4,29 @@ using System.Windows;
 using System.Windows.Controls;
 
 using SimpleWpf.Extensions;
-using SimpleWpf.ViewModel;
+using SimpleWpf.UI.ViewModel;
 
-namespace SimpleWpf.UI.Controls
+namespace SimpleWpf.UI.Controls.EnumUI
 {
-    public partial class EnumComboBox : UserControl
+    public partial class SimpleEnumComboBox : UserControl
     {
         public static readonly DependencyProperty EnumTypeProperty = DependencyProperty.Register(
             "EnumType",
             typeof(Type),
-            typeof(EnumComboBox),
+            typeof(SimpleEnumComboBox),
             new PropertyMetadata(new PropertyChangedCallback(OnEnumTypeChanged)));
 
         public static readonly DependencyProperty EnumValueProperty = DependencyProperty.Register(
             "EnumValue",
             typeof(object),
-            typeof(EnumComboBox),
+            typeof(SimpleEnumComboBox),
             new PropertyMetadata(new PropertyChangedCallback(OnEnumValueChanged)));
 
         public static readonly RoutedEvent EnumValueChangedEvent = EventManager.RegisterRoutedEvent(
             "EnumValueChanged",
             RoutingStrategy.Bubble,
             typeof(RoutedEventHandler),
-            typeof(EnumComboBox));
+            typeof(SimpleEnumComboBox));
 
         public Type EnumType
         {
@@ -81,7 +81,7 @@ namespace SimpleWpf.UI.Controls
             }
         }
 
-        public EnumComboBox()
+        public SimpleEnumComboBox()
         {
             InitializeComponent();
 
@@ -116,7 +116,7 @@ namespace SimpleWpf.UI.Controls
         // Binding -> ComboBox
         private static void OnEnumTypeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            var instance = d as EnumComboBox;
+            var instance = d as SimpleEnumComboBox;
 
             if (instance != null)
             {
@@ -127,7 +127,7 @@ namespace SimpleWpf.UI.Controls
         // Binding -> ComboBox
         private static void OnEnumValueChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            var instance = d as EnumComboBox;
+            var instance = d as SimpleEnumComboBox;
 
             if (instance != null &&
                 e.NewValue != null &&

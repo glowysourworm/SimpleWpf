@@ -6,35 +6,13 @@ using SimpleWpf.Extensions.Event;
 
 using SimpleWpf.Extensions.ObservableCollection;
 
-namespace SimpleWpf.ViewModel
+namespace SimpleWpf.UI.ViewModel.TreeView
 {
-    public class RecursiveDispatcherDelegates<T> where T : DispatcherViewModelBase
-    {
-        /// <summary>
-        /// (Bubble Up Event) Delegate to handle tree events. The intended use is to hook this up at the top level of the tree to listen for tree
-        ///                   events. The data will be forwarded from the tree level where the event took place.
-        /// </summary>
-        /// <param name="treeSender">Sender for sub-tree view model where the event was fired</param>
-        /// <param name="sender">The child collection for INotifyCollectionChanged typical events</param>
-        /// <param name="eventArgs">Event data for the change</param>
-        public delegate void CollectionChangedTreeEventHandler(RecursiveDispatcherViewModel<T> treeSender, object sender, NotifyCollectionChangedEventArgs eventArgs);
-
-        /// <summary>
-        /// (Bubble Up Event) Delegate to handle tree events. The intended use is to hook this up at the top level of the tree to listen for tree
-        ///                   events. The data will be forwarded from the tree level where the event took place.
-        /// </summary>
-        /// <param name="treeSender">Sender for sub-tree view model where the event was fired</param>
-        /// <param name="item">The child item for the sub-tree's children</param>
-        /// <param name="eventArgs">Event data for the change</param>
-        public delegate void ItemPropertyChangedTreeEventHandler(RecursiveDispatcherViewModel<T> treeSender, T item, PropertyChangedEventArgs eventArgs);
-    }
-
-
     /// <summary>
     /// Base class for a recursive view model which handles recursive iteration using IList (IEnumerable).
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public abstract class RecursiveDispatcherViewModel<T> : ViewModelBase, IDisposable, IEnumerable, INotifyCollectionChanged where T : DispatcherViewModelBase
+    public abstract class TreeViewModelBase<T> : ViewModelBase, IDisposable, IEnumerable, INotifyCollectionChanged where T : TreeViewNodeModelBase
     {
         /// <summary>
         /// Event that fires when collection has changed. This fires only on this level of the tree
@@ -50,29 +28,29 @@ namespace SimpleWpf.ViewModel
         /// (Bubble Up Event) Event that fires when collection has changed. This bubbles
         ///                   up the tree. So, setting this at the root will forward all tree collection events.
         /// </summary>
-        public event RecursiveDispatcherDelegates<T>.CollectionChangedTreeEventHandler CollectionChangedTreeEvent;
+        public event TreeViewDelegates<T>.CollectionChangedTreeEventHandler CollectionChangedTreeEvent;
 
         /// <summary>
         /// (Bubble Up Event) Event that fires when collection's item property has changed. This bubbles
         ///                   up the tree. So, setting this at the root will forward all tree item events.
         /// </summary>
-        public event RecursiveDispatcherDelegates<T>.ItemPropertyChangedTreeEventHandler ItemPropertyChangedTreeEvent;
+        public event TreeViewDelegates<T>.ItemPropertyChangedTreeEventHandler ItemPropertyChangedTreeEvent;
 
         // Parent Node
-        RecursiveDispatcherViewModel<T> _parent;
+        TreeViewModelBase<T> _parent;
 
         // Primary collection
-        NotifyingObservableCollection<RecursiveDispatcherViewModel<T>> _children;
+        NotifyingObservableCollection<TreeViewModelBase<T>> _children;
 
         // Current node's value
         T _nodeValue;
 
-        public RecursiveDispatcherViewModel<T> Parent
+        public TreeViewModelBase<T> Parent
         {
             get { return _parent; }
             set { this.RaiseAndSetIfChanged(ref _parent, value); }
         }
-        public NotifyingObservableCollection<RecursiveDispatcherViewModel<T>> Children
+        public NotifyingObservableCollection<TreeViewModelBase<T>> Children
         {
             get { return _children; }
         }
@@ -81,9 +59,9 @@ namespace SimpleWpf.ViewModel
             get { return _nodeValue; }
         }
 
-        public RecursiveDispatcherViewModel(T nodeValue, RecursiveDispatcherViewModel<T> parent = null)
+        public TreeViewModelBase(T nodeValue, TreeViewModelBase<T> parent = null)
         {
-            _children = new NotifyingObservableCollection<RecursiveDispatcherViewModel<T>>();
+            _children = new NotifyingObservableCollection<TreeViewModelBase<T>>();
             _nodeValue = nodeValue;
             _parent = parent;
             _nodeValue = nodeValue;
@@ -96,10 +74,10 @@ namespace SimpleWpf.ViewModel
         /// <summary>
         /// Constructs instance of the tree's node for the child collection
         /// </summary>
-        protected abstract RecursiveDispatcherViewModel<T> Construct(T nodeValue);
+        protected abstract TreeViewModelBase<T> Construct(T nodeValue);
 
         // Method used for recursive members (includes current node for action)
-        private void Recurse(Action<RecursiveDispatcherViewModel<T>> action, bool leafFirst = false, bool childrenOnly = false)
+        private void Recurse(Action<TreeViewModelBase<T>> action, bool leafFirst = false, bool childrenOnly = false)
         {
             if (!leafFirst && !childrenOnly)
                 action(this);
@@ -117,7 +95,7 @@ namespace SimpleWpf.ViewModel
         #region IEnumerable Methods
         public IEnumerator GetEnumerator()
         {
-            return this.Children.GetEnumerator();
+            return new TreeViewEnumerator(this);
         }
         #endregion
 
@@ -127,7 +105,7 @@ namespace SimpleWpf.ViewModel
         /// Recursively iterates the collection. This method must not overlap with IEnumerable due to framework
         /// usage. e.g. is the HierarchicalDataTemplate - which will then treat the tree as a flat list.
         /// </summary>
-        public void RecurseForEach(Action<RecursiveDispatcherViewModel<T>> action)
+        public void RecurseForEach(Action<TreeViewModelBase<T>> action)
         {
             Recurse(action);
         }
@@ -164,7 +142,7 @@ namespace SimpleWpf.ViewModel
         /// (Non-Recursive Method!) Adds an item to CURRENT DEPTH of the tree ONLY. Returns the new node.
         /// </summary>
         /// <exception cref="ArgumentException">Depths do not match for inserted item</exception>
-        public RecursiveDispatcherViewModel<T> Add(T item)
+        public TreeViewModelBase<T> Add(T item)
         {
             if (item == null)
                 throw new NullReferenceException("Trying to insert null value into recursive tree view model");
@@ -248,7 +226,7 @@ namespace SimpleWpf.ViewModel
         #endregion
 
         // Tree Collection Events
-        private void OnTreeItemCollectionChanged(RecursiveDispatcherViewModel<T> treeSender, object? sender, NotifyCollectionChangedEventArgs e)
+        private void OnTreeItemCollectionChanged(TreeViewModelBase<T> treeSender, object? sender, NotifyCollectionChangedEventArgs e)
         {
             // (There may be listeners at this level)
             if (this.CollectionChangedTreeEvent != null)
@@ -261,7 +239,7 @@ namespace SimpleWpf.ViewModel
         }
 
         // Tree Item Events
-        private void OnTreeItemPropertyChanged(RecursiveDispatcherViewModel<T> treeSender, T item, PropertyChangedEventArgs e)
+        private void OnTreeItemPropertyChanged(TreeViewModelBase<T> treeSender, T item, PropertyChangedEventArgs e)
         {
             // (There may be listeners at this level)
             if (this.ItemPropertyChangedTreeEvent != null)
@@ -296,7 +274,7 @@ namespace SimpleWpf.ViewModel
         }
 
         // Item Events
-        private void OnItemPropertyChanged(RecursiveDispatcherViewModel<T> item, PropertyChangedEventArgs propertyArgs)
+        private void OnItemPropertyChanged(TreeViewModelBase<T> item, PropertyChangedEventArgs propertyArgs)
         {
             if (this.ItemPropertyChanged != null)
                 this.ItemPropertyChanged(item.NodeValue, propertyArgs);

@@ -1,0 +1,4 @@
+﻿[*.cs]
+
+# CA1010: Generic interface should also be implemented
+dotnet_diagnostic.CA1010.severity = none

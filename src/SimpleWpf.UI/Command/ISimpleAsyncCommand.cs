@@ -1,6 +1,6 @@
 ﻿using System.Windows.Input;
 
-namespace SimpleWpf.Extensions.Command
+namespace SimpleWpf.UI.Command
 {
     public interface ISimpleAsyncCommand : ICommand
     {

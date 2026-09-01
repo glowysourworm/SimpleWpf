@@ -4,22 +4,22 @@ using System.Windows;
 using System.Windows.Controls;
 
 using SimpleWpf.Extensions.Collection;
-using SimpleWpf.ViewModel;
+using SimpleWpf.UI.ViewModel;
 
-namespace SimpleWpf.UI.Controls
+namespace SimpleWpf.UI.Controls.EnumUI
 {
-    public partial class RadioButtonEnumControl : UserControl
+    public partial class SimpleEnumRadioButtons : UserControl
     {
         public static readonly DependencyProperty EnumTypeProperty =
             DependencyProperty.Register("EnumType",
                                         typeof(Type),
-                                        typeof(RadioButtonEnumControl),
+                                        typeof(SimpleEnumRadioButtons),
                                         new PropertyMetadata(new PropertyChangedCallback(OnEnumTypeChanged)));
 
         public static readonly DependencyProperty EnumValueProperty =
             DependencyProperty.Register("EnumValue",
                                         typeof(object),
-                                        typeof(RadioButtonEnumControl),
+                                        typeof(SimpleEnumRadioButtons),
                                         new PropertyMetadata(new PropertyChangedCallback(OnEnumValueChanged)));
 
         public Type EnumType
@@ -63,7 +63,7 @@ namespace SimpleWpf.UI.Controls
             }
         }
 
-        public RadioButtonEnumControl()
+        public SimpleEnumRadioButtons()
         {
             InitializeComponent();
 
@@ -91,7 +91,7 @@ namespace SimpleWpf.UI.Controls
 
         private static void OnEnumTypeChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
         {
-            var control = sender as RadioButtonEnumControl;
+            var control = sender as SimpleEnumRadioButtons;
             var type = e.NewValue as Type;
 
             // Update controls for the new enum type
@@ -105,7 +105,7 @@ namespace SimpleWpf.UI.Controls
 
         private static void OnEnumValueChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            var control = d as RadioButtonEnumControl;
+            var control = d as SimpleEnumRadioButtons;
             var itemsSource = control.EnumList.ItemsSource as IEnumerable<EnumItem>;
             var enumValue = e.NewValue;
 

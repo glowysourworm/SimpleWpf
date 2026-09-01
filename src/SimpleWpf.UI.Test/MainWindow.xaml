@@ -1,0 +1,35 @@
+﻿<Window x:Class="SimpleWpf.UI.Test.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:treeviewUI="clr-namespace:SimpleWpf.UI.Controls.TreeViewUI;assembly=SimpleWpf.UI"
+        xmlns:shapes="clr-namespace:System.Windows.Shapes;assembly=PresentationFramework"
+        Title="SimpleWpf.UI Test Application" Height="450" Width="800">
+    <Grid>
+        <TabControl>
+            <TabItem Header="TreeView">
+                <treeviewUI:SimpleTreeView x:Name="TheTreeView"  
+                                           ItemsSource="{Binding}"
+                                           ItemIndent="20"
+                                           ItemBackground="White"
+                                           ItemBackgroundAlternation="AliceBlue"
+                                           ItemHoverBrush="#0F000000"
+                                           ItemSelectionBrush="#1F000000"
+                                           ItemBorder="LightGray"
+                                           ItemBorderThickness="1"
+                                           ItemPadding="3"
+                                           FontSize="14">
+                    <treeviewUI:SimpleTreeView.ItemExpanderOpenTemplate>
+                        <DataTemplate>
+                            <shapes:Ellipse Margin="5" Fill="GreenYellow" Stroke="GreenYellow" Height="10" Width="10" />
+                        </DataTemplate>
+                    </treeviewUI:SimpleTreeView.ItemExpanderOpenTemplate>
+                    <treeviewUI:SimpleTreeView.ItemExpanderClosedTemplate>
+                        <DataTemplate>
+                            <shapes:Ellipse Fill="Black" Stroke="Black" Height="10" Width="10" />
+                        </DataTemplate>
+                    </treeviewUI:SimpleTreeView.ItemExpanderClosedTemplate>                    
+                </treeviewUI:SimpleTreeView>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>

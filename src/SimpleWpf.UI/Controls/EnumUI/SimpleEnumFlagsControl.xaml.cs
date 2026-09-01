@@ -1,37 +1,36 @@
 ﻿using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Windows;
 using System.Windows.Controls;
 
 using SimpleWpf.Extensions;
 using SimpleWpf.Extensions.Collection;
-using SimpleWpf.UI.Controls.Model;
+using SimpleWpf.UI.ViewModel.EnumUI;
 
-namespace SimpleWpf.UI.Controls
+namespace SimpleWpf.UI.Controls.EnumUI
 {
-    public partial class EnumFlagsControl : UserControl
+    public partial class SimpleEnumFlagsControl : UserControl
     {
         public static readonly DependencyProperty HeaderProperty =
-            DependencyProperty.Register("Header", typeof(string), typeof(EnumFlagsControl), new PropertyMetadata("Header", new PropertyChangedCallback(OnHeaderChanged)));
+            DependencyProperty.Register("Header", typeof(string), typeof(SimpleEnumFlagsControl), new PropertyMetadata("Header", new PropertyChangedCallback(OnHeaderChanged)));
 
         public static readonly DependencyProperty HeaderFontSizeProperty =
-            DependencyProperty.Register("HeaderFontSize", typeof(double), typeof(EnumFlagsControl), new PropertyMetadata(16.0D));
+            DependencyProperty.Register("HeaderFontSize", typeof(double), typeof(SimpleEnumFlagsControl), new PropertyMetadata(16.0D));
 
         public static readonly DependencyProperty EnumNameFontSizeProperty =
-            DependencyProperty.Register("EnumNameFontSize", typeof(double), typeof(EnumFlagsControl), new PropertyMetadata(14.0D));
+            DependencyProperty.Register("EnumNameFontSize", typeof(double), typeof(SimpleEnumFlagsControl), new PropertyMetadata(14.0D));
 
         public static readonly DependencyProperty EnumDescriptionFontSizeProperty =
-            DependencyProperty.Register("EnumDescriptionFontSize", typeof(double), typeof(EnumFlagsControl), new PropertyMetadata(10.0D));
+            DependencyProperty.Register("EnumDescriptionFontSize", typeof(double), typeof(SimpleEnumFlagsControl), new PropertyMetadata(10.0D));
 
         public static readonly DependencyProperty ShowDescriptionsProperty =
-            DependencyProperty.Register("ShowDescriptions", typeof(bool), typeof(EnumFlagsControl), new PropertyMetadata(true));
+            DependencyProperty.Register("ShowDescriptions", typeof(bool), typeof(SimpleEnumFlagsControl), new PropertyMetadata(true));
 
         public static readonly DependencyProperty EnumTypeProperty =
-            DependencyProperty.Register("EnumType", typeof(Type), typeof(EnumFlagsControl), new PropertyMetadata(new PropertyChangedCallback(OnTypeChanged)));
+            DependencyProperty.Register("EnumType", typeof(Type), typeof(SimpleEnumFlagsControl), new PropertyMetadata(new PropertyChangedCallback(OnTypeChanged)));
 
         public static readonly DependencyProperty EnumValueProperty =
-            DependencyProperty.Register("EnumValue", typeof(Enum), typeof(EnumFlagsControl), new PropertyMetadata(new PropertyChangedCallback(OnValueChanged)));
+            DependencyProperty.Register("EnumValue", typeof(Enum), typeof(SimpleEnumFlagsControl), new PropertyMetadata(new PropertyChangedCallback(OnValueChanged)));
 
         public string Header
         {
@@ -71,7 +70,7 @@ namespace SimpleWpf.UI.Controls
 
         bool _initializing = false;
 
-        public EnumFlagsControl()
+        public SimpleEnumFlagsControl()
         {
             InitializeComponent();
         }
@@ -130,7 +129,7 @@ namespace SimpleWpf.UI.Controls
         // Update the items source when value changed
         private static void OnValueChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            var control = d as EnumFlagsControl;
+            var control = d as SimpleEnumFlagsControl;
             if (control != null &&
                 e.NewValue != null &&
                 control.EnumValue != null)
@@ -139,7 +138,7 @@ namespace SimpleWpf.UI.Controls
 
         private static void OnTypeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            var control = d as EnumFlagsControl;
+            var control = d as SimpleEnumFlagsControl;
             if (control != null &&
                 e.NewValue != null)
                 control.CreateItemsSource();
@@ -147,7 +146,7 @@ namespace SimpleWpf.UI.Controls
 
         private static void OnHeaderChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            var control = d as EnumFlagsControl;
+            var control = d as SimpleEnumFlagsControl;
             if (control != null &&
                 e.NewValue != null)
                 control.EnumGroupBox.Header = (string)e.NewValue;
