@@ -1,7 +1,10 @@
-﻿using System.Globalization;
+﻿using System.Collections.ObjectModel;
+using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 using System.Windows.Data;
 
-using SimpleWpf.UI.Collection;
+using SimpleWpf.Extensions;
+using SimpleWpf.UI.ViewModel.EnumUI;
 
 namespace SimpleWpf.UI.Converter
 {
@@ -20,39 +23,34 @@ namespace SimpleWpf.UI.Converter
 
             try
             {
-                var agnosticCollection = typeof(EnumObservableCollection<>);
-                var enumType = value.GetType();
-                var resultType = agnosticCollection.MakeGenericType(enumType);
-                var collection = Activator.CreateInstance(resultType);
+                var collection = new ObservableCollection<EnumItemViewModel>();
+                var enumType = (Type)value;
 
-                // Call method to set the EnumValue
-                var propertyInfo = resultType.GetProperty("EnumValue");
+                // Initialize Collection
+                foreach (Enum enumValue in Enum.GetValues(enumType))
+                {
+                    var item = new EnumItemViewModel();
+                    var displayAttribute = enumValue.GetAttribute<DisplayAttribute>();
 
-                // Set property EnumValue with the bound converter value
-                propertyInfo.SetValue(collection, value);
+                    item.Value = enumValue;
+                    item.Name = Enum.GetName(enumType, enumValue) ?? string.Empty;
+                    item.DisplayName = displayAttribute?.Name ?? item.Name ?? string.Empty;
+                    item.Description = displayAttribute?.Description ?? string.Empty;
+
+                    collection.Add(item);
+                }
 
                 return collection;
             }
             catch (Exception ex)
             {
-                throw new Exception("EnumObservableCollectionConverter must bind to an Enum type. TwoWay binding is supported; and the result is an EnumObservableCollection");
+                throw new Exception("EnumObservableCollectionConverter must bind to an Enum type. TwoWay binding is not supported; and the result is an ObservableCollection");
             }
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value == null)
-                return Binding.DoNothing;
-
-            try
-            {
-                var enumValueProperty = value.GetType().GetProperty("EnumValue");
-                return enumValueProperty.GetValue(value);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("EnumObservableCollectionConverter must bind to an Enum type. TwoWay binding is supported; and the result is an EnumObservableCollection");
-            }
+            throw new NotSupportedException("EnumObservableCollectionConverter must bind to an Enum type. TwoWay binding is not supported; and the result is an ObservableCollection");
         }
     }
 }

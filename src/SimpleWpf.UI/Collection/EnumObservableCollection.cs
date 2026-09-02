@@ -13,13 +13,13 @@ namespace SimpleWpf.UI.Collection
     /// this collection is to allow the binding of an enum property to a collection that is displayable like a list; and to provide
     /// two-way binding using a converter.
     /// </summary>
-    public class EnumObservableCollection<TEnum> : IList<EnumItem>, IList, INotifyPropertyChanged, INotifyCollectionChanged where TEnum : Enum
+    public class EnumObservableCollection<TEnum> : IList<EnumItemViewModel>, IList, INotifyPropertyChanged, INotifyCollectionChanged where TEnum : Enum
     {
         public event PropertyChangedEventHandler? PropertyChanged;
         public event NotifyCollectionChangedEventHandler? CollectionChanged;
 
         // List that represents the enum class-object
-        List<EnumItem> _list;
+        List<EnumItemViewModel> _list;
 
         // Value of the bound enum
         object _enumValue;
@@ -45,7 +45,7 @@ namespace SimpleWpf.UI.Collection
             }
         }
 
-        public EnumItem this[int index]
+        public EnumItemViewModel this[int index]
         {
             get { return _list[index]; }
             set { this.Insert(index, value); }
@@ -76,13 +76,13 @@ namespace SimpleWpf.UI.Collection
 
         private void Initialize()
         {
-            _list = new List<EnumItem>();
+            _list = new List<EnumItemViewModel>();
 
             foreach (Enum enumValue in Enum.GetValues(typeof(TEnum)))
             {
                 var enumName = Enum.GetName(typeof(TEnum), enumValue);
 
-                _list.Add(new EnumItem()
+                _list.Add(new EnumItemViewModel()
                 {
                     Name = enumName,
                     Value = enumValue,
@@ -112,7 +112,7 @@ namespace SimpleWpf.UI.Collection
                 return this.EnumValue != null ? this.EnumValue.Equals(enumValue) : false;
         }
 
-        public void Add(EnumItem item)
+        public void Add(EnumItemViewModel item)
         {
             throw new NotSupportedException("Add method is not supported for EnumObservableCollection");
         }
@@ -122,32 +122,32 @@ namespace SimpleWpf.UI.Collection
             throw new NotSupportedException("Clear method is not supported for EnumObservableCollection");
         }
 
-        public bool Contains(EnumItem item)
+        public bool Contains(EnumItemViewModel item)
         {
             return _list.Contains(item);
         }
 
-        public void CopyTo(EnumItem[] array, int arrayIndex)
+        public void CopyTo(EnumItemViewModel[] array, int arrayIndex)
         {
             _list.CopyTo(array, arrayIndex);
         }
 
-        public IEnumerator<EnumItem> GetEnumerator()
+        public IEnumerator<EnumItemViewModel> GetEnumerator()
         {
             return _list.GetEnumerator();
         }
 
-        public int IndexOf(EnumItem item)
+        public int IndexOf(EnumItemViewModel item)
         {
             return _list.IndexOf(item);
         }
 
-        public void Insert(int index, EnumItem item)
+        public void Insert(int index, EnumItemViewModel item)
         {
             throw new NotSupportedException("Insert method is not supported for EnumObservableCollection");
         }
 
-        public bool Remove(EnumItem item)
+        public bool Remove(EnumItemViewModel item)
         {
             throw new NotSupportedException("Remove method is not supported for EnumObservableCollection");
         }
@@ -174,7 +174,7 @@ namespace SimpleWpf.UI.Collection
 
         public int IndexOf(object? value)
         {
-            return _list.IndexOf((EnumItem)value);
+            return _list.IndexOf((EnumItemViewModel)value);
         }
 
         public void Insert(int index, object? value)

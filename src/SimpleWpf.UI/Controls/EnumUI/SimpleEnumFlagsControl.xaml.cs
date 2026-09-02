@@ -1,9 +1,7 @@
 ﻿using System.Collections.ObjectModel;
-using System.ComponentModel.DataAnnotations;
 using System.Windows;
 using System.Windows.Controls;
 
-using SimpleWpf.Extensions;
 using SimpleWpf.Extensions.Collection;
 using SimpleWpf.UI.ViewModel.EnumUI;
 
@@ -12,7 +10,7 @@ namespace SimpleWpf.UI.Controls.EnumUI
     public partial class SimpleEnumFlagsControl : UserControl
     {
         public static readonly DependencyProperty HeaderProperty =
-            DependencyProperty.Register("Header", typeof(string), typeof(SimpleEnumFlagsControl), new PropertyMetadata("Header", new PropertyChangedCallback(OnHeaderChanged)));
+            DependencyProperty.Register("Header", typeof(string), typeof(SimpleEnumFlagsControl));
 
         public static readonly DependencyProperty HeaderFontSizeProperty =
             DependencyProperty.Register("HeaderFontSize", typeof(double), typeof(SimpleEnumFlagsControl), new PropertyMetadata(16.0D));
@@ -27,10 +25,16 @@ namespace SimpleWpf.UI.Controls.EnumUI
             DependencyProperty.Register("ShowDescriptions", typeof(bool), typeof(SimpleEnumFlagsControl), new PropertyMetadata(true));
 
         public static readonly DependencyProperty EnumTypeProperty =
-            DependencyProperty.Register("EnumType", typeof(Type), typeof(SimpleEnumFlagsControl), new PropertyMetadata(new PropertyChangedCallback(OnTypeChanged)));
+            DependencyProperty.Register("EnumType", typeof(Type), typeof(SimpleEnumFlagsControl));
 
         public static readonly DependencyProperty EnumValueProperty =
-            DependencyProperty.Register("EnumValue", typeof(Enum), typeof(SimpleEnumFlagsControl), new PropertyMetadata(new PropertyChangedCallback(OnValueChanged)));
+            DependencyProperty.Register("EnumValue", typeof(Enum), typeof(SimpleEnumFlagsControl), new PropertyMetadata(OnEnumValueChanged));
+
+        public static readonly RoutedEvent EnumValueChangedEvent = EventManager.RegisterRoutedEvent(
+            "EnumValueChanged",
+            RoutingStrategy.Bubble,
+            typeof(RoutedEventHandler),
+            typeof(SimpleEnumFlagsControl));
 
         public string Header
         {
@@ -67,95 +71,84 @@ namespace SimpleWpf.UI.Controls.EnumUI
             get { return (Enum)GetValue(EnumValueProperty); }
             set { SetValue(EnumValueProperty, value); }
         }
+        public event RoutedEventHandler EnumValueChanged
+        {
+            add { AddHandler(EnumValueChangedEvent, value); }
+            remove { RemoveHandler(EnumValueChangedEvent, value); }
+        }
 
         bool _initializing = false;
 
         public SimpleEnumFlagsControl()
         {
             InitializeComponent();
-        }
 
-        protected void CreateItemsSource()
-        {
-            _initializing = true;
-
-            var enumItems = new ObservableCollection<EnumItem>();
-
-            foreach (Enum enumValue in Enum.GetValues(this.EnumType))
+            this.EnumItemsControl.Loaded += (sender, e) =>
             {
-                var enumName = Enum.GetName(this.EnumType, enumValue);
-
-                enumItems.Add(new EnumItem()
-                {
-                    Name = enumName,
-                    Value = enumValue,
-                    Description = enumValue.GetAttribute<DisplayAttribute>()?.Description ?? "",
-                    DisplayName = enumValue.GetAttribute<DisplayAttribute>()?.Name ?? enumName,
-                    IsChecked = this.EnumValue != null ? Enum.GetName(this.EnumType, this.EnumValue) == enumName : false
-                });
-            }
-
-            this.EnumItemsControl.ItemsSource = enumItems;
-
-            _initializing = false;
+                UpdateItemsSource();
+            };
         }
+
         protected void UpdateItemsSource()
         {
             _initializing = true;
 
-            var items = this.EnumItemsControl.ItemsSource as ObservableCollection<EnumItem>;
+            var collection = this.EnumItemsControl.ItemsSource as ObservableCollection<EnumItemViewModel>;
 
-            // Enum Flags are set using the bitwise & operator
-            items?.ForEach(item => item.IsChecked = ((item.Value as Enum).HasFlag(this.EnumValue as Enum)));
+            if (collection != null)
+            {
+                // Enum Flags are set using the bitwise & operator
+                foreach (var item in collection)
+                {
+                    Enum itemValue = item.Value as Enum;
+                    item.IsChecked = itemValue.HasFlag(this.EnumValue as Enum);
+                }
+            }
 
             _initializing = false;
         }
+
         protected void UpdateValue()
         {
-            var items = this.EnumItemsControl.ItemsSource as ObservableCollection<EnumItem>;
+            var items = this.EnumItemsControl.ItemsSource as ObservableCollection<EnumItemViewModel>;
 
-            // EnumValue is set using the bitwise | operator
-            int enumValue = 0;
+            if (items != null)
+            {
+                // EnumValue is set using the bitwise | operator
+                int enumValue = 0;
 
-            items?.Where(item => item.IsChecked)
+                items.Where(item => item.IsChecked)
                      .ForEach(item =>
                      {
                          enumValue = (int)enumValue | (int)Enum.ToObject(this.EnumType, item.Value);
                      });
 
-            this.EnumValue = Enum.ToObject(this.EnumType, enumValue);
+                this.EnumValue = Enum.ToObject(this.EnumType, enumValue);
+            }
         }
 
-        // Update the items source when value changed
-        private static void OnValueChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        private static void OnEnumValueChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             var control = d as SimpleEnumFlagsControl;
-            if (control != null &&
-                e.NewValue != null &&
-                control.EnumValue != null)
+
+            if (control != null)
+            {
+                // Selected Item (loops with selected index changed, should run twice)
                 control.UpdateItemsSource();
-        }
 
-        private static void OnTypeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        {
-            var control = d as SimpleEnumFlagsControl;
-            if (control != null &&
-                e.NewValue != null)
-                control.CreateItemsSource();
-        }
-
-        private static void OnHeaderChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        {
-            var control = d as SimpleEnumFlagsControl;
-            if (control != null &&
-                e.NewValue != null)
-                control.EnumGroupBox.Header = (string)e.NewValue;
+                // Raise Event for listeners
+                control.RaiseEvent(new RoutedEventArgs(EnumValueChangedEvent, control));
+            }
         }
 
         private void CheckBox_Checked(object sender, RoutedEventArgs e)
         {
-            if (!_initializing)
-                UpdateValue();
+            UpdateValue();
+        }
+
+        private void CheckBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            UpdateValue();
         }
     }
 }

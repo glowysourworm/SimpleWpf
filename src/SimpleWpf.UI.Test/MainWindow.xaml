@@ -1,24 +1,28 @@
 ﻿<Window x:Class="SimpleWpf.UI.Test.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:Name="BaseControl"
         xmlns:treeviewUI="clr-namespace:SimpleWpf.UI.Controls.TreeViewUI;assembly=SimpleWpf.UI"
+        xmlns:enumUI="clr-namespace:SimpleWpf.UI.Controls.EnumUI;assembly=SimpleWpf.UI"
         xmlns:shapes="clr-namespace:System.Windows.Shapes;assembly=PresentationFramework"
+        xmlns:enum="clr-namespace:SimpleWpf.UI.ValidationRules;assembly=SimpleWpf.UI"
+        xmlns:local="clr-namespace:SimpleWpf.UI.Test.EnumUI"
         Title="SimpleWpf.UI Test Application" Height="450" Width="800">
     <Grid>
         <TabControl>
             <TabItem Header="TreeView">
                 <Grid ColumnDefinitions="*, 300">
                     <treeviewUI:SimpleTreeView x:Name="TheTreeView"  
-                                           ItemsSource="{Binding}"
-                                           ItemIndent="20"
-                                           ItemBackground="White"
-                                           ItemBackgroundAlternation="AliceBlue"
-                                           ItemHoverBrush="#0F000000"
-                                           ItemSelectionBrush="#1F000000"
-                                           ItemBorder="LightGray"
-                                           ItemBorderThickness="1"
-                                           ItemPadding="3"
-                                           FontSize="14">
+                                               SelectedItemsChanged="TheTreeView_SelectedItemsChanged"
+                                               ItemIndent="20"
+                                               ItemBackground="White"
+                                               ItemBackgroundAlternation="AliceBlue"
+                                               ItemHoverBrush="#0F000000"
+                                               ItemSelectionBrush="#1F000000"
+                                               ItemBorder="LightGray"
+                                               ItemBorderThickness="1"
+                                               ItemPadding="3"
+                                               FontSize="14">
                         <treeviewUI:SimpleTreeView.ItemExpanderOpenTemplate>
                             <DataTemplate>
                                 <shapes:Ellipse Margin="5" Fill="GreenYellow" Stroke="GreenYellow" Height="10" Width="10" />
@@ -35,6 +39,30 @@
                 </Grid>
 
             </TabItem>
+
+            <TabItem Header="Enum Controls">
+
+                <Grid RowDefinitions="Auto, Auto, *" ColumnDefinitions="160, *">
+
+                    <TextBlock Text="Simple Enum Combo Box" />
+                    <TextBlock Text="Simple Enum Flags Control" Grid.Row="1" />
+                    <TextBlock Text="Simple Enum Radio Box" Grid.Row="2" />
+
+                    <enumUI:SimpleEnumComboBox x:Name="SimpleEnumCB" Grid.Column="1" 
+                                               EnumValue="{Binding Value1, Mode=TwoWay}"
+                                               EnumType="{x:Type local:EnumTestType}" />
+                    
+                    <enumUI:SimpleEnumFlagsControl x:Name="SimpleEnumFC" Grid.Row="1" Grid.Column="1" 
+                                                   EnumValue="{Binding Value2}"
+                                                   EnumType="{x:Type local:EnumTestType}" />
+                    
+                    <enumUI:SimpleEnumRadioButtons x:Name="SimpleEnumRB" Grid.Row="2" Grid.Column="1" 
+                                                   EnumValue="{Binding Value3}"
+                                                   EnumType="{x:Type local:EnumTestType}" />
+                </Grid>
+
+            </TabItem>
+            
         </TabControl>
     </Grid>
 </Window>

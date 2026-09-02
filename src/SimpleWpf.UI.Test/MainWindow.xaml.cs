@@ -3,6 +3,7 @@ using System.Windows;
 
 using SimpleWpf.Extensions.ObservableCollection;
 using SimpleWpf.UI.Controls.TreeViewUI;
+using SimpleWpf.UI.Test.EnumUI;
 using SimpleWpf.UI.ViewModel.TreeView;
 
 namespace SimpleWpf.UI.Test
@@ -11,18 +12,21 @@ namespace SimpleWpf.UI.Test
     {
         ObservableCollection<TreeViewModel> _selectedItems;
 
+        public EnumTestViewModel EnumTest;
+        public TreeViewModel TreeViewModel;
+
         public MainWindow()
         {
             InitializeComponent();
 
-            var treeView = new TreeViewModel(new TreeViewNodeModel(0)
+            this.TreeViewModel = new TreeViewModel(new TreeViewNodeModel(0)
             {
                 DisplayName = "Root"
             });
 
             for (int index = 0; index < 10; index++)
             {
-                var item = treeView.Add(new TreeViewNodeModel(1)
+                var item = this.TreeViewModel.Add(new TreeViewNodeModel(1)
                 {
                     DisplayName = "Item " + index
                 });
@@ -56,7 +60,12 @@ namespace SimpleWpf.UI.Test
             this.SelectedItemsLB.ItemsSource = _selectedItems;
             this.TheTreeView.SelectedItemsChanged += TheTreeView_SelectedItemsChanged;
 
-            this.DataContext = treeView;
+            this.EnumTest = new EnumTestViewModel();
+            this.SimpleEnumCB.DataContext = this.EnumTest;
+            this.SimpleEnumFC.DataContext = this.EnumTest;
+            this.SimpleEnumRB.DataContext = this.EnumTest;
+
+            this.TheTreeView.ItemsSource = this.TreeViewModel;
         }
 
         private void TheTreeView_SelectedItemsChanged(SimpleTreeView treeView, IEnumerable<TreeViewModel> selectedItems)

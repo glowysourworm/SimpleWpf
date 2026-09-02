@@ -1,6 +1,6 @@
 ﻿namespace SimpleWpf.UI.ViewModel.EnumUI
 {
-    public class EnumItem : ViewModelBase
+    public class EnumItemViewModel : ViewModelBase
     {
         string _name;
         string _displayName;
@@ -34,7 +34,7 @@
             set { this.RaiseAndSetIfChanged(ref _isChecked, value); }
         }
 
-        public EnumItem()
+        public EnumItemViewModel()
         {
             this.Name = string.Empty;
             this.DisplayName = string.Empty;

@@ -1,10 +1,7 @@
-﻿using System.Collections.ObjectModel;
-using System.ComponentModel.DataAnnotations;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 
-using SimpleWpf.Extensions;
-using SimpleWpf.UI.ViewModel;
+using SimpleWpf.UI.ViewModel.EnumUI;
 
 namespace SimpleWpf.UI.Controls.EnumUI
 {
@@ -13,14 +10,13 @@ namespace SimpleWpf.UI.Controls.EnumUI
         public static readonly DependencyProperty EnumTypeProperty = DependencyProperty.Register(
             "EnumType",
             typeof(Type),
-            typeof(SimpleEnumComboBox),
-            new PropertyMetadata(new PropertyChangedCallback(OnEnumTypeChanged)));
+            typeof(SimpleEnumComboBox));
 
         public static readonly DependencyProperty EnumValueProperty = DependencyProperty.Register(
             "EnumValue",
             typeof(object),
             typeof(SimpleEnumComboBox),
-            new PropertyMetadata(new PropertyChangedCallback(OnEnumValueChanged)));
+            new PropertyMetadata(OnEnumValueChanged));
 
         public static readonly RoutedEvent EnumValueChangedEvent = EventManager.RegisterRoutedEvent(
             "EnumValueChanged",
@@ -44,120 +40,39 @@ namespace SimpleWpf.UI.Controls.EnumUI
             remove { RemoveHandler(EnumValueChangedEvent, value); }
         }
 
-        public class EnumItem : ViewModelBase
-        {
-            object _value;
-            string _name;
-            string _displayName;
-            string _description;
-
-            public object Value
-            {
-                get { return _value; }
-                set { this.RaiseAndSetIfChanged(ref _value, value); }
-            }
-            public string Name
-            {
-                get { return _name; }
-                set { this.RaiseAndSetIfChanged(ref _name, value); }
-            }
-            public string DisplayName
-            {
-                get { return _displayName; }
-                set { this.RaiseAndSetIfChanged(ref _displayName, value); }
-            }
-            public string Description
-            {
-                get { return _description; }
-                set { this.RaiseAndSetIfChanged(ref _description, value); }
-            }
-
-            public EnumItem()
-            {
-                this.Value = null;
-                this.Name = string.Empty;
-                this.DisplayName = string.Empty;
-                this.Description = string.Empty;
-            }
-        }
-
         public SimpleEnumComboBox()
         {
             InitializeComponent();
-
-            RaiseEvent(new RoutedEventArgs(EnumValueChangedEvent, this));
         }
 
-        protected virtual void SetItemSource()
-        {
-            if (this.EnumType != null &&
-                this.EnumType.IsEnum)
-            {
-                var itemSource = new ObservableCollection<EnumItem>();
-
-                foreach (Enum enumValue in Enum.GetValues(this.EnumType))
-                {
-                    var item = new EnumItem();
-                    var displayAttribute = enumValue.GetAttribute<DisplayAttribute>();
-
-                    item.Value = enumValue;
-                    item.Name = Enum.GetName(this.EnumType, enumValue) ?? string.Empty;
-                    item.DisplayName = displayAttribute?.Name ?? item.Name ?? string.Empty;
-                    item.Description = displayAttribute?.Description ?? string.Empty;
-
-                    itemSource.Add(item);
-                }
-
-                // Sets initial selected item
-                this.TheComboBox.ItemsSource = itemSource;
-            }
-        }
-
-        // Binding -> ComboBox
-        private static void OnEnumTypeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        {
-            var instance = d as SimpleEnumComboBox;
-
-            if (instance != null)
-            {
-                instance.SetItemSource();
-            }
-        }
-
-        // Binding -> ComboBox
         private static void OnEnumValueChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            var instance = d as SimpleEnumComboBox;
+            var control = d as SimpleEnumComboBox;
+            var collection = control.TheComboBox.ItemsSource as IEnumerable<EnumItemViewModel>;
 
-            if (instance != null &&
-                e.NewValue != null &&
-                instance.EnumType != null)
+            if (control != null && collection != null && e.NewValue != null)
             {
-                // Binding -> Enum Name
-                var enumName = Enum.GetName(instance.EnumType, e.NewValue);
+                // Selected Item (loops with selected index changed, should run twice)
+                //
+                // NOTE*** Enum equality requires .Equals method
+                //
+                var item = collection.FirstOrDefault(x => x.Value.Equals(e.NewValue));
 
-                var itemsSource = instance.TheComboBox.ItemsSource as IEnumerable<EnumItem>;
+                if (control.TheComboBox.SelectedItem != item)
+                    control.TheComboBox.SelectedItem = item;
 
-                if (itemsSource != null)
-                {
-                    // UI -> Set Selected Item
-                    instance.TheComboBox.SelectedItem = itemsSource.FirstOrDefault(x => x.Name == enumName);
-
-                    // Listeners
-                    instance.RaiseEvent(new RoutedEventArgs(EnumValueChangedEvent, instance));
-                }
+                // Raise Event for listeners
+                control.RaiseEvent(new RoutedEventArgs(EnumValueChangedEvent, control));
             }
         }
 
-        // ComboBox -> Binding
         private void TheComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            var enumItem = this.TheComboBox.SelectedItem as EnumItem;
+            var selectedItem = this.TheComboBox.SelectedItem as EnumItemViewModel;
 
-            if (enumItem != null)
+            if (selectedItem != null)
             {
-                // -> OnEnumValueChanged
-                this.EnumValue = enumItem.Value;
+                this.EnumValue = selectedItem.Value;
             }
         }
     }
