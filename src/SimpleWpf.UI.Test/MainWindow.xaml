@@ -25,7 +25,7 @@
                     </treeviewUI:SimpleTreeView.ItemExpanderOpenTemplate>
                     <treeviewUI:SimpleTreeView.ItemExpanderClosedTemplate>
                         <DataTemplate>
-                            <shapes:Ellipse Fill="Black" Stroke="Black" Height="10" Width="10" />
+                            <shapes:Ellipse Margin="5" Fill="Black" Stroke="Black" Height="10" Width="10" />
                         </DataTemplate>
                     </treeviewUI:SimpleTreeView.ItemExpanderClosedTemplate>                    
                 </treeviewUI:SimpleTreeView>

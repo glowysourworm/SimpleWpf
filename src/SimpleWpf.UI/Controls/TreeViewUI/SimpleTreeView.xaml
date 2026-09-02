@@ -14,10 +14,11 @@
         <converters:BoolInverseVisibilityCollapseConverter x:Key="BoolInverseVisibilityCollapseConverter" />
         <converters:CollectionNonEmptyVisibilityConverter x:Key="CollectionNonEmptyVisibilityConverter" />
         <convertersTreeviewUI:TreeViewItemMarginConverter x:Key="TreeViewItemMarginConverter" />
-
+       
         <!-- Selectors -->
         <selectors:SimpleTreeViewItemContainerStyleSelector x:Key="SimpleTreeViewItemContainerStyleSelector" />
         <selectors:SimpleTreeViewItemTemplateSelector x:Key="SimpleTreeViewItemTemplateSelector" />
+        <selectors:SimpleTreeViewItemExpanderTemplateSelector x:Key="SimpleTreeViewItemExpanderTemplateSelector" />
 
         <!-- List Box Style (need selectors to be able to use these recursively -->
         <Style TargetType="ListBox" x:Key="SimpleTreeViewListBoxStyle">
@@ -56,6 +57,22 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        
+        <!-- Toggle Button Templates -->
+        <DataTemplate x:Key="SimpleTreeViewItemExpanderOpenTemplate">
+            <Grid Background="Transparent">
+
+                <ContentPresenter ContentTemplate="{Binding ItemExpanderOpenTemplate, RelativeSource={RelativeSource AncestorType={x:Type treeviewUI:SimpleTreeView}}}"
+                                                            Visibility="{Binding NodeValue.IsExpanded, NotifyOnSourceUpdated=True, Converter={StaticResource BoolVisibilityCollapseConverter}}" />
+            </Grid>
+        </DataTemplate>
+        <DataTemplate x:Key="SimpleTreeViewItemExpanderClosedTemplate">
+            <Grid Background="Transparent">
+
+                <ContentPresenter ContentTemplate="{Binding ItemExpanderClosedTemplate, RelativeSource={RelativeSource AncestorType={x:Type treeviewUI:SimpleTreeView}}}"
+                                                            Visibility="{Binding NodeValue.IsExpanded, NotifyOnSourceUpdated=True, Converter={StaticResource BoolInverseVisibilityCollapseConverter}}" />
+            </Grid>
+        </DataTemplate>        
 
         <!-- Item Template -->
         <DataTemplate x:Key="SimpleTreeViewItemTemplate">
@@ -71,29 +88,23 @@
                         BorderBrush="Transparent"
                         HorizontalAlignment="Stretch">
 
-                    <Grid ColumnDefinitions="Auto, *" Margin="0" VerticalAlignment="Center">
+                    <Grid ColumnDefinitions="Auto, *" Margin="0" VerticalAlignment="Center" Background="Transparent">
 
                         <!-- Expander -->
                         <ToggleButton x:Name="InputFileExpanderButton"
                                       Grid.Column="0"
                                       Margin="0"
                                       Padding="0"
-                                      ClickMode="Press"                                      
+                                      ClickMode="Release"      
+                                      Background="Transparent"                                      
+                                      Checked="InputFileExpanderButton_Checked"
+                                      Unchecked="InputFileExpanderButton_Unchecked"
+                                      ContentTemplateSelector="{StaticResource SimpleTreeViewItemExpanderTemplateSelector}"
                                       IsChecked="{Binding NodeValue.IsExpanded, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                       Visibility="{Binding Children, Converter={StaticResource CollectionNonEmptyVisibilityConverter}}">
-
                             <ToggleButton.Template>
                                 <ControlTemplate TargetType="ToggleButton">
-                                    <Grid Background="Transparent">
-
-                                        <ContentPresenter ContentTemplate="{Binding ItemExpanderClosedTemplate, RelativeSource={RelativeSource AncestorType={x:Type treeviewUI:SimpleTreeView}}}"
-                                                          Visibility="{Binding NodeValue.IsExpanded, Converter={StaticResource BoolInverseVisibilityCollapseConverter}}"                                                          
-                                                          />
-
-                                        <ContentPresenter ContentTemplate="{Binding ItemExpanderOpenTemplate, RelativeSource={RelativeSource AncestorType={x:Type treeviewUI:SimpleTreeView}}}"
-                                                          Visibility="{Binding NodeValue.IsExpanded, Converter={StaticResource BoolVisibilityCollapseConverter}}"
-                                                          />
-                                    </Grid>
+                                    <ContentPresenter />
                                 </ControlTemplate>
                             </ToggleButton.Template>
                         </ToggleButton>

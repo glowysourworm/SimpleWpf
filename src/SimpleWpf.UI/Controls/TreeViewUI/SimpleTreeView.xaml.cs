@@ -2,6 +2,7 @@
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 
@@ -151,6 +152,34 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
             if (viewModel != null)
             {
                 viewModel.ItemPropertyChangedTreeEvent += OnItemSourceItemPropertyChanged;
+            }
+        }
+
+        private void InputFileExpanderButton_Checked(object sender, RoutedEventArgs e)
+        {
+            var toggleButton = sender as ToggleButton;
+
+            // Have to force update of the template
+            if (toggleButton != null)
+            {
+                var selector = toggleButton.ContentTemplateSelector;
+
+                toggleButton.ContentTemplateSelector = null;
+                toggleButton.ContentTemplateSelector = selector;
+            }
+        }
+
+        private void InputFileExpanderButton_Unchecked(object sender, RoutedEventArgs e)
+        {
+            var toggleButton = sender as ToggleButton;
+
+            // Have to force update of the template
+            if (toggleButton != null)
+            {
+                var selector = toggleButton.ContentTemplateSelector;
+
+                toggleButton.ContentTemplateSelector = null;
+                toggleButton.ContentTemplateSelector = selector;
             }
         }
     }
