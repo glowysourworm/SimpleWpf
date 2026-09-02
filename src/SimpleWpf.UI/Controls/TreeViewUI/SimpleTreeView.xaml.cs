@@ -110,9 +110,19 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
         /// </summary>
         public event SimpleEventHandler<object, bool> ItemExpandedEvent;
 
+        /// <summary>
+        /// Event that occurs when the selection in the treeview has changed
+        /// </summary>
+        public event SimpleEventHandler<SimpleTreeView, IEnumerable<TreeViewModel>> SelectedItemsChanged;
+
+        // Private collections
+        private Dictionary<TreeViewModel, TreeViewModel> _selectedItems;
+
         public SimpleTreeView()
         {
             InitializeComponent();
+
+            _selectedItems = new Dictionary<TreeViewModel, TreeViewModel>();
 
             this.DataContextChanged += SimpleTreeView_DataContextChanged;
         }
@@ -139,9 +149,23 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
             {
                 viewModel.RecurseForEach(childItem =>
                 {
+                    var selected = childItem.NodeValue.IsSelected;
+
                     if (childItem.NodeValue.RecursionDepth != item.RecursionDepth)
                         childItem.NodeValue.IsSelected = false;
+
+                    // Selection Changed
+                    if (childItem.NodeValue.IsSelected && !_selectedItems.ContainsKey(childItem as TreeViewModel))
+                        _selectedItems.Add(childItem as TreeViewModel, childItem as TreeViewModel);
+
+                    if (!childItem.NodeValue.IsSelected && _selectedItems.ContainsKey(childItem as TreeViewModel))
+                        _selectedItems.Remove(childItem as TreeViewModel);
+
                 });
+
+                // Selected Items Changed
+                if (this.SelectedItemsChanged != null)
+                    this.SelectedItemsChanged(this, _selectedItems.Values);
             }
         }
 

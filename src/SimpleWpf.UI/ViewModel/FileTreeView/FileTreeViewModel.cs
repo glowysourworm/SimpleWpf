@@ -6,6 +6,11 @@ namespace SimpleWpf.UI.ViewModel.FileTreeView
     {
         private readonly string _searchPattern;
 
+        public string SearchPattern
+        {
+            get { return _searchPattern; }
+        }
+
         public FileTreeViewModel(string searchPattern,
                                  FileTreeNodeViewModel nodeValue,
                                  TreeViewModelBase<FileTreeNodeViewModel> parent = null)

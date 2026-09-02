@@ -1,11 +1,16 @@
-﻿using System.Windows;
+﻿using System.Collections.ObjectModel;
+using System.Windows;
 
+using SimpleWpf.Extensions.ObservableCollection;
+using SimpleWpf.UI.Controls.TreeViewUI;
 using SimpleWpf.UI.ViewModel.TreeView;
 
 namespace SimpleWpf.UI.Test
 {
     public partial class MainWindow : Window
     {
+        ObservableCollection<TreeViewModel> _selectedItems;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -39,7 +44,18 @@ namespace SimpleWpf.UI.Test
                 }
             }
 
+            _selectedItems = new ObservableCollection<TreeViewModel>();
+
+            this.SelectedItemsLB.ItemsSource = _selectedItems;
+            this.TheTreeView.SelectedItemsChanged += TheTreeView_SelectedItemsChanged;
+
             this.DataContext = treeView;
+        }
+
+        private void TheTreeView_SelectedItemsChanged(SimpleTreeView treeView, IEnumerable<TreeViewModel> selectedItems)
+        {
+            _selectedItems.Clear();
+            _selectedItems.AddRange(selectedItems);
         }
     }
 }

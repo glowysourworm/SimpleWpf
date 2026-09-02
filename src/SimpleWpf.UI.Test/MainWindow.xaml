@@ -7,7 +7,8 @@
     <Grid>
         <TabControl>
             <TabItem Header="TreeView">
-                <treeviewUI:SimpleTreeView x:Name="TheTreeView"  
+                <Grid ColumnDefinitions="*, 200">
+                    <treeviewUI:SimpleTreeView x:Name="TheTreeView"  
                                            ItemsSource="{Binding}"
                                            ItemIndent="20"
                                            ItemBackground="White"
@@ -18,17 +19,21 @@
                                            ItemBorderThickness="1"
                                            ItemPadding="3"
                                            FontSize="14">
-                    <treeviewUI:SimpleTreeView.ItemExpanderOpenTemplate>
-                        <DataTemplate>
-                            <shapes:Ellipse Margin="5" Fill="GreenYellow" Stroke="GreenYellow" Height="10" Width="10" />
-                        </DataTemplate>
-                    </treeviewUI:SimpleTreeView.ItemExpanderOpenTemplate>
-                    <treeviewUI:SimpleTreeView.ItemExpanderClosedTemplate>
-                        <DataTemplate>
-                            <shapes:Ellipse Margin="5" Fill="Black" Stroke="Black" Height="10" Width="10" />
-                        </DataTemplate>
-                    </treeviewUI:SimpleTreeView.ItemExpanderClosedTemplate>                    
-                </treeviewUI:SimpleTreeView>
+                        <treeviewUI:SimpleTreeView.ItemExpanderOpenTemplate>
+                            <DataTemplate>
+                                <shapes:Ellipse Margin="5" Fill="GreenYellow" Stroke="GreenYellow" Height="10" Width="10" />
+                            </DataTemplate>
+                        </treeviewUI:SimpleTreeView.ItemExpanderOpenTemplate>
+                        <treeviewUI:SimpleTreeView.ItemExpanderClosedTemplate>
+                            <DataTemplate>
+                                <shapes:Ellipse Margin="5" Fill="Black" Stroke="Black" Height="10" Width="10" />
+                            </DataTemplate>
+                        </treeviewUI:SimpleTreeView.ItemExpanderClosedTemplate>
+                    </treeviewUI:SimpleTreeView>
+
+                    <ListBox x:Name="SelectedItemsLB" Grid.Column="1" />
+                </Grid>
+
             </TabItem>
         </TabControl>
     </Grid>
