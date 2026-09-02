@@ -7,7 +7,7 @@
     <Grid>
         <TabControl>
             <TabItem Header="TreeView">
-                <Grid ColumnDefinitions="*, 200">
+                <Grid ColumnDefinitions="*, 300">
                     <treeviewUI:SimpleTreeView x:Name="TheTreeView"  
                                            ItemsSource="{Binding}"
                                            ItemIndent="20"

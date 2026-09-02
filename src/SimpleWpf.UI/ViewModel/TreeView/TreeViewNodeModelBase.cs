@@ -8,6 +8,8 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         bool _isExpanded;
         bool _isSelected;
 
+        bool _canHaveChildren;
+
         int _recursionDepth;
 
         string _displayName;
@@ -28,6 +30,11 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         {
             get { return _isSelected; }
             set { this.RaiseAndSetIfChanged(ref _isSelected, value); }
+        }
+        public bool CanHaveChildren
+        {
+            get { return _canHaveChildren; }
+            set { this.RaiseAndSetIfChanged(ref _canHaveChildren, value); }
         }
         public int RecursionDepth
         {
@@ -51,6 +58,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         {
             this.DisplayName = string.Empty;
             this.RecursionDepth = recursionDepth;
+            this.CanHaveChildren = true;
 
             this.ToggleExpansionCommand = new SimpleCommand(() =>
             {

@@ -12,13 +12,8 @@ namespace SimpleWpf.UI.ViewModel.TreeView
     /// Base class for a recursive view model which handles recursive iteration using IList (IEnumerable).
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public abstract class TreeViewModelBase<T> : ViewModelBase, IDisposable, IEnumerable, INotifyCollectionChanged where T : TreeViewNodeModelBase
+    public abstract class TreeViewModelBase<T> : ViewModelBase, IDisposable, IEnumerable where T : TreeViewNodeModelBase
     {
-        /// <summary>
-        /// Event that fires when collection has changed. This fires only on this level of the tree
-        /// </summary>
-        public event NotifyCollectionChangedEventHandler CollectionChanged;
-
         /// <summary>
         /// Event that fires when collection's item property has changed. This event fires only at this level of the tree
         /// </summary>
@@ -58,6 +53,10 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         {
             get { return _nodeValue; }
         }
+        public bool CanHaveChildren
+        {
+            get { return _nodeValue.CanHaveChildren; }
+        }
 
         public TreeViewModelBase(T nodeValue, TreeViewModelBase<T> parent = null)
         {
@@ -67,7 +66,6 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             _nodeValue = nodeValue;
 
             _children.ItemPropertyChanged += OnItemPropertyChanged;
-            _children.CollectionChanged += OnItemCollectionChanged;
             _nodeValue.PropertyChanged += OnNodeValuePropertyChanged;
         }
 
@@ -147,12 +145,14 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             if (item == null)
                 throw new NullReferenceException("Trying to insert null value into recursive tree view model");
 
+            if (!this.CanHaveChildren)
+                throw new Exception("Trying to add a node to a sub-tree that has not set the proper CanHaveChildren value on its nodes");
+
             // NEW NODE:  Use this opportunity to hook tree events
             var node = Construct(item);
 
             node.ItemPropertyChanged += OnItemPropertyChanged;
             node.NodeValue.PropertyChanged += OnNodeValuePropertyChanged;
-            node.CollectionChanged += OnItemCollectionChanged;
 
             _children.Add(node);
 
@@ -175,7 +175,6 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             {
                 node.ItemPropertyChanged -= OnItemPropertyChanged;
                 node.NodeValue.PropertyChanged -= OnNodeValuePropertyChanged;
-                node.CollectionChanged -= OnItemCollectionChanged;
             }
 
             _children.Clear();
@@ -212,7 +211,6 @@ namespace SimpleWpf.UI.ViewModel.TreeView
                     // Unhook Events
                     itemNode.ItemPropertyChanged -= OnItemPropertyChanged;
                     itemNode.NodeValue.PropertyChanged -= OnNodeValuePropertyChanged;
-                    itemNode.CollectionChanged -= OnItemCollectionChanged;
 
                     _children.RemoveAt(index);
                     return true;
@@ -249,17 +247,6 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             //
             if (this.Parent != null)
                 this.Parent.OnTreeItemPropertyChanged(treeSender, item, e);
-        }
-
-        // Item Events
-        private void OnItemCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
-        {
-            if (this.CollectionChanged != null)
-                this.CollectionChanged(sender, e);
-
-            // -> Bubble Up
-            //
-            OnTreeItemCollectionChanged(this, sender, e);
         }
 
         // Item Events
@@ -308,7 +295,6 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             {
                 Clear();
                 _children.ItemPropertyChanged -= OnItemPropertyChanged;
-                _children.CollectionChanged -= OnItemCollectionChanged;
                 _nodeValue.PropertyChanged -= OnNodeValuePropertyChanged;
                 _children = null;
             }

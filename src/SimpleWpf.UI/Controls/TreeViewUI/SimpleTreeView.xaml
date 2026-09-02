@@ -14,7 +14,9 @@
         <converters:BoolInverseVisibilityCollapseConverter x:Key="BoolInverseVisibilityCollapseConverter" />
         <converters:CollectionNonEmptyVisibilityConverter x:Key="CollectionNonEmptyVisibilityConverter" />
         <convertersTreeviewUI:TreeViewItemMarginConverter x:Key="TreeViewItemMarginConverter" />
-       
+        <converters:BoolANDVisibilityMultiConverter x:Key="BoolANDVisibilityMultiConverter" />
+        <converters:CollectionNonEmptyBoolConverter x:Key="CollectionNonEmptyBoolConverter" />
+
         <!-- Selectors -->
         <selectors:SimpleTreeViewItemContainerStyleSelector x:Key="SimpleTreeViewItemContainerStyleSelector" />
         <selectors:SimpleTreeViewItemTemplateSelector x:Key="SimpleTreeViewItemTemplateSelector" />
@@ -101,7 +103,7 @@
                                       Unchecked="InputFileExpanderButton_Unchecked"
                                       ContentTemplateSelector="{StaticResource SimpleTreeViewItemExpanderTemplateSelector}"
                                       IsChecked="{Binding NodeValue.IsExpanded, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                      Visibility="{Binding Children, Converter={StaticResource CollectionNonEmptyVisibilityConverter}}">
+                                      Visibility="{Binding NodeValue.CanHaveChildren, Converter={StaticResource BoolVisibilityCollapseConverter}}">
                             <ToggleButton.Template>
                                 <ControlTemplate TargetType="ToggleButton">
                                     <ContentPresenter />
@@ -135,8 +137,13 @@
                          ScrollViewer.HorizontalScrollBarVisibility="Hidden"
                          ScrollViewer.VerticalScrollBarVisibility="Hidden"
                          ScrollViewer.CanContentScroll="False"                         
-                         VirtualizingPanel.IsVirtualizing="True"
-                         Visibility="{Binding NodeValue.IsExpanded, Converter={StaticResource BoolVisibilityCollapseConverter}}">
+                         VirtualizingPanel.IsVirtualizing="True">
+                    <ListBox.Visibility>
+                        <MultiBinding Converter="{StaticResource BoolANDVisibilityMultiConverter}">
+                            <Binding Path="NodeValue.IsExpanded" />
+                            <Binding Path="NodeValue.CanHaveChildren" />
+                        </MultiBinding>
+                    </ListBox.Visibility>
                 </ListBox>
             </Grid>
 

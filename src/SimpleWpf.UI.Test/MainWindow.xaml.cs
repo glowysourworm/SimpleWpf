@@ -38,7 +38,14 @@ namespace SimpleWpf.UI.Test
                     {
                         var grandChild = child.Add(new TreeViewNodeModel(3)
                         {
-                            DisplayName = "Grand Child " + grandChildIndex
+                            DisplayName = "Grand Child (CanHaveChildren = false) " + grandChildIndex,
+                            CanHaveChildren = false
+                        });
+
+                        var grandChildTree = child.Add(new TreeViewNodeModel(3)
+                        {
+                            DisplayName = "Grand Child (CanHaveChildren = true) " + grandChildIndex,
+                            CanHaveChildren = true
                         });
                     }
                 }

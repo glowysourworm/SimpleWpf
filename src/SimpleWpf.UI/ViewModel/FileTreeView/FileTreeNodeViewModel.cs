@@ -73,6 +73,7 @@ namespace SimpleWpf.UI.ViewModel.FileTreeView
 
             // Is Directory?
             this.IsDirectory = Directory.Exists(path);
+            this.CanHaveChildren = this.IsDirectory;
 
             // This is sent in for performance purposes (also lazy loading)
             this.DirectoryFileCount = this.IsDirectory ? directoryFileCount : 0;
