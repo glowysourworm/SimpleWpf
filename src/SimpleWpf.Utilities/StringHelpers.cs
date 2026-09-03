@@ -23,12 +23,34 @@ namespace SimpleWpf.Utilities
             return string1.Contains(string2, StringComparison.InvariantCultureIgnoreCase);
         }
 
+        public static bool RegexMatch(string? pattern, string? target)
+        {
+            if (pattern == null || target == null)
+                return false;
+
+            return Regex.Match(target, pattern, RegexOptions.None).Success;
+        }
+
         public static bool RegexMatchIC(string? pattern, string? target)
         {
             if (pattern == null || target == null)
                 return false;
 
             return Regex.Match(target, pattern, RegexOptions.IgnoreCase).Success;
+        }
+
+        public static bool RegexMatch(string? pattern, string? target, out int matchCount)
+        {
+            matchCount = 0;
+
+            if (pattern == null || target == null)
+                return false;
+
+            var regex = Regex.Match(target, pattern, RegexOptions.None);
+
+            matchCount = regex.Captures.Count;
+
+            return regex.Success;
         }
 
         public static bool RegexMatchIC(string? pattern, string? target, out int matchCount)
