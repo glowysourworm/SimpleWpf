@@ -58,12 +58,17 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             get { return _nodeValue.CanHaveChildren; }
         }
 
+        // Begin / End Update (pattern)
+        bool _updating;
+
         public TreeViewModelBase(T nodeValue, TreeViewModelBase<T> parent = null)
         {
             _children = new NotifyingObservableCollection<TreeViewModelBase<T>>();
             _nodeValue = nodeValue;
             _parent = parent;
             _nodeValue = nodeValue;
+
+            _updating = false;
 
             _children.ItemPropertyChanged += OnItemPropertyChanged;
             _nodeValue.PropertyChanged += OnNodeValuePropertyChanged;
@@ -134,6 +139,17 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             });
 
             return result;
+        }
+
+        public bool HasDirectAncestor(TreeViewModelBase<T> subTree)
+        {
+            if (subTree == this)
+                return true;
+
+            if (this.Parent != null)
+                return this.Parent.HasDirectAncestor(subTree);
+
+            return false;
         }
 
         /// <summary>
@@ -223,9 +239,31 @@ namespace SimpleWpf.UI.ViewModel.TreeView
 
         #endregion
 
+        // Begin / End Update:  Blocking events is needed for handling selection. These methods are invoked by the user code
+        //                      to prevent selection from bogging down recursion loops.
+        //
+        public void BeginUpdate()
+        {
+            if (_updating)
+                throw new Exception("Update already in progress for the TreeViewModelBase");
+
+            _updating = true;
+        }
+
+        public void EndUpdate()
+        {
+            if (!_updating)
+                throw new Exception("Update not in progress for the TreeViewModelBase");
+
+            _updating = false;
+        }
+
         // Tree Collection Events
         private void OnTreeItemCollectionChanged(TreeViewModelBase<T> treeSender, object? sender, NotifyCollectionChangedEventArgs e)
         {
+            if (_updating)
+                return;
+
             // (There may be listeners at this level)
             if (this.CollectionChangedTreeEvent != null)
                 this.CollectionChangedTreeEvent(treeSender, sender, e);
@@ -239,6 +277,9 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         // Tree Item Events
         private void OnTreeItemPropertyChanged(TreeViewModelBase<T> treeSender, T item, PropertyChangedEventArgs e)
         {
+            if (_updating)
+                return;
+
             // (There may be listeners at this level)
             if (this.ItemPropertyChangedTreeEvent != null)
                 this.ItemPropertyChangedTreeEvent(treeSender, item, e);
@@ -252,6 +293,9 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         // Item Events
         private void OnItemPropertyChanged(T item, PropertyChangedEventArgs propertyArgs)
         {
+            if (_updating)
+                return;
+
             if (this.ItemPropertyChanged != null)
                 this.ItemPropertyChanged(item, propertyArgs);
 
@@ -263,6 +307,9 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         // Item Events
         private void OnItemPropertyChanged(TreeViewModelBase<T> item, PropertyChangedEventArgs propertyArgs)
         {
+            if (_updating)
+                return;
+
             if (this.ItemPropertyChanged != null)
                 this.ItemPropertyChanged(item.NodeValue, propertyArgs);
 
@@ -274,6 +321,9 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         // Item Events
         private void OnNodeValuePropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
+            if (_updating)
+                return;
+
             if (this.ItemPropertyChanged != null)
                 this.ItemPropertyChanged(sender as T, e);
 

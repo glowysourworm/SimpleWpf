@@ -120,6 +120,7 @@
                                    TextBlock.TextAlignment="Left">
                             <TextBlock.InputBindings>
                                 <MouseBinding Command="{Binding NodeValue.ToggleExpansionCommand}" MouseAction="LeftDoubleClick" />
+                                <!--MouseBinding Command="{Binding NodeValue.ToggleSelectionCommand}" MouseAction="LeftClick" /-->
                             </TextBlock.InputBindings>                            
                         </TextBlock>
                     </Grid>

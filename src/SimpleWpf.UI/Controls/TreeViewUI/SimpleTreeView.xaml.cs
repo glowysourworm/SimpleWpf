@@ -15,7 +15,7 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
     {
         #region (public) Dependency Properties
         public static readonly DependencyProperty ItemsSourceProperty =
-            DependencyProperty.Register("ItemsSource", typeof(IEnumerable), typeof(SimpleTreeView));
+            DependencyProperty.Register("ItemsSource", typeof(IEnumerable), typeof(SimpleTreeView), new PropertyMetadata(OnItemsSourcePropertyChanged));
 
         public static readonly DependencyProperty ItemExpanderClosedTemplateProperty =
             DependencyProperty.Register("ItemExpanderClosedTemplate", typeof(DataTemplate), typeof(SimpleTreeView));
@@ -123,8 +123,6 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
             InitializeComponent();
 
             _selectedItems = new Dictionary<TreeViewModel, TreeViewModel>();
-
-            this.DataContextChanged += SimpleTreeView_DataContextChanged;
         }
 
         protected override void OnPreviewMouseWheel(MouseWheelEventArgs e)
@@ -141,18 +139,36 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
         // Occurs when a property on the UI (target) side changes
         private void OnItemSourceItemPropertyChanged(TreeViewModelBase<TreeViewNodeModel> treeSender, TreeViewNodeModel item, PropertyChangedEventArgs eventArgs)
         {
-            var viewModel = this.DataContext as TreeViewModel;
+            var viewModel = this.ItemsSource as TreeViewModel;
 
-            // Selection:  De-select anything not in this item's collection (if it is selected)
+            // Selection:  Follow a pattern similar to most tree views (can select "sequentially")
             //
-            if (viewModel != null && item.IsSelected && eventArgs.PropertyName == "IsSelected")
+            if (viewModel != null && treeSender.NodeValue.RecursionDepth == item.RecursionDepth && eventArgs.PropertyName == "IsSelected")
             {
+                // Begin Update:  Prevent further events from firing until the update is finished
+                viewModel.BeginUpdate();
+
+                // Recurse Tree:  Set selection appropriately
                 viewModel.RecurseForEach(childItem =>
                 {
                     var selected = childItem.NodeValue.IsSelected;
 
-                    if (childItem.NodeValue.RecursionDepth != item.RecursionDepth)
+                    // Parent Items
+                    if (childItem.NodeValue.RecursionDepth < item.RecursionDepth)
                         childItem.NodeValue.IsSelected = false;
+
+                    // Child Items
+                    else if (childItem.NodeValue.RecursionDepth > item.RecursionDepth)
+                    {
+                        if (!item.IsSelected)
+                            childItem.NodeValue.IsSelected = false;
+
+                        else
+                        {
+                            if (childItem.HasDirectAncestor(treeSender))
+                                childItem.NodeValue.IsSelected = item.IsSelected;
+                        }
+                    }
 
                     // Selection Changed
                     if (childItem.NodeValue.IsSelected && !_selectedItems.ContainsKey(childItem as TreeViewModel))
@@ -163,19 +179,31 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
 
                 });
 
+                viewModel.EndUpdate();
+
                 // Selected Items Changed
                 if (this.SelectedItemsChanged != null)
                     this.SelectedItemsChanged(this, _selectedItems.Values);
             }
         }
 
-        private void SimpleTreeView_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+        private void UpdateItemsSource()
         {
-            var viewModel = e.NewValue as TreeViewModel;
+            var viewModel = this.ItemsSource as TreeViewModel;
 
             if (viewModel != null)
             {
                 viewModel.ItemPropertyChangedTreeEvent += OnItemSourceItemPropertyChanged;
+            }
+        }
+
+        private static void OnItemsSourcePropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var treeView = d as SimpleTreeView;
+
+            if (treeView != null)
+            {
+                treeView.UpdateItemsSource();
             }
         }
 

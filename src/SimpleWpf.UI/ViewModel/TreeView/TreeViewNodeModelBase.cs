@@ -15,6 +15,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         string _displayName;
 
         SimpleCommand _toggleExpansionCommand;
+        SimpleCommand _toggleSelectionCommand;
 
         public bool IsLoaded
         {
@@ -52,6 +53,11 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             get { return _toggleExpansionCommand; }
             set { this.RaiseAndSetIfChanged(ref _toggleExpansionCommand, value); }
         }
+        public SimpleCommand ToggleSelectionCommand
+        {
+            get { return _toggleSelectionCommand; }
+            set { this.RaiseAndSetIfChanged(ref _toggleSelectionCommand, value); }
+        }
 
 
         public TreeViewNodeModelBase(int recursionDepth)
@@ -63,6 +69,10 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             this.ToggleExpansionCommand = new SimpleCommand(() =>
             {
                 this.IsExpanded = !this.IsExpanded;
+            });
+            this.ToggleSelectionCommand = new SimpleCommand(() =>
+            {
+                this.IsSelected = !this.IsSelected;
             });
         }
     }
