@@ -157,17 +157,25 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
                     if (childItem.NodeValue.RecursionDepth < item.RecursionDepth)
                         childItem.NodeValue.IsSelected = false;
 
+                    if (childItem.NodeValue.RecursionDepth == item.RecursionDepth)
+                        childItem.NodeValue.IsSelected = childItem.NodeValue.IsSelected && (treeSender.Parent == childItem.Parent);
+
                     // Child Items
                     else if (childItem.NodeValue.RecursionDepth > item.RecursionDepth)
                     {
-                        if (!item.IsSelected)
-                            childItem.NodeValue.IsSelected = false;
+                        childItem.NodeValue.IsSelected = false;
 
-                        else
-                        {
-                            if (childItem.HasDirectAncestor(treeSender))
-                                childItem.NodeValue.IsSelected = item.IsSelected;
-                        }
+                        //if (!item.IsSelected)
+                        //    childItem.NodeValue.IsSelected = false;
+
+                        //else
+                        //{
+                        //    if (childItem.HasDirectAncestor(treeSender))
+                        //        childItem.NodeValue.IsSelected = item.IsSelected;
+
+                        //    else
+                        //        childItem.NodeValue.IsSelected = false;
+                        //}
                     }
 
                     // Selection Changed
