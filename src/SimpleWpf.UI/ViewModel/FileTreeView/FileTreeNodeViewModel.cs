@@ -60,7 +60,7 @@ namespace SimpleWpf.UI.ViewModel.FileTreeView
         }
 
         public FileTreeNodeViewModel(string baseDirectory, string path, int directoryFileCount)
-            : base(GetDirectoryDepth(path) - GetDirectoryDepth(baseDirectory))
+            : base(path, GetDirectoryDepth(path) - GetDirectoryDepth(baseDirectory))
         {
             if (!Directory.Exists(baseDirectory))
                 throw new ArgumentException("Directory does not exist! Must create PathViewModel with valid directory");

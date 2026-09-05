@@ -61,9 +61,9 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         }
 
 
-        public TreeViewNodeModelBase(int recursionDepth)
+        public TreeViewNodeModelBase(string displayName, int recursionDepth)
         {
-            this.DisplayName = string.Empty;
+            this.DisplayName = displayName;
             this.RecursionDepth = recursionDepth;
             this.CanHaveChildren = true;
 

@@ -2,7 +2,7 @@
 {
     public class TreeViewNodeModel : TreeViewNodeModelBase
     {
-        public TreeViewNodeModel(int recursionDepth) : base(recursionDepth)
+        public TreeViewNodeModel(string displayName, int recursionDepth) : base(displayName, recursionDepth)
         {
 
         }

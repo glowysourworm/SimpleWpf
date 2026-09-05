@@ -114,16 +114,16 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
         /// <summary>
         /// Event that occurs when the selection in the treeview has changed
         /// </summary>
-        public event SimpleEventHandler<SimpleTreeView, IEnumerable<TreeViewModel>> SelectedItemsChanged;
+        public event SimpleEventHandler<SimpleTreeView, IEnumerable<TreeViewModelBase>> SelectedItemsChanged;
 
         // Private collections
-        private Dictionary<TreeViewModel, TreeViewModel> _selectedItems;
+        private Dictionary<TreeViewModelBase, TreeViewModelBase> _selectedItems;
 
         public SimpleTreeView()
         {
             InitializeComponent();
 
-            _selectedItems = new Dictionary<TreeViewModel, TreeViewModel>();
+            _selectedItems = new Dictionary<TreeViewModelBase, TreeViewModelBase>();
         }
 
         protected override void OnPreviewMouseWheel(MouseWheelEventArgs e)
@@ -140,7 +140,7 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
         // Occurs when a property on the UI (target) side changes
         private void OnItemSourceItemPropertyChanged(TreeViewModelBase treeSender, ITreeViewNode item, PropertyChangedEventArgs eventArgs)
         {
-            var viewModel = this.ItemsSource as TreeViewModel;
+            var viewModel = this.ItemsSource as TreeViewModelBase;
 
             // Selection:  Follow a pattern similar to most tree views (can select "sequentially")
             //
@@ -178,11 +178,11 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
                     }
 
                     // Selection Changed
-                    if (childItem.NodeValue.IsSelected && !_selectedItems.ContainsKey(childItem as TreeViewModel))
-                        _selectedItems.Add(childItem as TreeViewModel, childItem as TreeViewModel);
+                    if (childItem.NodeValue.IsSelected && !_selectedItems.ContainsKey(childItem))
+                        _selectedItems.Add(childItem, childItem);
 
-                    if (!childItem.NodeValue.IsSelected && _selectedItems.ContainsKey(childItem as TreeViewModel))
-                        _selectedItems.Remove(childItem as TreeViewModel);
+                    if (!childItem.NodeValue.IsSelected && _selectedItems.ContainsKey(childItem))
+                        _selectedItems.Remove(childItem);
 
                 });
 

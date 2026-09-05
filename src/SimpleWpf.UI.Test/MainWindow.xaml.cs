@@ -10,7 +10,7 @@ namespace SimpleWpf.UI.Test
 {
     public partial class MainWindow : Window
     {
-        ObservableCollection<TreeViewModel> _selectedItems;
+        ObservableCollection<TreeViewModelBase> _selectedItems;
 
         public EnumTestViewModel EnumTest;
         public TreeViewModel TreeViewModel;
@@ -19,43 +19,29 @@ namespace SimpleWpf.UI.Test
         {
             InitializeComponent();
 
-            this.TreeViewModel = new TreeViewModel(new TreeViewNodeModel(0)
-            {
-                DisplayName = "Root"
-            });
+            this.TreeViewModel = new TreeViewModel(new TreeViewNodeModel("Root", 0));
 
             for (int index = 0; index < 10; index++)
             {
-                var item = this.TreeViewModel.Add(new TreeViewNodeModel(1)
-                {
-                    DisplayName = "Item " + index
-                });
+                var item = this.TreeViewModel.Add(new TreeViewNodeModel("Item " + index, 1));
 
                 for (int childIndex = 0; childIndex < 10; childIndex++)
                 {
-                    var child = item.Add(new TreeViewNodeModel(2)
-                    {
-                        DisplayName = "Child " + childIndex
-                    });
+                    var child = item.Add(new TreeViewNodeModel("Child " + childIndex, 2));
 
                     for (int grandChildIndex = 0; grandChildIndex < 10; grandChildIndex++)
                     {
-                        var grandChild = child.Add(new TreeViewNodeModel(3)
-                        {
-                            DisplayName = "Grand Child (CanHaveChildren = false) " + grandChildIndex,
-                            CanHaveChildren = false
-                        });
+                        var grandChild = child.Add(new TreeViewNodeModel("Grand Child (CanHaveChildren = false) " + grandChildIndex, 3));
 
-                        var grandChildTree = child.Add(new TreeViewNodeModel(3)
+                        var grandChildTree = child.Add(new TreeViewNodeModel("Grand Child (CanHaveChildren = true) " + grandChildIndex, 3)
                         {
-                            DisplayName = "Grand Child (CanHaveChildren = true) " + grandChildIndex,
                             CanHaveChildren = true
                         });
                     }
                 }
             }
 
-            _selectedItems = new ObservableCollection<TreeViewModel>();
+            _selectedItems = new ObservableCollection<TreeViewModelBase>();
 
             this.SelectedItemsLB.ItemsSource = _selectedItems;
             this.TheTreeView.SelectedItemsChanged += TheTreeView_SelectedItemsChanged;
@@ -68,7 +54,7 @@ namespace SimpleWpf.UI.Test
             this.TheTreeView.ItemsSource = this.TreeViewModel;
         }
 
-        private void TheTreeView_SelectedItemsChanged(SimpleTreeView treeView, IEnumerable<TreeViewModel> selectedItems)
+        private void TheTreeView_SelectedItemsChanged(SimpleTreeView sender, IEnumerable<TreeViewModelBase> selectedItems)
         {
             _selectedItems.Clear();
             _selectedItems.AddRange(selectedItems);
