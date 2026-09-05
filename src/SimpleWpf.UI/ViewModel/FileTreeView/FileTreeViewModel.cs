@@ -24,13 +24,9 @@ namespace SimpleWpf.UI.ViewModel.FileTreeView
             return new FileTreeViewModel(_searchPattern, nodeValue, this);
         }
 
-        public IEnumerable<FileTreeNodeViewModel> GetSelection()
+        public IEnumerable<FileTreeViewModel> GetSelection(bool includeDirectories)
         {
-            return this.RecursiveWhere(x => x.IsSelected);
-        }
-        public IEnumerable<FileTreeNodeViewModel> GetSelection(bool includeDirectories)
-        {
-            var result = new List<FileTreeNodeViewModel>();
+            var result = new List<FileTreeViewModel>();
 
             // current sub-tree
             RecurseForEach(subTree =>
@@ -39,11 +35,11 @@ namespace SimpleWpf.UI.ViewModel.FileTreeView
                 {
                     // File
                     if (!subTree.NodeValue.IsDirectory)
-                        result.Add(subTree.NodeValue);
+                        result.Add(subTree as FileTreeViewModel);
 
                     // Directory
                     else if (includeDirectories)
-                        result.Add(subTree.NodeValue);
+                        result.Add(subTree as FileTreeViewModel);
                 }
             });
 
