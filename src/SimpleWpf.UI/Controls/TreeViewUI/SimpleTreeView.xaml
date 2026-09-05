@@ -10,7 +10,7 @@
     <UserControl.Resources>
         
         <!-- Converters -->
-        <converters:BoolVisibilityCollapseConverter x:Key="BoolVisibilityCollapseConverter" />
+        <!converters:BoolVisibilityCollapseConverter x:Key="BoolVisibilityCollapseConverter" />
         <converters:BoolInverseVisibilityCollapseConverter x:Key="BoolInverseVisibilityCollapseConverter" />
         <converters:CollectionNonEmptyVisibilityConverter x:Key="CollectionNonEmptyVisibilityConverter" />
         <convertersTreeviewUI:TreeViewItemMarginConverter x:Key="TreeViewItemMarginConverter" />

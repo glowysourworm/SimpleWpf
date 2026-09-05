@@ -8,6 +8,7 @@ using System.Windows.Media;
 
 using SimpleWpf.Extensions.Event;
 using SimpleWpf.UI.ViewModel.TreeView;
+using SimpleWpf.UI.ViewModel.TreeView.Interface;
 
 namespace SimpleWpf.UI.Controls.TreeViewUI
 {
@@ -137,7 +138,7 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
         }
 
         // Occurs when a property on the UI (target) side changes
-        private void OnItemSourceItemPropertyChanged(TreeViewModelBase<TreeViewNodeModel> treeSender, TreeViewNodeModel item, PropertyChangedEventArgs eventArgs)
+        private void OnItemSourceItemPropertyChanged(TreeViewModelBase treeSender, ITreeViewNode item, PropertyChangedEventArgs eventArgs)
         {
             var viewModel = this.ItemsSource as TreeViewModel;
 
@@ -163,19 +164,19 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
                     // Child Items
                     else if (childItem.NodeValue.RecursionDepth > item.RecursionDepth)
                     {
-                        childItem.NodeValue.IsSelected = false;
+                        //childItem.NodeValue.IsSelected = false;
 
-                        //if (!item.IsSelected)
-                        //    childItem.NodeValue.IsSelected = false;
+                        if (!item.IsSelected)
+                            childItem.NodeValue.IsSelected = false;
 
-                        //else
-                        //{
-                        //    if (childItem.HasDirectAncestor(treeSender))
-                        //        childItem.NodeValue.IsSelected = item.IsSelected;
+                        else
+                        {
+                            if (childItem.HasDirectAncestor(treeSender))
+                                childItem.NodeValue.IsSelected = item.IsSelected;
 
-                        //    else
-                        //        childItem.NodeValue.IsSelected = false;
-                        //}
+                            else
+                                childItem.NodeValue.IsSelected = false;
+                        }
                     }
 
                     // Selection Changed
@@ -197,7 +198,7 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
 
         private void UpdateItemsSource()
         {
-            var viewModel = this.ItemsSource as TreeViewModel;
+            var viewModel = this.ItemsSource as TreeViewModelBase;
 
             if (viewModel != null)
             {

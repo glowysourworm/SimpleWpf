@@ -32,22 +32,22 @@ namespace SimpleWpf.UnitTest.SimpleWpf.ViewModel
             var rootNode = new FileTreeViewModel("*.txt", root);
 
             // -> Root -> Test (Dir)
-            var testDirectoryNode = rootNode.Add(new FileTreeNodeViewModel(_rootDirectory, _testDirectory, 0));
+            var testDirectoryNode = rootNode.Add(new FileTreeNodeViewModel(_rootDirectory, _testDirectory, 0)) as FileTreeViewModel;
 
             // -> Root -> Test (Dir) -> Test (File)
-            var fileNode = testDirectoryNode.Add(new FileTreeNodeViewModel(_rootDirectory, _testFilePath, 0));
+            var fileNode = testDirectoryNode.Add(new FileTreeNodeViewModel(_rootDirectory, _testFilePath, 0)) as FileTreeViewModel;
 
-            Assert.That(rootNode.NodeValue.FullPath == _rootDirectory);
-            Assert.That(testDirectoryNode.NodeValue.FullPath == _testDirectory);
-            Assert.That(fileNode.NodeValue.FullPath == _testFilePath);
+            Assert.That(rootNode.GetNodeValue().FullPath == _rootDirectory);
+            Assert.That(testDirectoryNode.GetNodeValue().FullPath == _testDirectory);
+            Assert.That(fileNode.GetNodeValue().FullPath == _testFilePath);
 
-            Assert.That(rootNode.NodeValue.BaseDirectory == _rootDirectory);
-            Assert.That(testDirectoryNode.NodeValue.BaseDirectory == _rootDirectory);
-            Assert.That(fileNode.NodeValue.BaseDirectory == _rootDirectory);
+            Assert.That(rootNode.GetNodeValue().BaseDirectory == _rootDirectory);
+            Assert.That(testDirectoryNode.GetNodeValue().BaseDirectory == _rootDirectory);
+            Assert.That(fileNode.GetNodeValue().BaseDirectory == _rootDirectory);
 
-            Assert.That(rootNode.NodeValue.IsDirectory);
-            Assert.That(testDirectoryNode.NodeValue.IsDirectory);
-            Assert.That(fileNode.NodeValue.IsDirectory);
+            Assert.That(rootNode.GetNodeValue().IsDirectory);
+            Assert.That(testDirectoryNode.GetNodeValue().IsDirectory);
+            Assert.That(fileNode.GetNodeValue().IsDirectory);
         }
 
         [Test]

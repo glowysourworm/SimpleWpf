@@ -1,8 +1,4 @@
 ﻿using System.ComponentModel;
-using System.Threading.Tasks;
-using System.Windows;
-
-using SimpleWpf.Extensions.ObservableCollection;
 
 namespace SimpleWpf.Extensions.Event
 {

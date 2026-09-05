@@ -1,6 +1,8 @@
-﻿namespace SimpleWpf.UI.ViewModel.TreeView
+﻿using SimpleWpf.UI.ViewModel.TreeView.Interface;
+
+namespace SimpleWpf.UI.ViewModel.TreeView
 {
-    public class TreeViewModel : TreeViewModelBase<TreeViewNodeModel>
+    public class TreeViewModel : TreeViewModelBase
     {
         public TreeViewModel(TreeViewNodeModel nodeValue,
                              TreeViewModel parent = null)
@@ -8,9 +10,9 @@
         {
         }
 
-        protected override TreeViewModel Construct(TreeViewNodeModel nodeValue)
+        protected override TreeViewModel Construct(ITreeViewNode nodeValue)
         {
-            return new TreeViewModel(nodeValue, this);
+            return new TreeViewModel(nodeValue as TreeViewNodeModel, this);
         }
 
         public override string ToString()

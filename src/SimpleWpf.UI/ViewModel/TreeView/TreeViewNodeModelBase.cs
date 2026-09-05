@@ -1,8 +1,9 @@
 ﻿using SimpleWpf.UI.Command;
+using SimpleWpf.UI.ViewModel.TreeView.Interface;
 
 namespace SimpleWpf.UI.ViewModel.TreeView
 {
-    public abstract class TreeViewNodeModelBase : ViewModelBase
+    public abstract class TreeViewNodeModelBase : ViewModelBase, ITreeViewNode
     {
         bool _isLoaded;
         bool _isExpanded;
