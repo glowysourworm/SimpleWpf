@@ -12,9 +12,9 @@ namespace SimpleWpf.UI.Controls.TreeViewUI.Selectors
         }
         public override Style SelectStyle(object item, DependencyObject container)
         {
-            var listBoxItem = VisualTreeHelperEx.FindAncestorByType<ListBoxItem>(container);
+            var treeViewItem = VisualTreeHelperEx.FindAncestorByType<TreeViewItem>(container);
 
-            if (listBoxItem == null)
+            if (treeViewItem == null)
                 throw new NullReferenceException("Improper handling of SimpleTreeViewItemContainerStyleSelector");
 
             // SPECIFIC VIEW MODEL
@@ -26,7 +26,7 @@ namespace SimpleWpf.UI.Controls.TreeViewUI.Selectors
 
             // Styling:  There may be a need for style selection; but this is primarily to 
             //           use these with recursion.
-            return listBoxItem.FindResource("SimpleTreeViewItemContainerStyle") as Style;
+            return treeViewItem.FindResource("SimpleTreeViewItemContainerStyle") as Style;
         }
     }
 }

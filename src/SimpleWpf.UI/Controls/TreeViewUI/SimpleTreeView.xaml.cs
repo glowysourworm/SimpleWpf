@@ -128,13 +128,13 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
 
         protected override void OnPreviewMouseWheel(MouseWheelEventArgs e)
         {
-            // Calculate scroll extent
-            var scrollAmount = Math.Clamp(this.TheScrollViewer.VerticalOffset - e.Delta, 0, this.TheScrollViewer.ScrollableHeight);
+            //// Calculate scroll extent
+            //var scrollAmount = Math.Clamp(this.TheScrollViewer.VerticalOffset - e.Delta, 0, this.TheScrollViewer.ScrollableHeight);
 
-            // Handle scroll with the viewer
-            this.TheScrollViewer.ScrollToVerticalOffset(scrollAmount);
+            //// Handle scroll with the viewer
+            //this.TheScrollViewer.ScrollToVerticalOffset(scrollAmount);
 
-            e.Handled = true;
+            //e.Handled = true;
         }
 
         // Occurs when a property on the UI (target) side changes
@@ -164,8 +164,6 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
                     // Child Items
                     else if (childItem.NodeValue.RecursionDepth > item.RecursionDepth)
                     {
-                        //childItem.NodeValue.IsSelected = false;
-
                         if (!item.IsSelected)
                             childItem.NodeValue.IsSelected = false;
 

@@ -12,9 +12,9 @@ namespace SimpleWpf.UI.Controls.TreeViewUI.Selectors
 
         public override DataTemplate SelectTemplate(object item, DependencyObject container)
         {
-            var listBoxItem = VisualTreeHelperEx.FindAncestorByType<ListBoxItem>(container);
+            var treeViewItem = VisualTreeHelperEx.FindAncestorByType<TreeViewItem>(container);
 
-            if (listBoxItem == null)
+            if (treeViewItem == null)
                 throw new NullReferenceException("Improper handling of SimpleTreeViewItemTemplateSelector");
 
             //var viewModel = listBoxItem.DataContext as TreeViewModelBase<TreeViewNodeModelBase>;
@@ -26,7 +26,7 @@ namespace SimpleWpf.UI.Controls.TreeViewUI.Selectors
             //             use these with recursion. For further styling it may be easier to expose
             //             other dependency properties of the TreeView
 
-            return listBoxItem.FindResource("SimpleTreeViewItemTemplate") as DataTemplate;
+            return treeViewItem.FindResource("SimpleTreeViewItemTemplate") as DataTemplate;
         }
     }
 }

@@ -10,7 +10,7 @@
     <UserControl.Resources>
         
         <!-- Converters -->
-        <!converters:BoolVisibilityCollapseConverter x:Key="BoolVisibilityCollapseConverter" />
+        <converters:BoolVisibilityCollapseConverter x:Key="BoolVisibilityCollapseConverter" />
         <converters:BoolInverseVisibilityCollapseConverter x:Key="BoolInverseVisibilityCollapseConverter" />
         <converters:CollectionNonEmptyVisibilityConverter x:Key="CollectionNonEmptyVisibilityConverter" />
         <convertersTreeviewUI:TreeViewItemMarginConverter x:Key="TreeViewItemMarginConverter" />
@@ -23,17 +23,33 @@
         <selectors:SimpleTreeViewItemExpanderTemplateSelector x:Key="SimpleTreeViewItemExpanderTemplateSelector" />
 
         <!-- List Box Style (need selectors to be able to use these recursively -->
-        <Style TargetType="ListBox" x:Key="SimpleTreeViewListBoxStyle">
+        <Style TargetType="TreeView" x:Key="SimpleTreeViewListBoxStyle">
             <Setter Property="BorderBrush" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Margin" Value="0" />
-            <Setter Property="AlternationCount" Value="2" />
-            <Setter Property="ItemTemplateSelector" Value="{StaticResource SimpleTreeViewItemTemplateSelector}" />
             <Setter Property="ItemContainerStyleSelector" Value="{StaticResource SimpleTreeViewItemContainerStyleSelector}" />
         </Style>
 
+        <!-- Toggle Button Templates -->
+        <DataTemplate x:Key="SimpleTreeViewItemExpanderOpenTemplate">
+            <Grid Background="Transparent" ColumnDefinitions="Auto, *" RowDefinitions="Auto, Auto">
+
+                <!-- Item Expander -->
+                <ContentPresenter ContentTemplate="{Binding ItemExpanderOpenTemplate, RelativeSource={RelativeSource AncestorType={x:Type treeviewUI:SimpleTreeView}}}"
+                                                            Visibility="{Binding NodeValue.IsExpanded, NotifyOnSourceUpdated=True, Converter={StaticResource BoolVisibilityCollapseConverter}}" />
+            </Grid>
+        </DataTemplate>
+        <DataTemplate x:Key="SimpleTreeViewItemExpanderClosedTemplate">
+            <Grid Background="Transparent" ColumnDefinitions="Auto, *" RowDefinitions="Auto, Auto">
+
+                <!-- Item Expander -->
+                <ContentPresenter ContentTemplate="{Binding ItemExpanderClosedTemplate, RelativeSource={RelativeSource AncestorType={x:Type treeviewUI:SimpleTreeView}}}"
+                                                            Visibility="{Binding NodeValue.IsExpanded, NotifyOnSourceUpdated=True, Converter={StaticResource BoolInverseVisibilityCollapseConverter}}" />
+            </Grid>
+        </DataTemplate>
+
         <!-- Item Container Style-->
-        <Style TargetType="ListBoxItem" x:Key="SimpleTreeViewItemContainerStyle">
+        <Style TargetType="TreeViewItem" x:Key="SimpleTreeViewItemContainerStyle">
             <Setter Property="BorderBrush" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Margin" Value="0" />
@@ -42,150 +58,85 @@
             <Setter Property="FontFamily" Value="{Binding FontFamily, RelativeSource={RelativeSource AncestorType=UserControl}}" />
             <Setter Property="FontStyle" Value="{Binding FontStyle, RelativeSource={RelativeSource AncestorType=UserControl}}" />
             <Setter Property="FontWeight" Value="{Binding FontWeight, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+            <Setter Property="HeaderTemplateSelector" Value="{StaticResource SimpleTreeViewItemExpanderTemplateSelector}" />
+            <Setter Property="ItemsSource" Value="{Binding Children}" />
             
             <!-- DATA BINDING (must align with the view model)-->
             <Setter Property="IsSelected" Value="{Binding NodeValue.IsSelected, Mode=TwoWay}" />
-            
+            <Setter Property="IsExpanded" Value="{Binding NodeValue.IsExpanded, Mode=TwoWay}" />
+
+
             <Setter Property="Template">
                 <Setter.Value>
-                    <ControlTemplate TargetType="ListBoxItem">
-                        <Border Padding="{TemplateBinding Padding}"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}">
-                            <ContentPresenter Margin="{TemplateBinding Margin}" />
-                        </Border>
+                    <ControlTemplate TargetType="TreeViewItem">
+
+
+                        <Grid x:Name="ItemInnerGrid" Background="Transparent" ColumnDefinitions="Auto, *" RowDefinitions="Auto, *">
+
+                            <!-- Item Expander -->
+                            <Border Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    Padding="{TemplateBinding Padding}"
+                                    Margin="{TemplateBinding Margin}">
+                                <Border.InputBindings>
+                                    <MouseBinding MouseAction="LeftClick" Command="{Binding NodeValue.ToggleExpansionCommand}" />
+                                </Border.InputBindings>
+                                
+                                <ContentPresenter ContentSource="Header" 
+                                                  Visibility="{Binding NodeValue.CanHaveChildren, Converter={StaticResource BoolVisibilityCollapseConverter}}" />
+                            </Border>
+
+                            <!-- Item Header -->
+                            <Border Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    Padding="{TemplateBinding Padding}"
+                                    Margin="{TemplateBinding Margin}"
+                                    Grid.Column="1">
+                                <TextBlock Text="{Binding NodeValue.DisplayName}" />
+                            </Border>
+
+                            <!-- Items -->
+                            <ItemsPresenter 
+                                    Grid.Row="1"
+                                    Grid.Column="1"
+                                    Visibility="{Binding NodeValue.IsExpanded, NotifyOnSourceUpdated=True, Converter={StaticResource BoolVisibilityCollapseConverter}}" />
+
+                        </Grid>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
-        </Style>
-        
-        <!-- Toggle Button Templates -->
-        <DataTemplate x:Key="SimpleTreeViewItemExpanderOpenTemplate">
-            <Grid Background="Transparent">
 
-                <ContentPresenter ContentTemplate="{Binding ItemExpanderOpenTemplate, RelativeSource={RelativeSource AncestorType={x:Type treeviewUI:SimpleTreeView}}}"
-                                                            Visibility="{Binding NodeValue.IsExpanded, NotifyOnSourceUpdated=True, Converter={StaticResource BoolVisibilityCollapseConverter}}" />
-            </Grid>
-        </DataTemplate>
-        <DataTemplate x:Key="SimpleTreeViewItemExpanderClosedTemplate">
-            <Grid Background="Transparent">
-
-                <ContentPresenter ContentTemplate="{Binding ItemExpanderClosedTemplate, RelativeSource={RelativeSource AncestorType={x:Type treeviewUI:SimpleTreeView}}}"
-                                                            Visibility="{Binding NodeValue.IsExpanded, NotifyOnSourceUpdated=True, Converter={StaticResource BoolInverseVisibilityCollapseConverter}}" />
-            </Grid>
-        </DataTemplate>        
-
-        <!-- Item Template -->
-        <DataTemplate x:Key="SimpleTreeViewItemTemplate">
-
-            <Grid RowDefinitions="Auto, *" Margin="0" VerticalAlignment="Center">
-
-                <!-- Header -->
-                <Border x:Name="HeaderBorder"
-                        Grid.Row="0"
-                        Padding="0"
-                        Margin="0"
-                        BorderThickness="0"
-                        BorderBrush="Transparent"
-                        HorizontalAlignment="Stretch">
-
-                    <Grid ColumnDefinitions="Auto, *" Margin="0" VerticalAlignment="Center" Background="Transparent">
-
-                        <!-- Expander -->
-                        <ToggleButton x:Name="InputFileExpanderButton"
-                                      Grid.Column="0"
-                                      Margin="0"
-                                      Padding="0"
-                                      ClickMode="Release"      
-                                      Background="Transparent"                                      
-                                      Checked="InputFileExpanderButton_Checked"
-                                      Unchecked="InputFileExpanderButton_Unchecked"
-                                      ContentTemplateSelector="{StaticResource SimpleTreeViewItemExpanderTemplateSelector}"
-                                      IsChecked="{Binding NodeValue.IsExpanded, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                      Visibility="{Binding NodeValue.CanHaveChildren, Converter={StaticResource BoolVisibilityCollapseConverter}}">
-                            <ToggleButton.Template>
-                                <ControlTemplate TargetType="ToggleButton">
-                                    <ContentPresenter />
-                                </ControlTemplate>
-                            </ToggleButton.Template>
-                        </ToggleButton>
-
-                        <TextBlock Text="{Binding}"
-                                   Grid.Column="1"
-                                   Padding="0"
-                                   Margin="{Binding ItemPadding, RelativeSource={RelativeSource AncestorType={x:Type treeviewUI:SimpleTreeView}}}"
-                                   HorizontalAlignment="Stretch"
-                                   VerticalAlignment="Center"
-                                   TextBlock.TextAlignment="Left">
-                            <TextBlock.InputBindings>
-                                <MouseBinding Command="{Binding NodeValue.ToggleExpansionCommand}" MouseAction="LeftDoubleClick" />
-                                <!--MouseBinding Command="{Binding NodeValue.ToggleSelectionCommand}" MouseAction="LeftClick" /-->
-                            </TextBlock.InputBindings>                            
-                        </TextBlock>
-                    </Grid>
-                </Border>
-
-                <!-- Items -->
-                <ListBox x:Name="LeafLB"
-                         Grid.Row="1" 
-                         Margin="{Binding ItemIndent, RelativeSource={RelativeSource AncestorType={x:Type treeviewUI:SimpleTreeView}}, Converter={StaticResource TreeViewItemMarginConverter}}"
-                         BorderThickness="0"
-                         BorderBrush="Transparent"
-                         ItemsSource="{Binding Children}"
-                         Style="{StaticResource SimpleTreeViewListBoxStyle}"
-                         SelectionMode="Extended"
-                         ScrollViewer.HorizontalScrollBarVisibility="Hidden"
-                         ScrollViewer.VerticalScrollBarVisibility="Hidden"
-                         ScrollViewer.CanContentScroll="False"                         
-                         VirtualizingPanel.IsVirtualizing="True">
-                    <ListBox.Visibility>
-                        <MultiBinding Converter="{StaticResource BoolANDVisibilityMultiConverter}">
-                            <Binding Path="NodeValue.IsExpanded" />
-                            <Binding Path="NodeValue.CanHaveChildren" />
-                        </MultiBinding>
-                    </ListBox.Visibility>
-                </ListBox>
-            </Grid>
-
-            <DataTemplate.Triggers>
-
-                <!-- Alteration -->
-                <!--Trigger Property="ItemsControl.AlternationIndex" Value="0">
-                    <Setter TargetName="HeaderBorder" Property="Background" Value="{Binding ItemBackground, RelativeSource={RelativeSource AncestorType={x:Type treeviewUI:SimpleTreeView}}}" />
-                </Trigger>
-                <Trigger Property="ItemsControl.AlternationIndex" Value="1">
-                    <Setter TargetName="HeaderBorder" Property="Background" Value="{Binding ItemBackgroundAlternation, RelativeSource={RelativeSource AncestorType={x:Type treeviewUI:SimpleTreeView}}}" />
-                </Trigger-->
-
-                <Trigger Property="IsMouseOver" Value="True" SourceName="HeaderBorder">
-                    <Setter TargetName="HeaderBorder" Property="Background" Value="{Binding ItemHoverBrush, RelativeSource={RelativeSource AncestorType={x:Type treeviewUI:SimpleTreeView}}}" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{Binding ItemHoverBrush, RelativeSource={RelativeSource AncestorType={x:Type treeviewUI:SimpleTreeView}}}" />
                 </Trigger>
                 <DataTrigger Binding="{Binding NodeValue.IsSelected}" Value="True">
-                    <Setter TargetName="HeaderBorder" Property="Background" Value="{Binding ItemSelectionBrush, RelativeSource={RelativeSource AncestorType={x:Type treeviewUI:SimpleTreeView}}}" />
+                    <Setter Property="Background" Value="{Binding ItemSelectionBrush, RelativeSource={RelativeSource AncestorType={x:Type treeviewUI:SimpleTreeView}}}" />
                 </DataTrigger>
-            </DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding NodeValue.IsExpanded}" Value="True">
+                    <Setter Property="HeaderTemplate" Value="{StaticResource SimpleTreeViewItemExpanderOpenTemplate}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding NodeValue.IsExpanded}" Value="False">
+                    <Setter Property="HeaderTemplate" Value="{StaticResource SimpleTreeViewItemExpanderClosedTemplate}" />
+                </DataTrigger>
+            </Style.Triggers>
 
-        </DataTemplate>
+        </Style>
+       
 
     </UserControl.Resources>
 
-    <ScrollViewer x:Name="TheScrollViewer" CanContentScroll="False"
-                  HorizontalScrollBarVisibility="Auto"
-                  VerticalScrollBarVisibility="Auto"
-                  BorderBrush="{Binding BorderBrush, ElementName=BaseControl}"
-                  BorderThickness="{Binding BorderThickness, ElementName=BaseControl}">
-        <Grid>
-
-            <ListBox x:Name="TheTreeView" 
-                     ItemsSource="{Binding ItemsSource, ElementName=BaseControl}"
-                     ScrollViewer.HorizontalScrollBarVisibility="Hidden"
-                     ScrollViewer.VerticalScrollBarVisibility="Hidden"
-                     ScrollViewer.CanContentScroll="False"
-                     SelectionMode="Extended"
-                     Style="{StaticResource SimpleTreeViewListBoxStyle}">
-            </ListBox>
-
-        </Grid>
-    </ScrollViewer>
+    <TreeView x:Name="TheTreeView" 
+              ItemsSource="{Binding ItemsSource, ElementName=BaseControl}"
+              ScrollViewer.HorizontalScrollBarVisibility="Auto"
+              ScrollViewer.VerticalScrollBarVisibility="Auto"
+              ScrollViewer.CanContentScroll="False"
+              VirtualizingPanel.IsVirtualizing="True"
+              VirtualizingPanel.VirtualizationMode="Recycling"
+              VirtualizingPanel.CacheLength="3"
+              VirtualizingPanel.CacheLengthUnit="Item"
+              Style="{StaticResource SimpleTreeViewListBoxStyle}">
+    </TreeView>
 </UserControl>

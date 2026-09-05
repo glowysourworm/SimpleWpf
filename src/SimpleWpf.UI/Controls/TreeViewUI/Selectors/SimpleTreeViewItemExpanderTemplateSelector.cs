@@ -9,25 +9,25 @@ namespace SimpleWpf.UI.Controls.TreeViewUI.Selectors
     {
         public override DataTemplate SelectTemplate(object item, DependencyObject container)
         {
-            var listBoxItem = VisualTreeHelperEx.FindAncestorByType<ListBoxItem>(container);
+            var treeViewItem = VisualTreeHelperEx.FindAncestorByType<TreeViewItem>(container);
 
-            if (listBoxItem == null ||
-                listBoxItem.DataContext == null)
+            if (treeViewItem == null ||
+                treeViewItem.DataContext == null)
                 throw new Exception("Trying to select data template for a null item, or null data context");
 
             // Going to need some reflection here because of the template class hierarchy...
             try
             {
-                var nodeValueProperty = listBoxItem.DataContext.GetType().GetProperty("NodeValue");
+                var nodeValueProperty = treeViewItem.DataContext.GetType().GetProperty("NodeValue");
                 var isExpandedProperty = nodeValueProperty.PropertyType.GetProperty("IsExpanded");
-                var nodeValue = nodeValueProperty.GetValue(listBoxItem.DataContext);
+                var nodeValue = nodeValueProperty.GetValue(treeViewItem.DataContext);
                 var isExpanded = (bool)isExpandedProperty.GetValue(nodeValue);
 
                 if (isExpanded)
-                    return listBoxItem.FindResource("SimpleTreeViewItemExpanderOpenTemplate") as DataTemplate;
+                    return treeViewItem.FindResource("SimpleTreeViewItemExpanderOpenTemplate") as DataTemplate;
 
                 else
-                    return listBoxItem.FindResource("SimpleTreeViewItemExpanderClosedTemplate") as DataTemplate;
+                    return treeViewItem.FindResource("SimpleTreeViewItemExpanderClosedTemplate") as DataTemplate;
             }
             catch (Exception ex)
             {
