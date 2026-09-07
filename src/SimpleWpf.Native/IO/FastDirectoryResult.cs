@@ -1,5 +1,4 @@
 ﻿using System.IO;
-using System.Xml.Linq;
 
 using SimpleWpf.Native.WinAPI.Data;
 
@@ -8,7 +7,7 @@ namespace SimpleWpf.Native.IO
     public struct FastDirectoryResult
     {
         public string FileName;
-        public string Path;
+        public string FullPath;
         public bool IsDirectory;
         public long Size;
         public FileAttributes Attributes;
@@ -22,7 +21,7 @@ namespace SimpleWpf.Native.IO
         /// </summary>
         public FastDirectoryResult(string directory)
         {
-            this.Path = directory;
+            this.FullPath = directory;
             this.IsDirectory = true;
             this.Attributes = FileAttributes.Directory;
         }
@@ -32,7 +31,7 @@ namespace SimpleWpf.Native.IO
             this.Size = CombineHighLowInts(findData.nFileSizeHigh, findData.nFileSizeLow);
             this.FileName = findData.cFileName;
             this.IsDirectory = false;
-            this.Path = System.IO.Path.Combine(directory, findData.cFileName);
+            this.FullPath = System.IO.Path.Combine(directory, findData.cFileName);
             this.Attributes = (FileAttributes)findData.dwFileAttributes;
 
             this.CreationTimeUTC = ConvertDateTime((uint)findData.ftCreationTime.dwHighDateTime, (uint)findData.ftCreationTime.dwLowDateTime);
@@ -44,7 +43,7 @@ namespace SimpleWpf.Native.IO
         {
             this.Size = CombineHighLowInts(findData.nFileSizeHigh, findData.nFileSizeLow);
             this.FileName = findData.cFileName;
-            this.Path = System.IO.Path.Combine(directory, findData.cFileName);
+            this.FullPath = System.IO.Path.Combine(directory, findData.cFileName);
             this.IsDirectory = false;
             this.Attributes = (FileAttributes)findData.dwFileAttributes;
 

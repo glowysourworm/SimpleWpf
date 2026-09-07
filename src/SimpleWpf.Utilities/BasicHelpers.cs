@@ -25,7 +25,7 @@ namespace SimpleWpf.Utilities
             {
                 return fastDirectory.GetFiles()
                                     .Where(x => !x.IsDirectory)
-                                    .Select(x => x.Path)
+                                    .Select(x => x.FullPath)
                                     .ToList();
             }
         }

@@ -71,16 +71,16 @@ namespace SimpleWpf.Native.IO
             foreach (var directory in directories.Select(x => new FastDirectoryResult(x)))
             {
                 // Exclude the base directory from results
-                if (directory.Path != _baseDirectory)
+                if (directory.FullPath != _baseDirectory)
                 {
                     result.Add(directory);
                 }
 
-                if (directory.Path == _baseDirectory ||
+                if (directory.FullPath == _baseDirectory ||
                     _searchOption == SearchOption.AllDirectories)
                 {
                     // Get File Listing (flattened)
-                    var directoryFiles = GetFromDirectory(directory.Path);
+                    var directoryFiles = GetFromDirectory(directory.FullPath);
 
                     foreach (var file in directoryFiles)
                     {

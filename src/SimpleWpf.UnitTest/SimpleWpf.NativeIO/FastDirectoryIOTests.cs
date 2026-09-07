@@ -49,7 +49,7 @@ namespace SimpleWpf.UnitTest.SimpleWpf.NativeIO
                 Assert.That(result.Count(x => x.FileName == _testSubFolder) == 0);
 
                 // Path
-                Assert.That(result.Count(x => x.Path == _testSubFolder) == 1);
+                Assert.That(result.Count(x => x.FullPath == _testSubFolder) == 1);
             }
         }
 
@@ -73,9 +73,9 @@ namespace SimpleWpf.UnitTest.SimpleWpf.NativeIO
                 Assert.That(result.Count(x => x.FileName == TEST_FILE2) == 1);
 
                 // Path
-                Assert.That(result.Count(x => x.Path == _testSubFolder) == 1);
-                Assert.That(result.Count(x => x.Path == _testFilePath1) == 1);
-                Assert.That(result.Count(x => x.Path == _testFilePath2) == 1);
+                Assert.That(result.Count(x => x.FullPath == _testSubFolder) == 1);
+                Assert.That(result.Count(x => x.FullPath == _testFilePath1) == 1);
+                Assert.That(result.Count(x => x.FullPath == _testFilePath2) == 1);
             }
         }
 
