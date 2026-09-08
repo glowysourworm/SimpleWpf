@@ -7,9 +7,6 @@ namespace SimpleWpf.IocFramework.EventAggregation
     {
         readonly SimpleDictionary<IocEventKey, Action<T>> _actions;
 
-        // GetLastEvent()
-        T _lastPayload;
-
         bool _isRunning;
 
         public IocEvent()
@@ -36,11 +33,6 @@ namespace SimpleWpf.IocFramework.EventAggregation
             _actions.Remove(eventKey);
         }
 
-        public T GetLast()
-        {
-            return _lastPayload;
-        }
-
         public void Publish(T payload)
         {
             // Copying the collection because the actions may have subscriptions in them that modify the _actions
@@ -48,10 +40,6 @@ namespace SimpleWpf.IocFramework.EventAggregation
             var actions = _actions.OrderBy(x => x.Key.Priority)
                                   .Select(x => x.Value)
                                   .Actualize();
-
-            // Save payload for the GetLastEvent() method
-            //
-            _lastPayload = payload;
 
             _isRunning = true;
 

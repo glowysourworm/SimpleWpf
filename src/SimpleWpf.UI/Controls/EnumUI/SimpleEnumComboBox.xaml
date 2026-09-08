@@ -19,7 +19,6 @@
             <DataTemplate>
                 <Border Cursor="Hand">
                     <Grid Background="Transparent" 
-                          Margin="2" 
                           ToolTip="{Binding Description}">
                         <ContentPresenter Content="{Binding Name}" />
                     </Grid>

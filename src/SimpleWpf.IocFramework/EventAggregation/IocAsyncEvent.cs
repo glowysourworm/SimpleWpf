@@ -7,7 +7,6 @@ namespace SimpleWpf.IocFramework.EventAggregation
     {
         readonly SimpleDictionary<IocEventKey, Func<T, Task>> _functions;
 
-        T _lastPayload;
         bool _isRunning;
 
         public IocAsyncEvent()
@@ -34,12 +33,6 @@ namespace SimpleWpf.IocFramework.EventAggregation
 
             _functions.Remove(eventKey);
         }
-
-        public T GetLast()
-        {
-            return _lastPayload;
-        }
-
         public async Task Publish(T payload)
         {
             // Copying the collection because the functions may have subscriptions in them that modify the _functions
