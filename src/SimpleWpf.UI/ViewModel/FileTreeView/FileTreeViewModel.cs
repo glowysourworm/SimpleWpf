@@ -33,6 +33,12 @@ namespace SimpleWpf.UI.ViewModel.FileTreeView
             return new FileTreeViewModel(_searchPattern, nodeValue as FileTreeNodeViewModel, this);
         }
 
+        public int GetSelectedFileCount()
+        {
+            // Selected File Count
+            return RecursiveCount(node => node.IsSelected && !node.CanHaveChildren);
+        }
+
         public IEnumerable<FileTreeViewModel> GetSelection(bool includeDirectories)
         {
             var result = new List<FileTreeViewModel>();
