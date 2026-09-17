@@ -2,6 +2,7 @@
 
 namespace SimpleWpf.UnitTest.SimpleWpf.NativeIO
 {
+    [TestClass]
     public class FastDirectoryIOTests
     {
         const string TEST_FOLDER = "SimpleWpf_UnitTest_NativeIO";
@@ -15,7 +16,7 @@ namespace SimpleWpf.UnitTest.SimpleWpf.NativeIO
         private string _testFilePath1;
         private string _testFilePath2;
 
-        [SetUp]
+        [TestInitialize]
         public void Setup()
         {
             _rootDirectory = Environment.CurrentDirectory;
@@ -31,7 +32,7 @@ namespace SimpleWpf.UnitTest.SimpleWpf.NativeIO
             File.WriteAllText(_testFilePath2, "This is a test file for SimpleWpf.UnitTest project. This may be deleted.");
         }
 
-        [Test]
+        [TestMethod]
         public void TopLevelDirectory()
         {
             using (var fileIO = new FastDirectoryIO(_testDirectory, "*.txt", SearchOption.TopDirectoryOnly))
@@ -39,21 +40,21 @@ namespace SimpleWpf.UnitTest.SimpleWpf.NativeIO
                 var result = fileIO.GetFiles();
 
                 // Includes Directories / Files
-                Assert.That(result.Count() == 1);
+                Assert.IsTrue(result.Count() == 1);
 
                 // Directory Flag
-                Assert.That(result.Count(x => x.Attributes.HasFlag(FileAttributes.Directory)) == 1);
-                Assert.That(result.Count(x => x.IsDirectory) == 1);
+                Assert.IsTrue(result.Count(x => x.Attributes.HasFlag(FileAttributes.Directory)) == 1);
+                Assert.IsTrue(result.Count(x => x.IsDirectory) == 1);
 
                 // FileName
-                Assert.That(result.Count(x => x.FileName == _testSubFolder) == 0);
+                Assert.IsTrue(result.Count(x => x.FileName == _testSubFolder) == 0);
 
                 // Path
-                Assert.That(result.Count(x => x.FullPath == _testSubFolder) == 1);
+                Assert.IsTrue(result.Count(x => x.FullPath == _testSubFolder) == 1);
             }
         }
 
-        [Test]
+        [TestMethod]
         public void AllDirectories()
         {
             using (var fileIO = new FastDirectoryIO(_testDirectory, "*.txt", SearchOption.AllDirectories))
@@ -61,25 +62,25 @@ namespace SimpleWpf.UnitTest.SimpleWpf.NativeIO
                 var result = fileIO.GetFiles();
 
                 // Includes Directories / Files
-                Assert.That(result.Count() == 3);
+                Assert.IsTrue(result.Count() == 3);
 
                 // Directory Flag
-                Assert.That(result.Count(x => x.Attributes.HasFlag(FileAttributes.Directory)) == 1);
-                Assert.That(result.Count(x => x.IsDirectory) == 1);
+                Assert.IsTrue(result.Count(x => x.Attributes.HasFlag(FileAttributes.Directory)) == 1);
+                Assert.IsTrue(result.Count(x => x.IsDirectory) == 1);
 
                 // FileName
-                Assert.That(result.Count(x => x.FileName == _testSubFolder) == 0);
-                Assert.That(result.Count(x => x.FileName == TEST_FILE1) == 1);
-                Assert.That(result.Count(x => x.FileName == TEST_FILE2) == 1);
+                Assert.IsTrue(result.Count(x => x.FileName == _testSubFolder) == 0);
+                Assert.IsTrue(result.Count(x => x.FileName == TEST_FILE1) == 1);
+                Assert.IsTrue(result.Count(x => x.FileName == TEST_FILE2) == 1);
 
                 // Path
-                Assert.That(result.Count(x => x.FullPath == _testSubFolder) == 1);
-                Assert.That(result.Count(x => x.FullPath == _testFilePath1) == 1);
-                Assert.That(result.Count(x => x.FullPath == _testFilePath2) == 1);
+                Assert.IsTrue(result.Count(x => x.FullPath == _testSubFolder) == 1);
+                Assert.IsTrue(result.Count(x => x.FullPath == _testFilePath1) == 1);
+                Assert.IsTrue(result.Count(x => x.FullPath == _testFilePath2) == 1);
             }
         }
 
-        [TearDown]
+        [TestCleanup]
         public void Teardown()
         {
             if (Directory.Exists(_testDirectory))

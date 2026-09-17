@@ -18,10 +18,10 @@ namespace SimpleWpf.Utilities
             MainThread = Application.Current.Dispatcher;
         }
 
-        public static IEnumerable<string> FastGetFiles(string baseDirectory, string searchPattern, SearchOption option)
+        public static IEnumerable<string> FastGetFiles(string baseDirectory, SearchOption option, params string[] searchPatterns)
         {
             // Scan directories for files (Use NativeIO for much faster iteration. Less managed memory loading)
-            using (var fastDirectory = new FastDirectoryIO(baseDirectory, searchPattern, option))
+            using (var fastDirectory = new FastDirectoryIO(baseDirectory, option, searchPatterns))
             {
                 return fastDirectory.GetFiles()
                                     .Where(x => !x.IsDirectory)
@@ -30,10 +30,10 @@ namespace SimpleWpf.Utilities
             }
         }
 
-        public static IEnumerable<FastDirectoryResult> FastGetFileData(string baseDirectory, string searchPattern, bool includeDirectories, SearchOption option)
+        public static IEnumerable<FastDirectoryResult> FastGetFileData(string baseDirectory, bool includeDirectories, SearchOption option, params string[] searchPatterns)
         {
             // Scan directories for files (Use NativeIO for much faster iteration. Less managed memory loading)
-            using (var fastDirectory = new FastDirectoryIO(baseDirectory, searchPattern, option))
+            using (var fastDirectory = new FastDirectoryIO(baseDirectory, option, searchPatterns))
             {
                 return fastDirectory.GetFiles()
                                     .Where(x => !x.IsDirectory || includeDirectories)

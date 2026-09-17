@@ -24,15 +24,22 @@ namespace SimpleWpf.Native.IO
         }
 
         readonly string _baseDirectory;
-        readonly string _filter;
+        readonly IEnumerable<string> _filters;
         readonly SearchOption _searchOption;
 
         System32FindData _win32FindData;
 
-        public FastDirectoryIO(string baseDirectory, string filter, SearchOption option)
+        public FastDirectoryIO(string baseDirectory, SearchOption option, string filter)
         {
             _baseDirectory = baseDirectory;
-            _filter = filter;
+            _filters = new string[] { filter };
+            _searchOption = option;
+            _win32FindData = new System32FindData();
+        }
+        public FastDirectoryIO(string baseDirectory, SearchOption option, params string[] filters)
+        {
+            _baseDirectory = baseDirectory;
+            _filters = filters;
             _searchOption = option;
             _win32FindData = new System32FindData();
         }
@@ -76,18 +83,20 @@ namespace SimpleWpf.Native.IO
                     result.Add(directory);
                 }
 
-                if (directory.FullPath == _baseDirectory ||
-                    _searchOption == SearchOption.AllDirectories)
+                if (directory.FullPath == _baseDirectory || _searchOption == SearchOption.AllDirectories)
                 {
-                    // Get File Listing (flattened)
-                    var directoryFiles = GetFromDirectory(directory.FullPath);
-
-                    foreach (var file in directoryFiles)
+                    foreach (var filter in _filters)
                     {
-                        // Win32 API may return directories during this operation, also...
-                        if (!file.IsDirectory)
+                        // Get File Listing (flattened)
+                        var directoryFiles = GetFromDirectory(directory.FullPath, filter);
+
+                        foreach (var file in directoryFiles)
                         {
-                            result.Add(file);
+                            // Win32 API may return directories during this operation, also...
+                            if (!file.IsDirectory)
+                            {
+                                result.Add(file);
+                            }
                         }
                     }
                 }
@@ -100,7 +109,7 @@ namespace SimpleWpf.Native.IO
         /// Returns all files in CURRENT directory regardless of type. Then, they may be iterated
         /// recursively to detail the folder tree.
         /// </summary>
-        private IEnumerable<FastDirectoryResult> GetFromDirectory(string directory)
+        private IEnumerable<FastDirectoryResult> GetFromDirectory(string directory, string searchPattern)
         {
             var result = new List<FastDirectoryResult>();
             var firstRead = true;
@@ -111,7 +120,7 @@ namespace SimpleWpf.Native.IO
                 if (firstRead)
                 {
                     // NATIVE CALL:  First read to directory
-                    context = FirstNativeCall(directory);
+                    context = FirstNativeCall(directory, searchPattern);
 
                     // Create Result (with current Win32 Data)
                     if (context.Handle != null && !context.Handle.IsInvalid)
@@ -164,7 +173,7 @@ namespace SimpleWpf.Native.IO
             return result;
         }
 
-        private DirectoryContext FirstNativeCall(string currentDirectory)
+        private DirectoryContext FirstNativeCall(string currentDirectory, string searchPattern)
         {
 #pragma warning disable SYSLIB0003 // Type or member is obsolete
 #pragma warning disable 618
@@ -174,7 +183,7 @@ namespace SimpleWpf.Native.IO
 
             // SEE WIN NATIVE API:  C:\(path)\(to)\(current)\(folder)\{filter = *.txt}
             //
-            var searchPath = Path.Combine(currentDirectory, _filter);
+            var searchPath = Path.Combine(currentDirectory, searchPattern);
 
             // Native Call: Directory + (some sort of wildcard search)
             var handle = FileIO.FindFirstFile(searchPath, _win32FindData);

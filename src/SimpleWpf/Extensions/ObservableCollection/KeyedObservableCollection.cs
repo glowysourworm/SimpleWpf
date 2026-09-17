@@ -1,29 +1,51 @@
-﻿using System.Collections.ObjectModel;
+﻿using System.Collections;
+using System.Collections.Specialized;
+using System.ComponentModel;
 
+using SimpleWpf.Extensions.Event;
 using SimpleWpf.SimpleCollections.Collection;
+using SimpleWpf.SimpleCollections.Extension;
 
 namespace SimpleWpf.Extensions.ObservableCollection
 {
-    public class KeyedObservableCollection<K, V> : ObservableCollection<V>
+    public class KeyedObservableCollection<K, V> : IEnumerable<V>, INotifyCollectionChanged where V : INotifyPropertyChanged
     {
+        // Hash support for performance
         SimpleDictionary<K, V> _dictionary;
-        Func<V, K> _keySelector;
 
-        public KeyedObservableCollection(Func<V, K> keySelector) : this(keySelector, Enumerable.Empty<V>())
-        {
+        public int Count { get { return _dictionary.Count; } }
 
-        }
-        public KeyedObservableCollection(Func<V, K> keySelector, IEnumerable<V> collection) : base(collection)
+        // INotifyCollectionChanged
+        public event NotifyCollectionChangedEventHandler? CollectionChanged;
+        public event CollectionItemChangedHandler<V> ItemPropertyChanged;
+
+        public KeyedObservableCollection()
         {
-            _keySelector = keySelector;
             _dictionary = new SimpleDictionary<K, V>();
 
-            // Overrides will take care of initialization
+            OnCollectionClear();
         }
 
         public V this[K key]
         {
             get { return _dictionary[key]; }
+            set
+            {
+                if (ContainsKey(key))
+                {
+                    var oldItem = _dictionary[key];
+                    var newItem = value;
+
+                    _dictionary[key].PropertyChanged -= OnItemPropertyChanged;
+                    _dictionary[key] = value;
+
+                    value.PropertyChanged += OnItemPropertyChanged;
+
+                    OnCollectionReplace(oldItem, newItem);
+                }
+                else
+                    throw new Exception("Key not found in the dictionary");
+            }
         }
 
         public bool ContainsKey(K key)
@@ -31,61 +53,115 @@ namespace SimpleWpf.Extensions.ObservableCollection
             return _dictionary.ContainsKey(key);
         }
 
-        public int IndexOfKey(K key)
+        public bool Remove(K key)
         {
-            var index = 0;
+            var value = _dictionary[key];
 
-            foreach (var pair in _dictionary)
+            value.PropertyChanged -= OnItemPropertyChanged;
+
+            var returnValue = _dictionary.Remove(key);
+
+            OnCollectionRemove(value);
+
+            return returnValue;
+        }
+
+        /// <summary>
+        /// Removes items where they match the predicate
+        /// </summary>
+        public bool Remove(Func<V, bool> predicate)
+        {
+            var removed = _dictionary.Filter(pair => predicate(pair.Value));
+
+            foreach (var pair in removed)
             {
-                if (pair.Key.Equals(key))
-                    return index;
-
-                index++;
+                pair.Value.PropertyChanged -= OnItemPropertyChanged;
             }
 
-            return -1;
+            return true;
         }
 
-        public void RemoveByKey(K key)
+        public void Add(K key, V value)
         {
-            if (!_dictionary.ContainsKey(key))
-                throw new ArgumentException("Key not contained within the collection");
+            if (_dictionary.ContainsKey(key))
+                throw new ArgumentException("Dictionary already contains element with the same key");
 
-            var index = IndexOfKey(key);
+            value.PropertyChanged += OnItemPropertyChanged;
 
-            RemoveAt(index);
+            _dictionary.Add(key, value);
+
+            OnCollectionAdd(value);
         }
 
-        protected override void InsertItem(int index, V item)
+        public void Add(KeyValuePair<K, V> item)
         {
-            base.InsertItem(index, item);
-
-            _dictionary.Add(_keySelector(item), item);
+            Add(item.Key, item.Value);
         }
 
-        protected override void ClearItems()
+        public void Clear()
         {
-            base.ClearItems();
+            foreach (var pair in _dictionary)
+            {
+                pair.Value.PropertyChanged -= OnItemPropertyChanged;
+            }
 
             _dictionary.Clear();
+
+            OnCollectionClear();
         }
 
-        protected override void RemoveItem(int index)
+        public bool Contains(KeyValuePair<K, V> item)
         {
-            base.RemoveItem(index);
-
-            var pair = _dictionary.ElementAt(index);
-
-            _dictionary.Remove(pair.Key);
+            return ContainsKey(item.Key);
         }
 
-        protected override void SetItem(int index, V item)
+        public void CopyTo(KeyValuePair<K, V>[] array, int arrayIndex)
         {
-            base.SetItem(index, item);
+            throw new NotImplementedException();
+        }
 
-            var pair = _dictionary.ElementAt(index);
+        public bool Remove(KeyValuePair<K, V> item)
+        {
+            return Remove(item.Key);
+        }
 
-            _dictionary[pair.Key] = item;
+        public IEnumerator GetEnumerator()
+        {
+            return _dictionary.Values.GetEnumerator();
+        }
+        IEnumerator<V> IEnumerable<V>.GetEnumerator()
+        {
+            return _dictionary.Values.GetEnumerator();
+        }
+
+        private void OnCollectionAdd(V item)
+        {
+            if (this.CollectionChanged != null)
+                this.CollectionChanged(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, item));
+        }
+
+        private void OnCollectionRemove(V item)
+        {
+            if (this.CollectionChanged != null)
+                this.CollectionChanged(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, item));
+        }
+
+        private void OnCollectionReplace(V oldItem, V newItem)
+        {
+            if (this.CollectionChanged != null)
+                this.CollectionChanged(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, newItem, oldItem));
+        }
+
+        private void OnCollectionClear()
+        {
+            if (this.CollectionChanged != null)
+                this.CollectionChanged(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+        }
+
+        private void OnItemPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (this.ItemPropertyChanged != null)
+                this.ItemPropertyChanged((V)sender, e);
         }
     }
 }

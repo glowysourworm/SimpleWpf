@@ -5,13 +5,6 @@ namespace SimpleWpf.UI.ViewModel.FileTreeView
 {
     public class FileTreeViewModel : TreeViewModelBase
     {
-        private readonly string _searchPattern;
-
-        public string SearchPattern
-        {
-            get { return _searchPattern; }
-        }
-
         /// <summary>
         /// Returns node value casted up to the file tree view model.
         /// </summary>
@@ -20,17 +13,15 @@ namespace SimpleWpf.UI.ViewModel.FileTreeView
             return this.NodeValue as FileTreeNodeViewModel;
         }
 
-        public FileTreeViewModel(string searchPattern,
-                                 FileTreeNodeViewModel nodeValue,
+        public FileTreeViewModel(FileTreeNodeViewModel nodeValue,
                                  TreeViewModelBase parent = null)
             : base(nodeValue, parent)
         {
-            _searchPattern = searchPattern;
         }
 
         protected override TreeViewModelBase Construct(ITreeViewNode nodeValue)
         {
-            return new FileTreeViewModel(_searchPattern, nodeValue as FileTreeNodeViewModel, this);
+            return new FileTreeViewModel(nodeValue as FileTreeNodeViewModel, this);
         }
 
         public int GetSelectedFileCount()
