@@ -2,6 +2,7 @@
 using System.Collections.Specialized;
 using System.ComponentModel;
 
+using SimpleWpf.Extensions.Collection;
 using SimpleWpf.Extensions.Event;
 using SimpleWpf.SimpleCollections.Collection;
 using SimpleWpf.SimpleCollections.Extension;
@@ -19,11 +20,33 @@ namespace SimpleWpf.Extensions.ObservableCollection
         public event NotifyCollectionChangedEventHandler? CollectionChanged;
         public event CollectionItemChangedHandler<V> ItemPropertyChanged;
 
+        // BeginUpdate / EndUpdate
+        //
+        // This is an attempt at performance improvement from the UI side. During a large
+        // collection change there will be a lot of extra binding events. So, there will
+        // be a blocker to see how it helps; but it will need to be enacted from the user
+        // code.
+        //
+        bool _updating;
+
         public KeyedObservableCollection()
         {
             _dictionary = new SimpleDictionary<K, V>();
+            _updating = false;
 
-            OnCollectionClear();
+            OnCollectionReset();
+        }
+
+        public void BeginUpdate()
+        {
+            _updating = true;
+        }
+        public void EndUpdate(bool notifyObservers = false)
+        {
+            _updating = false;
+
+            if (notifyObservers)
+                OnCollectionReset();
         }
 
         public V this[K key]
@@ -59,9 +82,11 @@ namespace SimpleWpf.Extensions.ObservableCollection
 
             value.PropertyChanged -= OnItemPropertyChanged;
 
+            var index = _dictionary.IndexOf(pair => pair.Key.Equals(key));
+
             var returnValue = _dictionary.Remove(key);
 
-            OnCollectionRemove(value);
+            OnCollectionRemove(value, index);
 
             return returnValue;
         }
@@ -107,7 +132,7 @@ namespace SimpleWpf.Extensions.ObservableCollection
 
             _dictionary.Clear();
 
-            OnCollectionClear();
+            OnCollectionReset();
         }
 
         public bool Contains(KeyValuePair<K, V> item)
@@ -136,30 +161,45 @@ namespace SimpleWpf.Extensions.ObservableCollection
 
         private void OnCollectionAdd(V item)
         {
+            if (_updating)
+                return;
+
             if (this.CollectionChanged != null)
                 this.CollectionChanged(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, item));
         }
 
-        private void OnCollectionRemove(V item)
+        private void OnCollectionRemove(V item, int index)
         {
+            if (_updating)
+                return;
+
             if (this.CollectionChanged != null)
-                this.CollectionChanged(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, item));
+                this.CollectionChanged(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, item, index));
         }
 
         private void OnCollectionReplace(V oldItem, V newItem)
         {
+            if (_updating)
+                return;
+
             if (this.CollectionChanged != null)
                 this.CollectionChanged(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, newItem, oldItem));
         }
 
-        private void OnCollectionClear()
+        private void OnCollectionReset()
         {
+            if (_updating)
+                return;
+
             if (this.CollectionChanged != null)
                 this.CollectionChanged(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
         }
 
         private void OnItemPropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
+            if (_updating)
+                return;
+
             if (this.ItemPropertyChanged != null)
                 this.ItemPropertyChanged((V)sender, e);
         }
