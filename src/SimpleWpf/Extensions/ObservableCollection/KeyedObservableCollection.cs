@@ -9,7 +9,7 @@ using SimpleWpf.SimpleCollections.Extension;
 
 namespace SimpleWpf.Extensions.ObservableCollection
 {
-    public class KeyedObservableCollection<K, V> : IEnumerable<V>, INotifyCollectionChanged where V : INotifyPropertyChanged
+    public class KeyedObservableCollection<K, V> : IEnumerable<V>, INotifyCollectionChanged, INotifyPropertyChanged where V : INotifyPropertyChanged
     {
         // Hash support for performance
         SimpleDictionary<K, V> _dictionary;
@@ -19,6 +19,7 @@ namespace SimpleWpf.Extensions.ObservableCollection
         // INotifyCollectionChanged
         public event NotifyCollectionChangedEventHandler? CollectionChanged;
         public event CollectionItemChangedHandler<V> ItemPropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         // BeginUpdate / EndUpdate
         //
@@ -87,6 +88,7 @@ namespace SimpleWpf.Extensions.ObservableCollection
             var returnValue = _dictionary.Remove(key);
 
             OnCollectionRemove(value, index);
+            OnPropertyChanged("Count");
 
             return returnValue;
         }
@@ -103,6 +105,8 @@ namespace SimpleWpf.Extensions.ObservableCollection
                 pair.Value.PropertyChanged -= OnItemPropertyChanged;
             }
 
+            OnPropertyChanged("Count");
+
             return true;
         }
 
@@ -116,6 +120,7 @@ namespace SimpleWpf.Extensions.ObservableCollection
             _dictionary.Add(key, value);
 
             OnCollectionAdd(value);
+            OnPropertyChanged("Count");
         }
 
         public void Add(KeyValuePair<K, V> item)
@@ -133,6 +138,7 @@ namespace SimpleWpf.Extensions.ObservableCollection
             _dictionary.Clear();
 
             OnCollectionReset();
+            OnPropertyChanged("Count");
         }
 
         public bool Contains(KeyValuePair<K, V> item)
@@ -202,6 +208,15 @@ namespace SimpleWpf.Extensions.ObservableCollection
 
             if (this.ItemPropertyChanged != null)
                 this.ItemPropertyChanged((V)sender, e);
+        }
+
+        private void OnPropertyChanged(string propertyName)
+        {
+            if (_updating)
+                return;
+
+            if (this.PropertyChanged != null)
+                this.PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }
