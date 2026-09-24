@@ -34,6 +34,10 @@ namespace SimpleWpf.UI.Controls.EnumUI
             get { return GetValue(EnumValueProperty); }
             set { SetValue(EnumValueProperty, value); }
         }
+        public object SelectedItem
+        {
+            get { return this.TheComboBox.SelectedItem; }
+        }
         public event RoutedEventHandler EnumValueChanged
         {
             add { AddHandler(EnumValueChangedEvent, value); }
