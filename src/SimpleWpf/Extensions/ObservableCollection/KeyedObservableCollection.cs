@@ -2,17 +2,17 @@
 using System.Collections.Specialized;
 using System.ComponentModel;
 
-using SimpleWpf.Extensions.Collection;
 using SimpleWpf.Extensions.Event;
 using SimpleWpf.SimpleCollections.Collection;
 using SimpleWpf.SimpleCollections.Extension;
 
 namespace SimpleWpf.Extensions.ObservableCollection
 {
-    public class KeyedObservableCollection<K, V> : IEnumerable<V>, INotifyCollectionChanged, INotifyPropertyChanged where V : INotifyPropertyChanged
+    public class KeyedObservableCollection<K, V> : IEnumerable<V>, IReadOnlyCollection<V>, INotifyCollectionChanged, INotifyPropertyChanged where V : INotifyPropertyChanged
     {
         // Hash support for performance
         SimpleDictionary<K, V> _dictionary;
+        SimpleDictionary<K, int> _indexDictionary;
 
         public int Count { get { return _dictionary.Count; } }
 
@@ -33,6 +33,7 @@ namespace SimpleWpf.Extensions.ObservableCollection
         public KeyedObservableCollection()
         {
             _dictionary = new SimpleDictionary<K, V>();
+            _indexDictionary = new SimpleDictionary<K, int>();
             _updating = false;
 
             OnCollectionReset();
@@ -83,9 +84,11 @@ namespace SimpleWpf.Extensions.ObservableCollection
 
             value.PropertyChanged -= OnItemPropertyChanged;
 
-            var index = _dictionary.IndexOf(pair => pair.Key.Equals(key));
+            var index = _indexDictionary[key];
 
             var returnValue = _dictionary.Remove(key);
+
+            _indexDictionary.Remove(key);
 
             OnCollectionRemove(value, index);
             OnPropertyChanged("Count");
@@ -103,8 +106,11 @@ namespace SimpleWpf.Extensions.ObservableCollection
             foreach (var pair in removed)
             {
                 pair.Value.PropertyChanged -= OnItemPropertyChanged;
+
+                _indexDictionary.Remove(pair.Key);
             }
 
+            OnCollectionReset();
             OnPropertyChanged("Count");
 
             return true;
@@ -118,6 +124,7 @@ namespace SimpleWpf.Extensions.ObservableCollection
             value.PropertyChanged += OnItemPropertyChanged;
 
             _dictionary.Add(key, value);
+            _indexDictionary.Add(key, _indexDictionary.Count);
 
             OnCollectionAdd(value);
             OnPropertyChanged("Count");
