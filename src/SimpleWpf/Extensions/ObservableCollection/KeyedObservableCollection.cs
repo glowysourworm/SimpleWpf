@@ -15,6 +15,8 @@ namespace SimpleWpf.Extensions.ObservableCollection
         SimpleDictionary<K, int> _indexDictionary;
 
         public int Count { get { return _dictionary.Count; } }
+        public IEnumerable<K> Keys { get { return _dictionary.Keys; } }
+        public IEnumerable<V> Values { get { return _dictionary.Values; } }
 
         // INotifyCollectionChanged
         public event NotifyCollectionChangedEventHandler? CollectionChanged;
