@@ -529,6 +529,9 @@ namespace SimpleWpf.Extensions.Collection
         /// </summary>
         public static T Next<T>(this IEnumerable<T> collection, T item) where T : class
         {
+            if (!collection.Any())
+                throw new ArgumentException("Collection is empty");
+
             var found = false;
 
             foreach (var otherItem in collection)
@@ -540,11 +543,7 @@ namespace SimpleWpf.Extensions.Collection
                     found = true;
             }
 
-            if (found)
-                return collection.First();
-
-            else
-                throw new Exception("Item in collection not found EnumerableExtension.Next()");
+            return collection.First();
         }
 
         /// <summary>
@@ -564,11 +563,7 @@ namespace SimpleWpf.Extensions.Collection
                     found = true;
             }
 
-            if (found)
-                return collection.Last();
-
-            else
-                throw new Exception("Item in collection not found EnumerableExtension.Previous()");
+            return collection.Last();
         }
 
         public static IEnumerable<V> OfType<T, V>(this IEnumerable<T> collection)
