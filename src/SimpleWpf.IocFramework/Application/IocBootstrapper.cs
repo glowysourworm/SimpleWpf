@@ -125,5 +125,13 @@ namespace SimpleWpf.IocFramework.Application
                 definition.Instance.Run();
             }
         }
+
+        /// <summary>
+        /// Define code to handle shutdown procedure. There is nothing for the base class to do.
+        /// </summary>
+        public virtual void Shutdown()
+        {
+            // User override
+        }
     }
 }
