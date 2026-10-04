@@ -1,5 +1,4 @@
 ﻿using System.Collections;
-using System.Collections.Specialized;
 using System.ComponentModel;
 
 using SimpleWpf.Extensions.Collection;
@@ -14,6 +13,11 @@ namespace SimpleWpf.UI.ViewModel.TreeView
     /// </summary>
     public abstract class TreeViewModelBase : ViewModelBase, IEnumerable, IDisposable
     {
+        /// <summary>
+        /// (Bubble Up Event) This is a tree-wide event for property changed events
+        /// </summary>
+        public event TreeViewDelegates.ItemPropertyChangedTreeEventHandler ItemPropertyChanged;
+
         // Parent Node
         TreeViewModelBase? _parent;
 
@@ -24,6 +28,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         bool _isLoaded;
         bool _isExpanded;
         bool _isSelected;
+        int _recursionDepth;
 
         // Tree Ordering:  Tree item order may be applied to the tree to
         //                 make multiple selection simple and more efficient.
@@ -70,11 +75,16 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             get { return _isSelected; }
             set { this.RaiseAndSetIfChanged(ref _isSelected, value); }
         }
+        public int RecursionDepth
+        {
+            get { return _recursionDepth; }
+            set { this.RaiseAndSetIfChanged(ref _recursionDepth, value); }
+        }
 
         // Begin / End Update (pattern)
         bool _updating;
 
-        public TreeViewModelBase(TreeViewModelBase? parent)
+        public TreeViewModelBase(int recursionDepth, TreeViewModelBase? parent)
         {
             _children = new KeyedObservableCollection<int, TreeViewModelBase>();
             _parent = parent;
@@ -219,11 +229,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             if (item == null)
                 throw new NullReferenceException("Trying to insert null value into recursive tree view model");
 
-            //if (!this.CanHaveChildren)
-            //    throw new Exception("Trying to add a node to a sub-tree that has not set the proper CanHaveChildren value on its nodes");
-
-            //item.ItemPropertyChanged += OnItemPropertyChanged;
-            //item.PropertyChanged += OnNodeValuePropertyChanged;
+            item.PropertyChanged += OnItemPropertyChanged;
 
             item.ItemId = _TREE_ITEM_COUNTER++;
 
@@ -280,6 +286,17 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             }
         }
 
+        private void OnItemPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            // This should only be subscribed at the root
+            if (this.ItemPropertyChanged != null)
+                this.ItemPropertyChanged(this, sender, e);
+
+            // Bubble Up!
+            else if (this.Parent != null)
+                this.Parent.OnItemPropertyChanged(sender, e);
+        }
+
         /// <summary>
         /// (Recursive Method) Clears tree starting at this depth
         /// </summary>
@@ -292,10 +309,9 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         private void ClearImpl()
         {
             // Unhook Events
-            foreach (var node in _children)
+            foreach (TreeViewModelBase node in _children)
             {
-                //node.ItemPropertyChanged -= OnItemPropertyChanged;
-                //node.PropertyChanged -= OnNodeValuePropertyChanged;
+                node.PropertyChanged -= OnItemPropertyChanged;
             }
 
             _children.Clear();
@@ -330,100 +346,9 @@ namespace SimpleWpf.UI.ViewModel.TreeView
 
         #endregion
 
-        // Begin / End Update:  Blocking events is needed for handling selection. These methods are invoked by the user code
-        //                      to prevent selection from bogging down recursion loops.
-        //
-        public void BeginUpdate()
-        {
-            if (_updating)
-                throw new Exception("Update already in progress for the TreeViewModelBase");
-
-            _updating = true;
-        }
-
-        public void EndUpdate()
-        {
-            if (!_updating)
-                throw new Exception("Update not in progress for the TreeViewModelBase");
-
-            _updating = false;
-        }
-
-        // Tree Collection Events
-        private void OnTreeItemCollectionChanged(TreeViewModelBase treeSender, object? sender, NotifyCollectionChangedEventArgs e)
-        {
-            if (_updating)
-                return;
-
-            //// (There may be listeners at this level)
-            //if (this.CollectionChangedTreeEvent != null)
-            //    this.CollectionChangedTreeEvent(treeSender, sender, e);
-
-            //// -> Bubble Up
-            ////
-            //if (this.Parent != null)
-            //    this.Parent.OnTreeItemCollectionChanged(treeSender, sender, e);
-        }
-
-        // Tree Item Events
-        private void OnTreeItemPropertyChanged(TreeViewModelBase treeSender, object item, PropertyChangedEventArgs e)
-        {
-            if (_updating)
-                return;
-
-            //// (There may be listeners at this level)
-            //if (this.ItemPropertyChangedTreeEvent != null)
-            //    this.ItemPropertyChangedTreeEvent(treeSender, item, e);
-
-            //// -> Bubble Up
-            ////
-            //if (this.Parent != null)
-            //    this.Parent.OnTreeItemPropertyChanged(treeSender, item, e);
-        }
-
-        // Item Events
-        private void OnItemPropertyChanged(object item, PropertyChangedEventArgs propertyArgs)
-        {
-            if (_updating)
-                return;
-
-            //if (this.ItemPropertyChanged != null)
-            //    this.ItemPropertyChanged(item, propertyArgs);
-
-            //// -> Bubble Up
-            ////
-            //OnTreeItemPropertyChanged(this, item, propertyArgs);
-        }
-
-        // Item Events
-        private void OnNodeValuePropertyChanged(object? sender, PropertyChangedEventArgs e)
-        {
-            if (_updating)
-                return;
-
-            //if (this.ItemPropertyChanged != null)
-            //    this.ItemPropertyChanged(sender as TreeViewModelBase, e);
-
-            //// -> Bubble Up
-            ////
-            //OnTreeItemPropertyChanged(this, sender as TreeViewModelBase, e);
-        }
-
         public void Dispose()
         {
-            if (_children != null)
-            {
-                Recurse(x => x.DisposeImpl(), true);
-            }
-        }
-        private void DisposeImpl()
-        {
-            if (_children != null)
-            {
-                Clear();
-                _children.ItemPropertyChanged -= OnItemPropertyChanged;
-                _children = null;
-            }
+            Clear();
         }
     }
 }

@@ -149,7 +149,7 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
         }
 
         // Occurs when a property on the UI (target) side changes
-        private void HandleTreeSelection(TreeViewModel tree, TreeViewModel nodeClicked)
+        private void HandleTreeSelection(SimpleTreeViewModel tree, TreeViewModel nodeClicked)
         {
             var ctrl = Keyboard.Modifiers == ModifierKeys.Control;
             var shift = Keyboard.Modifiers == ModifierKeys.Shift;
@@ -167,7 +167,7 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
                 var isSelected = nodeClicked.IsSelected;
 
                 // De-Select
-                tree.RecurseForEach<TreeViewModel>(treeNode =>
+                tree.RecursiveForEach<TreeViewModel>(treeNode =>
                 {
                     treeNode.IsSelected = false;
 
@@ -214,14 +214,14 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
                 if (_selectedNode != null)
                 {
                     // First, check to see that tree has been numbered
-                    if (!tree.IsNumbered)
+                    if (!tree.IsNumberingSet())
                         throw new Exception("Must set tree numbering before using multi-selection");
 
                     // Get two item numbers
                     var numberLow = Math.Min(_selectedNode.ItemId, nodeClicked.ItemId);
                     var numberHigh = Math.Max(_selectedNode.ItemId, nodeClicked.ItemId);
 
-                    tree.RecurseForEach(treeNode =>
+                    tree.RecursiveForEach<TreeViewModel>(treeNode =>
                     {
                         if (treeNode.ItemId >= numberLow &&
                             treeNode.ItemId <= numberHigh)
@@ -377,7 +377,7 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
                 }
 
                 // Selection (finally)
-                HandleTreeSelection(this.ItemsSource as TreeViewModel, viewModel);
+                HandleTreeSelection(this.ItemsSource as SimpleTreeViewModel, viewModel);
 
                 e.Handled = true;
             }

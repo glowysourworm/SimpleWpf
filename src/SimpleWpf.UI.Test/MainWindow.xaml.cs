@@ -13,18 +13,18 @@ namespace SimpleWpf.UI.Test
         ObservableCollection<TreeViewModelBase> _selectedItems;
 
         public EnumTestViewModel EnumTest;
-        public TreeViewModel TreeView;
+        public SimpleTreeViewModel TreeView;
 
         public MainWindow()
         {
             InitializeComponent();
 
-            this.TreeView = new TreeViewModel("Root", 0, null);
+            var root = new TreeViewModel("Root", 0, null);
 
             for (int index = 0; index < 10; index++)
             {
-                var item = new TreeViewModel("Item " + index, 1, this.TreeView);
-                this.TreeView.Add(item);
+                var item = new TreeViewModel("Item " + index, 1, root);
+                root.Add(item);
 
                 for (int childIndex = 0; childIndex < 10; childIndex++)
                 {
@@ -35,14 +35,6 @@ namespace SimpleWpf.UI.Test
                     {
                         var grandChild = new TreeViewModel("Grand Child (CanHaveChildren = false) " + grandChildIndex, 3, child);
                         child.Add(grandChild);
-
-
-                        var grandChildTree = new TreeViewModel("Grand Child (CanHaveChildren = true) " + grandChildIndex, 3, child)
-                        {
-                            CanHaveChildren = true
-                        };
-
-                        child.Add(grandChildTree);
                     }
                 }
             }
@@ -57,10 +49,11 @@ namespace SimpleWpf.UI.Test
             this.SimpleEnumFC.DataContext = this.EnumTest;
             this.SimpleEnumRB.DataContext = this.EnumTest;
 
-            this.TheTreeView.ItemsSource = this.TreeView;
-
             // Multi-Selection
-            this.TreeView.SetTreeNumbering();
+            root.SetTreeNumbering();
+
+            this.TreeView = new SimpleTreeViewModel(root);
+            this.TheTreeView.ItemsSource = this.TreeView;
         }
 
         private void TheTreeView_SelectedItemsChanged(SimpleTreeView sender, IEnumerable<TreeViewModelBase> selectedItems)

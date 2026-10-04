@@ -2,40 +2,22 @@
 {
     public class TreeViewModel : TreeViewModelBase
     {
-
-
-        bool _canHaveChildren;
-
-        int _recursionDepth;
-
         string _displayName;
 
-        public bool CanHaveChildren
-        {
-            get { return _canHaveChildren; }
-            set { this.RaiseAndSetIfChanged(ref _canHaveChildren, value); }
-        }
-        public int RecursionDepth
-        {
-            get { return _recursionDepth; }
-            set { this.RaiseAndSetIfChanged(ref _recursionDepth, value); }
-        }
         public string DisplayName
         {
             get { return _displayName; }
             set { this.RaiseAndSetIfChanged(ref _displayName, value); }
         }
 
-        public TreeViewModel(string displayName, int recursionDepth, TreeViewModel? parent) : base(parent)
+        public TreeViewModel(string displayName, int recursionDepth, TreeViewModelBase? parent) : base(recursionDepth, parent)
         {
-            this.DisplayName = displayName;
-            this.RecursionDepth = recursionDepth;
-            this.CanHaveChildren = true;
+            _displayName = displayName;
         }
 
         public override string ToString()
         {
-            return this.DisplayName;
+            return _displayName;
         }
     }
 }
