@@ -11,6 +11,6 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         /// <param name="treeSender">Sender for sub-tree view model where the event was fired</param>
         /// <param name="item">The child item for the sub-tree's children</param>
         /// <param name="eventArgs">Event data for the change</param>
-        public delegate void ItemPropertyChangedTreeEventHandler(TreeViewModelBase treeSender, object item, PropertyChangedEventArgs eventArgs);
+        public delegate void ItemPropertyChangedTreeEventHandler(TreeViewNodeModelBase treeSender, object item, PropertyChangedEventArgs eventArgs);
     }
 }

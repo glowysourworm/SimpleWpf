@@ -1,6 +1,6 @@
 ﻿namespace SimpleWpf.UI.ViewModel.TreeView
 {
-    public class TreeViewModel : TreeViewModelBase
+    public class TreeViewNodeModel : TreeViewNodeModelBase
     {
         string _displayName;
 
@@ -10,7 +10,7 @@
             set { this.RaiseAndSetIfChanged(ref _displayName, value); }
         }
 
-        public TreeViewModel(string displayName, int recursionDepth, TreeViewModelBase? parent) : base(recursionDepth, parent)
+        public TreeViewNodeModel(string displayName, int recursionDepth, TreeViewNodeModelBase? parent) : base(recursionDepth, parent)
         {
             _displayName = displayName;
         }

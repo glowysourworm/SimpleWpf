@@ -13,9 +13,14 @@
         <converters:BoolVisibilityCollapseConverter x:Key="BoolVisibilityCollapseConverter" />
         <converters:BoolInverseVisibilityCollapseConverter x:Key="BoolInverseVisibilityCollapseConverter" />
         <converters:CollectionNonEmptyVisibilityConverter x:Key="CollectionNonEmptyVisibilityConverter" />
+        <converters:CollectionNonEmptyVisibilityHiddenConverter x:Key="CollectionNonEmptyVisibilityHiddenConverter" />
         <convertersTreeviewUI:TreeViewItemMarginConverter x:Key="TreeViewItemMarginConverter" />
         <converters:BoolANDVisibilityMultiConverter x:Key="BoolANDVisibilityMultiConverter" />
         <converters:CollectionNonEmptyBoolConverter x:Key="CollectionNonEmptyBoolConverter" />
+        <converters:ParameterConverterBase x:Key="ParameterGreaterThanVisibilityCollapsedConverter"
+                                           TrueValue="{x:Static Visibility.Visible}" 
+                                           FalseValue="{x:Static Visibility.Collapsed}" 
+                                           Comparison="GreaterThan" />
 
         <!-- Selectors -->
         <selectors:SimpleTreeViewItemContainerStyleSelector x:Key="SimpleTreeViewItemContainerStyleSelector" />
@@ -83,7 +88,11 @@
                                     Margin="{TemplateBinding Margin}">
 
                                 <ContentPresenter ContentSource="Header" 
-                                                  Visibility="{Binding CanHaveChildren, Converter={StaticResource BoolVisibilityCollapseConverter}}" />
+                                                  Visibility="{Binding ChildCount, 
+                                                                       Mode=OneWay, 
+                                                                       UpdateSourceTrigger=PropertyChanged, 
+                                                                       Converter={StaticResource ParameterGreaterThanVisibilityCollapsedConverter},
+                                                                       ConverterParameter=0}" />
                             </Border>
 
                             <!-- Item Header Content-->
@@ -127,8 +136,8 @@
 
     </UserControl.Resources>
 
+    <!-- ItemsSource:  The binding to the items source has trouble in some situations. Better to use code behind for this. -->
     <TreeView x:Name="TheTreeView" 
-              ItemsSource="{Binding ItemsSource, ElementName=BaseControl}"
               ScrollViewer.HorizontalScrollBarVisibility="Auto"
               ScrollViewer.VerticalScrollBarVisibility="Auto"
               ScrollViewer.CanContentScroll="False"

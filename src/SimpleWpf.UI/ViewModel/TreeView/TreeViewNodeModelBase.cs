@@ -11,7 +11,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView
     ///                    lazy loading; and item property changed events (+ bubble-up handling); and, also, grouped property
     ///                    events.
     /// </summary>
-    public abstract class TreeViewModelBase : ViewModelBase, IEnumerable, IDisposable
+    public abstract class TreeViewNodeModelBase : ViewModelBase, IEnumerable
     {
         /// <summary>
         /// Notifies to the iterator code what to do with actions and predicates for
@@ -29,10 +29,10 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         public event TreeViewDelegates.ItemPropertyChangedTreeEventHandler ItemPropertyChanged;
 
         // Parent Node
-        TreeViewModelBase? _parent;
+        TreeViewNodeModelBase? _parent;
 
         // Primary collection
-        KeyedObservableCollection<int, TreeViewModelBase> _children;
+        KeyedObservableCollection<int, TreeViewNodeModelBase> _children;
 
         // Basic Properties
         bool _isLoaded;
@@ -61,14 +61,18 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         /// </summary>
         public bool IsNumbered { get; private set; }
 
-        public TreeViewModelBase? Parent
+        public TreeViewNodeModelBase? Parent
         {
             get { return _parent; }
             set { this.RaiseAndSetIfChanged(ref _parent, value); }
         }
-        public IReadOnlyCollection<TreeViewModelBase> Children
+        public IReadOnlyCollection<TreeViewNodeModelBase> Children
         {
             get { return _children; }
+        }
+        public int ChildCount
+        {
+            get { return _children.Count; }
         }
         public bool IsLoaded
         {
@@ -94,9 +98,9 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         // Begin / End Update (pattern)
         bool _updating;
 
-        public TreeViewModelBase(int recursionDepth, TreeViewModelBase? parent)
+        public TreeViewNodeModelBase(int recursionDepth, TreeViewNodeModelBase? parent)
         {
-            _children = new KeyedObservableCollection<int, TreeViewModelBase>();
+            _children = new KeyedObservableCollection<int, TreeViewNodeModelBase>();
             _parent = parent;
 
             _updating = false;
@@ -105,6 +109,8 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             // once the user calls "SetTreeNumbering" from the root.
             this.ItemId = 0;
             this.IsNumbered = false;
+
+            OnPropertyChanged(nameof(ChildCount));
         }
 
         #region IEnumerable Methods
@@ -115,7 +121,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         #endregion
 
         // Method used for recursive members (includes current node for action)
-        private void Recurse(Func<TreeViewModelBase, IteratorContinuation> userFunc, bool leafFirst = false, bool childrenOnly = false)
+        private void Recurse(Func<TreeViewNodeModelBase, IteratorContinuation> userFunc, bool leafFirst = false, bool childrenOnly = false)
         {
             if (!leafFirst && !childrenOnly)
             {
@@ -124,7 +130,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             }
 
             // Recursive Iterator
-            foreach (TreeViewModelBase item in _children)
+            foreach (TreeViewNodeModelBase item in _children)
             {
                 item.Recurse(userFunc);
             }
@@ -135,8 +141,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView
                     return;
             }
         }
-
-        private void Recurse<T>(Func<T, IteratorContinuation> userFunc, bool leafFirst = false, bool childrenOnly = false) where T : TreeViewModelBase
+        private void Recurse<T>(Func<T, IteratorContinuation> userFunc, bool leafFirst = false, bool childrenOnly = false) where T : TreeViewNodeModelBase
         {
             if (this is not T)
                 throw new ArgumentException("Invalid cast of tree node");
@@ -148,7 +153,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             }
 
             // Recursive Iterator
-            foreach (TreeViewModelBase item in _children)
+            foreach (TreeViewNodeModelBase item in _children)
             {
                 item.Recurse(userFunc);
             }
@@ -166,16 +171,16 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         /// Recursively iterates the collection. This method must not overlap with IEnumerable due to framework
         /// usage. e.g. is the HierarchicalDataTemplate - which will then treat the tree as a flat list.
         /// </summary>
-        public void RecurseForEach(Action<TreeViewModelBase> action)
+        public void RecurseForEach(Action<TreeViewNodeModelBase> action)
         {
-            this.RecurseForEach<TreeViewModelBase>(action);
+            this.RecurseForEach<TreeViewNodeModelBase>(action);
         }
 
         /// <summary>
         /// (Casted) Recursively iterates the collection. This method must not overlap with IEnumerable due to framework
         /// usage. e.g. is the HierarchicalDataTemplate - which will then treat the tree as a flat list.
         /// </summary>
-        public void RecurseForEach<T>(Action<T> action) where T : TreeViewModelBase
+        public void RecurseForEach<T>(Action<T> action) where T : TreeViewNodeModelBase
         {
             Recurse<T>((node) =>
             {
@@ -188,11 +193,11 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         {
             return this.RecursiveCount(x => true);
         }
-        public int RecursiveCount(Func<TreeViewModelBase, bool> predicate)
+        public int RecursiveCount(Func<TreeViewNodeModelBase, bool> predicate)
         {
-            return this.RecursiveCount<TreeViewModelBase>(predicate);
+            return this.RecursiveCount<TreeViewNodeModelBase>(predicate);
         }
-        public int RecursiveCount<T>(Func<T, bool> predicate) where T : TreeViewModelBase
+        public int RecursiveCount<T>(Func<T, bool> predicate) where T : TreeViewNodeModelBase
         {
             var count = 0;
             Recurse<T>(x =>
@@ -204,11 +209,11 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             });
             return count;
         }
-        public IEnumerable<TreeViewModelBase> RecursiveWhere(Func<TreeViewModelBase, bool> predicate)
+        public IEnumerable<TreeViewNodeModelBase> RecursiveWhere(Func<TreeViewNodeModelBase, bool> predicate)
         {
-            return this.RecursiveWhere<TreeViewModelBase>(predicate);
+            return this.RecursiveWhere<TreeViewNodeModelBase>(predicate);
         }
-        public IEnumerable<T> RecursiveWhere<T>(Func<T, bool> predicate) where T : TreeViewModelBase
+        public IEnumerable<T> RecursiveWhere<T>(Func<T, bool> predicate) where T : TreeViewNodeModelBase
         {
             var result = new List<T>();
 
@@ -223,11 +228,11 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             return result;
         }
 
-        public bool RecursiveAll(Func<TreeViewModelBase, bool> predicate)
+        public bool RecursiveAll(Func<TreeViewNodeModelBase, bool> predicate)
         {
-            return this.RecursiveAll<TreeViewModelBase>(predicate);
+            return this.RecursiveAll<TreeViewNodeModelBase>(predicate);
         }
-        public bool RecursiveAll<T>(Func<T, bool> predicate) where T : TreeViewModelBase
+        public bool RecursiveAll<T>(Func<T, bool> predicate) where T : TreeViewNodeModelBase
         {
             var result = true;
 
@@ -244,11 +249,11 @@ namespace SimpleWpf.UI.ViewModel.TreeView
 
             return result;
         }
-        public bool RecursiveAny(Func<TreeViewModelBase, bool> predicate)
+        public bool RecursiveAny(Func<TreeViewNodeModelBase, bool> predicate)
         {
-            return this.RecursiveAny<TreeViewModelBase>(predicate);
+            return this.RecursiveAny<TreeViewNodeModelBase>(predicate);
         }
-        public bool RecursiveAny<T>(Func<T, bool> predicate) where T : TreeViewModelBase
+        public bool RecursiveAny<T>(Func<T, bool> predicate) where T : TreeViewNodeModelBase
         {
             var result = false;
 
@@ -265,11 +270,11 @@ namespace SimpleWpf.UI.ViewModel.TreeView
 
             return result;
         }
-        public TreeViewModelBase? RecursiveFirst(Func<TreeViewModelBase, bool> predicate)
+        public TreeViewNodeModelBase? RecursiveFirst(Func<TreeViewNodeModelBase, bool> predicate)
         {
-            return this.RecursiveFirst<TreeViewModelBase>(predicate);
+            return this.RecursiveFirst<TreeViewNodeModelBase>(predicate);
         }
-        public T? RecursiveFirst<T>(Func<T, bool> predicate) where T : TreeViewModelBase
+        public T? RecursiveFirst<T>(Func<T, bool> predicate) where T : TreeViewNodeModelBase
         {
             T? result = null;
 
@@ -287,7 +292,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             return result;
         }
 
-        public bool HasDirectAncestor(TreeViewModelBase subTree)
+        public bool HasDirectAncestor(TreeViewNodeModelBase subTree)
         {
             if (subTree == this)
                 return true;
@@ -302,7 +307,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         /// (Non-Recursive Method!) Adds an item to CURRENT DEPTH of the tree ONLY. Returns the new node.
         /// </summary>
         /// <exception cref="ArgumentException">Depths do not match for inserted item</exception>
-        public TreeViewModelBase Add(TreeViewModelBase item)
+        public TreeViewNodeModelBase Add(TreeViewNodeModelBase item)
         {
             if (item == null)
                 throw new NullReferenceException("Trying to insert null value into recursive tree view model");
@@ -312,6 +317,8 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             item.ItemId = _TREE_ITEM_COUNTER++;
 
             _children.Add(item.ItemId, item);
+
+            OnPropertyChanged(nameof(ChildCount));
 
             return item;
         }
@@ -342,7 +349,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             this.ItemId = 0;
         }
 
-        private void SetTreeNumberingRecurse(TreeViewModelBase treeNode)
+        private void SetTreeNumberingRecurse(TreeViewNodeModelBase treeNode)
         {
             // Save Items
             var items = _children.Values.Actualize();
@@ -392,18 +399,20 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         private void ClearImpl()
         {
             // Unhook Events
-            foreach (TreeViewModelBase node in _children)
+            foreach (TreeViewNodeModelBase node in _children)
             {
                 node.PropertyChanged -= OnItemPropertyChanged;
             }
 
             _children.Clear();
+
+            OnPropertyChanged(nameof(ChildCount));
         }
 
         /// <summary>
         /// (Recursive Method) Checks tree (from this depth downward) for the item
         /// </summary>
-        public bool Contains(TreeViewModelBase item)
+        public bool Contains(TreeViewNodeModelBase item)
         {
             var contains = false;
 
@@ -424,19 +433,18 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         /// <summary>
         /// Removes item (FROM THIS DEPTH ONLY!) This is a non-recursive method.
         /// </summary>
-        public bool Remove(TreeViewModelBase item)
+        public bool Remove(TreeViewNodeModelBase item)
         {
             if (!_children.ContainsKey(item.ItemId))
                 throw new ArgumentException("Item not contained within tree view children");
 
-            return _children.Remove(item.ItemId);
+            var result = _children.Remove(item.ItemId);
+
+            OnPropertyChanged(nameof(ChildCount));
+
+            return result;
         }
 
         #endregion
-
-        public void Dispose()
-        {
-            Clear();
-        }
     }
 }

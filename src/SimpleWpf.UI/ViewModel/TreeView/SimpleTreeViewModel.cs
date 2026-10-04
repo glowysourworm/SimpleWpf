@@ -1,17 +1,23 @@
 ﻿using System.Collections;
+using System.Collections.Specialized;
 using System.ComponentModel;
 
 namespace SimpleWpf.UI.ViewModel.TreeView
 {
-    public class SimpleTreeViewModel : ViewModelBase, IDisposable, IEnumerable
+    public class SimpleTreeViewModel : ViewModelBase, IEnumerable, INotifyCollectionChanged
     {
         /// <summary>
-        /// Occurs when an item in the tree changes
+        /// (Bubble Up Event) Occurs (once) when an item in the tree changes
         /// </summary>
         public event TreeViewDelegates.ItemPropertyChangedTreeEventHandler ItemPropertyChangedEvent;
 
+        /// <summary>
+        /// Notify Collection Changed:  Fires once for a reset at the EndUpdate call
+        /// </summary>
+        public event NotifyCollectionChangedEventHandler? CollectionChanged;
+
         // Root
-        TreeViewModelBase? _root;
+        TreeViewNodeModelBase? _root;
 
         // Begin / End Update:  The primary issue with this tree view is multi-select. The numbering scheme
         //                      was used as a simple solution of getting contiguous select to work. It just
@@ -20,12 +26,22 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         //
         bool _updadting;
         bool _numberingSet;
+        int _count;
+
+        /// <summary>
+        /// This may be required for binding on the UI's backend
+        /// </summary>
+        public int Count
+        {
+            get { return _count; }
+        }
 
         public SimpleTreeViewModel()
         {
             _root = null;
             _updadting = false;
             _numberingSet = false;
+            _count = 0;
         }
         public void BeginUpdate()
         {
@@ -35,22 +51,53 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         }
         public void EndUpdate()
         {
-            if (_root == null)
-                throw new NullReferenceException("Must first add nodes to the tree before calling any access methods");
-
             if (!_updadting)
                 throw new Exception("Trying to end update before calling BeginUpdate");
 
-            _root.SetTreeNumbering();
+            // User has removed the root
+            if (_root != null)
+            {
+                _root.SetTreeNumbering();
 
-            _updadting = false;
-            _numberingSet = _root.RecursiveAll(x => x.IsNumbered);
+                _updadting = false;
+                _numberingSet = _root.RecursiveAll(x => x.IsNumbered);
+                _count = _root.RecursiveCount();
+            }
+
+            // Empty
+            else
+            {
+                _updadting = false;
+                _numberingSet = false;
+                _count = 0;
+            }
+
+            if (this.CollectionChanged != null)
+                this.CollectionChanged(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+
+            OnPropertyChanged(nameof(Count));
+        }
+        public bool IsUpdating()
+        {
+            return _updadting;
+        }
+
+        /// <summary>
+        /// Gets count of nodes in the tree. This may only be called before / after an
+        /// update!
+        /// </summary>
+        public int GetCount()
+        {
+            if (_updadting)
+                throw new Exception("The tree node count is not set during an update");
+
+            return _count;
         }
 
         /// <summary>
         /// Adds the tree view node to the tree by matching its parent. Returns the node that was sent.
         /// </summary>
-        public T Add<T>(T node) where T : TreeViewModelBase
+        public T Add<T>(T node) where T : TreeViewNodeModelBase
         {
             if (!_updadting)
                 throw new Exception("Must first call BeginUpdate before adding tree nodes");
@@ -71,11 +118,55 @@ namespace SimpleWpf.UI.ViewModel.TreeView
 
                 parentNode.Add(node);
 
-                // This gets reset once the nodes are added
+                // These get reset once the nodes are added / removed
                 _numberingSet = false;
+                _count = 0;
             }
 
             return node;
+        }
+
+        /// <summary>
+        /// Removes the tree view node from the tree. Must be done during an update!
+        /// </summary>
+        public void Remove<T>(T node) where T : TreeViewNodeModelBase
+        {
+            if (!_updadting)
+                throw new Exception("Must first call BeginUpdate before removing tree nodes");
+
+            if (_root == null)
+                throw new Exception("Tree has no nodes! Must have first added nodes to the tree");
+
+            else
+            {
+                // Find Parent Node
+                var parentNode = _root.RecursiveFirst(x => x == node.Parent);
+
+                if (parentNode == null)
+                    throw new Exception("Cannot find parent node for ancestor! Make sure that you've connected nodes properly before adding them to the tree");
+
+                // Root:  Just set root to null. The user has called for root to be removed; but may use the node in their code
+                //
+                if (parentNode == _root)
+                    _root = null;
+                else
+                    parentNode.Remove(node);
+
+                // This gets reset once the nodes are added
+                _numberingSet = false;
+                _count = 0;
+            }
+        }
+        public void Clear()
+        {
+            if (_updadting)
+                throw new Exception("Trying to clear the tree during an update");
+
+            if (_root == null)
+                return;
+
+            _root.Clear();
+            _numberingSet = false;
         }
         public bool IsNumberingSet()
         {
@@ -84,35 +175,35 @@ namespace SimpleWpf.UI.ViewModel.TreeView
 
             return _numberingSet;
         }
-        public bool RecursiveAny<T>(Func<T, bool> predicate) where T : TreeViewModelBase
+        public bool RecursiveAny<T>(Func<T, bool> predicate) where T : TreeViewNodeModelBase
         {
             if (_root == null)
                 throw new NullReferenceException("Must first add nodes to the tree before calling any access methods");
 
             return _root.RecursiveAny(predicate);
         }
-        public void RecursiveForEach(Action<TreeViewModelBase> action)
+        public void RecursiveForEach(Action<TreeViewNodeModelBase> action)
         {
             if (_root == null)
                 throw new NullReferenceException("Must first add nodes to the tree before calling any access methods");
 
             _root.RecurseForEach(action);
         }
-        public void RecursiveForEach<T>(Action<T> action) where T : TreeViewModelBase
+        public void RecursiveForEach<T>(Action<T> action) where T : TreeViewNodeModelBase
         {
             if (_root == null)
                 throw new NullReferenceException("Must first add nodes to the tree before calling any access methods");
 
             _root.RecurseForEach<T>(action);
         }
-        public void RecursiveCount<T>(Func<T, bool> predicate) where T : TreeViewModelBase
+        public int RecursiveCount<T>(Func<T, bool> predicate) where T : TreeViewNodeModelBase
         {
             if (_root == null)
                 throw new NullReferenceException("Must first add nodes to the tree before calling any access methods");
 
-            _root.RecursiveCount<T>(predicate);
+            return _root.RecursiveCount<T>(predicate);
         }
-        public IEnumerable<T> RecursiveWhere<T>(Func<T, bool> predicate) where T : TreeViewModelBase
+        public IEnumerable<T> RecursiveWhere<T>(Func<T, bool> predicate) where T : TreeViewNodeModelBase
         {
             if (_root == null)
                 throw new NullReferenceException("Must first add nodes to the tree before calling any access methods");
@@ -122,21 +213,14 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         public IEnumerator GetEnumerator()
         {
             if (_root == null)
-                throw new NullReferenceException("Must first add nodes to the tree before calling any access methods");
+                return Enumerable.Empty<TreeViewNodeModelBase>().GetEnumerator();
 
             return _root.GetEnumerator();
         }
-        private void OnItemPropertyChanged(TreeViewModelBase treeSender, object item, PropertyChangedEventArgs eventArgs)
+        private void OnItemPropertyChanged(TreeViewNodeModelBase treeSender, object item, PropertyChangedEventArgs eventArgs)
         {
             if (this.ItemPropertyChangedEvent != null)
                 this.ItemPropertyChangedEvent(treeSender, item, eventArgs);
-        }
-        public void Dispose()
-        {
-            if (_root != null)
-            {
-                _root.Dispose();
-            }
         }
     }
 }

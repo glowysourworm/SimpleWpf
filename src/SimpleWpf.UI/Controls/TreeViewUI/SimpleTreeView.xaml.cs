@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 
@@ -16,7 +15,7 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
     {
         #region (public) Dependency Properties
         public static readonly DependencyProperty ItemsSourceProperty =
-            DependencyProperty.Register("ItemsSource", typeof(IEnumerable), typeof(SimpleTreeView), new PropertyMetadata(OnItemsSourcePropertyChanged));
+            DependencyProperty.Register("ItemsSource", typeof(IEnumerable), typeof(SimpleTreeView), new PropertyMetadata(OnItemsSourceChanged));
 
         public static readonly DependencyProperty ItemExpanderClosedTemplateProperty =
             DependencyProperty.Register("ItemExpanderClosedTemplate", typeof(DataTemplate), typeof(SimpleTreeView));
@@ -122,34 +121,23 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
         /// <summary>
         /// Event that occurs when the selection in the treeview has changed
         /// </summary>
-        public event SimpleEventHandler<SimpleTreeView, IEnumerable<TreeViewModelBase>> SelectedItemsChanged;
+        public event SimpleEventHandler<SimpleTreeView, IEnumerable<TreeViewNodeModelBase>> SelectedItemsChanged;
 
         // Private collections
-        private Dictionary<TreeViewModelBase, TreeViewModelBase> _selectedItems;
+        private Dictionary<TreeViewNodeModelBase, TreeViewNodeModelBase> _selectedItems;
 
         // Node Selection
-        TreeViewModel? _selectedNode;
+        TreeViewNodeModelBase? _selectedNode;
 
         public SimpleTreeView()
         {
             InitializeComponent();
 
-            _selectedItems = new Dictionary<TreeViewModelBase, TreeViewModelBase>();
-        }
-
-        protected override void OnPreviewMouseWheel(MouseWheelEventArgs e)
-        {
-            //// Calculate scroll extent
-            //var scrollAmount = Math.Clamp(this.TheScrollViewer.VerticalOffset - e.Delta, 0, this.TheScrollViewer.ScrollableHeight);
-
-            //// Handle scroll with the viewer
-            //this.TheScrollViewer.ScrollToVerticalOffset(scrollAmount);
-
-            //e.Handled = true;
+            _selectedItems = new Dictionary<TreeViewNodeModelBase, TreeViewNodeModelBase>();
         }
 
         // Occurs when a property on the UI (target) side changes
-        private void HandleTreeSelection(SimpleTreeViewModel tree, TreeViewModel nodeClicked)
+        private void HandleTreeSelection(SimpleTreeViewModel tree, TreeViewNodeModelBase nodeClicked)
         {
             var ctrl = Keyboard.Modifiers == ModifierKeys.Control;
             var shift = Keyboard.Modifiers == ModifierKeys.Shift;
@@ -249,59 +237,12 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
                 }
             }
 
-
-            //// Selection:  Follow a pattern similar to most tree views (can select "sequentially")
-            ////
-            //if (tree.RecursionDepth == sender.RecursionDepth)
-            //{
-            //    // Begin Update:  Prevent further events from firing until the update is finished
-            //    sender.BeginUpdate();
-
-            //    // Recurse Tree:  Set selection appropriately
-            //    tree.RecurseForEach<TreeViewModel>(childItem =>
-            //    {
-            //        var selected = childItem.IsSelected;
-
-            //        // Parent Items
-            //        if (childItem.RecursionDepth < sender.RecursionDepth)
-            //            childItem.IsSelected = false;
-
-            //        if (childItem.RecursionDepth == sender.RecursionDepth)
-            //            childItem.IsSelected = childItem.IsSelected && (sender.Parent == childItem.Parent);
-
-            //        // Child Items
-            //        else if (childItem.RecursionDepth > sender.RecursionDepth)
-            //        {
-            //            if (!sender.IsSelected)
-            //                childItem.IsSelected = false;
-
-            //            else
-            //            {
-            //                if (childItem.HasDirectAncestor(sender))
-            //                    childItem.IsSelected = sender.IsSelected;
-
-            //                else
-            //                    childItem.IsSelected = false;
-            //            }
-            //        }
-
-            //        // Selection Changed
-            //        if (childItem.IsSelected && !_selectedItems.ContainsKey(childItem))
-            //            _selectedItems.Add(childItem, childItem);
-
-            //        if (!childItem.IsSelected && _selectedItems.ContainsKey(childItem))
-            //            _selectedItems.Remove(childItem);
-
-            //    });
-
-            //    sender.EndUpdate();
-
             // Selected Items Changed
             if (this.SelectedItemsChanged != null)
                 this.SelectedItemsChanged(this, _selectedItems.Values);
         }
 
-        private void UpdateSelection(TreeViewModelBase treeNode)
+        private void UpdateSelection(TreeViewNodeModelBase treeNode)
         {
             // Selection Changed
             if (treeNode.IsSelected && !_selectedItems.ContainsKey(treeNode))
@@ -309,17 +250,6 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
 
             if (!treeNode.IsSelected && _selectedItems.ContainsKey(treeNode))
                 _selectedItems.Remove(treeNode);
-        }
-
-        private void UpdateItemsSource()
-        {
-            var viewModel = this.ItemsSource as TreeViewModelBase;
-
-            if (viewModel != null)
-            {
-                //viewModel.ItemPropertyChangedTreeEvent -= OnItemSourceItemPropertyChanged;
-                //viewModel.ItemPropertyChangedTreeEvent += OnItemSourceItemPropertyChanged;
-            }
         }
 
         protected override void OnPreviewMouseLeftButtonDown(MouseButtonEventArgs e)
@@ -346,7 +276,7 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
                 }
 
                 // Get our data context
-                var viewModel = treeViewItem.DataContext as TreeViewModel;
+                var viewModel = treeViewItem.DataContext as TreeViewNodeModelBase;
 
                 if (viewModel == null)
                 {
@@ -383,41 +313,20 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
             }
         }
 
-        private static void OnItemsSourcePropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        private static void OnItemsSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            var treeView = d as SimpleTreeView;
+            var control = d as SimpleTreeView;
+            var source = e.NewValue as SimpleTreeViewModel;
 
-            if (treeView != null)
+            if (control != null &&
+                source != null)
             {
-                treeView.UpdateItemsSource();
-            }
-        }
-
-        private void InputFileExpanderButton_Checked(object sender, RoutedEventArgs e)
-        {
-            var toggleButton = sender as ToggleButton;
-
-            // Have to force update of the template
-            if (toggleButton != null)
-            {
-                var selector = toggleButton.ContentTemplateSelector;
-
-                toggleButton.ContentTemplateSelector = null;
-                toggleButton.ContentTemplateSelector = selector;
-            }
-        }
-
-        private void InputFileExpanderButton_Unchecked(object sender, RoutedEventArgs e)
-        {
-            var toggleButton = sender as ToggleButton;
-
-            // Have to force update of the template
-            if (toggleButton != null)
-            {
-                var selector = toggleButton.ContentTemplateSelector;
-
-                toggleButton.ContentTemplateSelector = null;
-                toggleButton.ContentTemplateSelector = selector;
+                // This will circumvent binding issues:  it is simple to raise a property changed event
+                // from the user code - which is what usually happens. So, any property changed event
+                // that fires from the SimpleTreeViewModel class hierarchy will get caught here without
+                // worrying about binding settings, templates, etc...
+                //
+                control.TheTreeView.ItemsSource = source;
             }
         }
     }

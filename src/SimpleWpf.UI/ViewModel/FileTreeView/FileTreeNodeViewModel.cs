@@ -4,7 +4,7 @@ using SimpleWpf.UI.ViewModel.TreeView;
 
 namespace SimpleWpf.UI.ViewModel.FileTreeView
 {
-    public class FileTreeViewModel : TreeViewModelBase
+    public class FileTreeNodeViewModel : TreeViewNodeModelBase
     {
         string _baseDirectory;
         string _fullPath;
@@ -56,7 +56,7 @@ namespace SimpleWpf.UI.ViewModel.FileTreeView
             set { this.RaiseAndSetIfChanged(ref _directoryFileCount, value); }
         }
 
-        public FileTreeViewModel(string baseDirectory, string path, int directoryFileCount, FileTreeViewModel? parent)
+        public FileTreeNodeViewModel(string baseDirectory, string path, int directoryFileCount, FileTreeNodeViewModel? parent)
             : base(GetDirectoryDepth(path) - GetDirectoryDepth(baseDirectory), parent)
         {
             if (!Directory.Exists(baseDirectory))
