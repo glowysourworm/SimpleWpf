@@ -167,7 +167,7 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
                 var isSelected = nodeClicked.IsSelected;
 
                 // De-Select
-                tree.RecursiveForEach<TreeViewModel>(treeNode =>
+                tree.RecursiveForEach(treeNode =>
                 {
                     treeNode.IsSelected = false;
 
@@ -221,7 +221,7 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
                     var numberLow = Math.Min(_selectedNode.ItemId, nodeClicked.ItemId);
                     var numberHigh = Math.Max(_selectedNode.ItemId, nodeClicked.ItemId);
 
-                    tree.RecursiveForEach<TreeViewModel>(treeNode =>
+                    tree.RecursiveForEach(treeNode =>
                     {
                         if (treeNode.ItemId >= numberLow &&
                             treeNode.ItemId <= numberHigh)

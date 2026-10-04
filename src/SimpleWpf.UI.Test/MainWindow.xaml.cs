@@ -19,16 +19,22 @@ namespace SimpleWpf.UI.Test
         {
             InitializeComponent();
 
-            var root = new TreeViewModel("Root", 0, null);
+            this.TreeView = new SimpleTreeViewModel();
+            this.TreeView.BeginUpdate();
+
+            // Use SimpleTreeViewModel to add nodes (or) can also just chain nodes together to the already added one(s)
+            var root = this.TreeView.Add(new TreeViewModel("Root", 0, null));
 
             for (int index = 0; index < 10; index++)
             {
-                var item = new TreeViewModel("Item " + index, 1, root);
-                root.Add(item);
+                // SimpleTreeViewModel.Add
+                var item = this.TreeView.Add(new TreeViewModel("Item " + index, 1, root));
 
                 for (int childIndex = 0; childIndex < 10; childIndex++)
                 {
                     var child = new TreeViewModel("Child " + childIndex, 2, item);
+
+                    // TreeViewModelBase.Add (node add)
                     item.Add(child);
 
                     for (int grandChildIndex = 0; grandChildIndex < 10; grandChildIndex++)
@@ -38,6 +44,9 @@ namespace SimpleWpf.UI.Test
                     }
                 }
             }
+
+            // Finalize Add (sets tree node numbering)
+            this.TreeView.EndUpdate();
 
             _selectedItems = new ObservableCollection<TreeViewModelBase>();
 
@@ -49,10 +58,6 @@ namespace SimpleWpf.UI.Test
             this.SimpleEnumFC.DataContext = this.EnumTest;
             this.SimpleEnumRB.DataContext = this.EnumTest;
 
-            // Multi-Selection
-            root.SetTreeNumbering();
-
-            this.TreeView = new SimpleTreeViewModel(root);
             this.TheTreeView.ItemsSource = this.TreeView;
         }
 

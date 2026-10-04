@@ -14,6 +14,16 @@ namespace SimpleWpf.UI.ViewModel.TreeView
     public abstract class TreeViewModelBase : ViewModelBase, IEnumerable, IDisposable
     {
         /// <summary>
+        /// Notifies to the iterator code what to do with actions and predicates for
+        /// the caller
+        /// </summary>
+        protected enum IteratorContinuation
+        {
+            Continue = 0,
+            BreakAndReturn
+        }
+
+        /// <summary>
         /// (Bubble Up Event) This is a tree-wide event for property changed events
         /// </summary>
         public event TreeViewDelegates.ItemPropertyChangedTreeEventHandler ItemPropertyChanged;
@@ -105,37 +115,49 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         #endregion
 
         // Method used for recursive members (includes current node for action)
-        private void Recurse(Action<TreeViewModelBase> action, bool leafFirst = false, bool childrenOnly = false)
+        private void Recurse(Func<TreeViewModelBase, IteratorContinuation> userFunc, bool leafFirst = false, bool childrenOnly = false)
         {
             if (!leafFirst && !childrenOnly)
-                action(this);
+            {
+                if (userFunc(this) == IteratorContinuation.BreakAndReturn)
+                    return;
+            }
 
             // Recursive Iterator
             foreach (TreeViewModelBase item in _children)
             {
-                item.Recurse(action);
+                item.Recurse(userFunc);
             }
 
             if (leafFirst && !childrenOnly)
-                action(this);
+            {
+                if (userFunc(this) == IteratorContinuation.BreakAndReturn)
+                    return;
+            }
         }
 
-        private void Recurse<T>(Action<T> action, bool leafFirst = false, bool childrenOnly = false) where T : TreeViewModelBase
+        private void Recurse<T>(Func<T, IteratorContinuation> userFunc, bool leafFirst = false, bool childrenOnly = false) where T : TreeViewModelBase
         {
             if (this is not T)
                 throw new ArgumentException("Invalid cast of tree node");
 
             if (!leafFirst && !childrenOnly)
-                action(this as T);
+            {
+                if (userFunc(this as T) == IteratorContinuation.BreakAndReturn)
+                    return;
+            }
 
             // Recursive Iterator
             foreach (TreeViewModelBase item in _children)
             {
-                item.Recurse(action);
+                item.Recurse(userFunc);
             }
 
             if (leafFirst && !childrenOnly)
-                action(this as T);
+            {
+                if (userFunc(this as T) == IteratorContinuation.BreakAndReturn)
+                    return;
+            }
         }
 
         #region IList Methods
@@ -146,7 +168,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         /// </summary>
         public void RecurseForEach(Action<TreeViewModelBase> action)
         {
-            Recurse(action);
+            this.RecurseForEach<TreeViewModelBase>(action);
         }
 
         /// <summary>
@@ -155,24 +177,20 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         /// </summary>
         public void RecurseForEach<T>(Action<T> action) where T : TreeViewModelBase
         {
-            Recurse<T>(action);
+            Recurse<T>((node) =>
+            {
+                action(node);
+                return IteratorContinuation.Continue;
+            });
         }
 
         public int RecursiveCount()
         {
-            var count = 0;
-            Recurse(x => count++);
-            return count;
+            return this.RecursiveCount(x => true);
         }
         public int RecursiveCount(Func<TreeViewModelBase, bool> predicate)
         {
-            var count = 0;
-            Recurse(x =>
-            {
-                if (predicate(x))
-                    count++;
-            });
-            return count;
+            return this.RecursiveCount<TreeViewModelBase>(predicate);
         }
         public int RecursiveCount<T>(Func<T, bool> predicate) where T : TreeViewModelBase
         {
@@ -181,20 +199,14 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             {
                 if (predicate(x))
                     count++;
+
+                return IteratorContinuation.Continue;
             });
             return count;
         }
         public IEnumerable<TreeViewModelBase> RecursiveWhere(Func<TreeViewModelBase, bool> predicate)
         {
-            var result = new List<TreeViewModelBase>();
-
-            Recurse(x =>
-            {
-                if (predicate(x))
-                    result.Add(x);
-            });
-
-            return result;
+            return this.RecursiveWhere<TreeViewModelBase>(predicate);
         }
         public IEnumerable<T> RecursiveWhere<T>(Func<T, bool> predicate) where T : TreeViewModelBase
         {
@@ -204,6 +216,72 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             {
                 if (predicate(x))
                     result.Add(x);
+
+                return IteratorContinuation.Continue;
+            });
+
+            return result;
+        }
+
+        public bool RecursiveAll(Func<TreeViewModelBase, bool> predicate)
+        {
+            return this.RecursiveAll<TreeViewModelBase>(predicate);
+        }
+        public bool RecursiveAll<T>(Func<T, bool> predicate) where T : TreeViewModelBase
+        {
+            var result = true;
+
+            Recurse<T>(node =>
+            {
+                if (!predicate(node))
+                {
+                    result = false;
+                    return IteratorContinuation.BreakAndReturn;
+                }
+
+                return IteratorContinuation.Continue;
+            });
+
+            return result;
+        }
+        public bool RecursiveAny(Func<TreeViewModelBase, bool> predicate)
+        {
+            return this.RecursiveAny<TreeViewModelBase>(predicate);
+        }
+        public bool RecursiveAny<T>(Func<T, bool> predicate) where T : TreeViewModelBase
+        {
+            var result = false;
+
+            Recurse<T>(node =>
+            {
+                if (predicate(node))
+                {
+                    result = true;
+                    return IteratorContinuation.BreakAndReturn;
+                }
+
+                return IteratorContinuation.Continue;
+            });
+
+            return result;
+        }
+        public TreeViewModelBase? RecursiveFirst(Func<TreeViewModelBase, bool> predicate)
+        {
+            return this.RecursiveFirst<TreeViewModelBase>(predicate);
+        }
+        public T? RecursiveFirst<T>(Func<T, bool> predicate) where T : TreeViewModelBase
+        {
+            T? result = null;
+
+            Recurse<T>(node =>
+            {
+                if (predicate(node))
+                {
+                    result = node;
+                    return IteratorContinuation.BreakAndReturn;
+                }
+
+                return IteratorContinuation.Continue;
             });
 
             return result;
@@ -303,7 +381,12 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         public void Clear()
         {
             // Leaf First:  Runs the delegate after iterating the children (recursively)
-            Recurse(x => x.ClearImpl(), true);
+            Recurse(x =>
+            {
+                x.ClearImpl();
+                return IteratorContinuation.Continue;
+
+            }, true);
         }
 
         private void ClearImpl()
@@ -327,7 +410,12 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             Recurse(x =>
             {
                 if (x == item)
+                {
                     contains = true;
+                    return IteratorContinuation.BreakAndReturn;
+                }
+
+                return IteratorContinuation.Continue;
             });
 
             return contains;
