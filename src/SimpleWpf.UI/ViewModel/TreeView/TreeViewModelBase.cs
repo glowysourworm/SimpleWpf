@@ -268,15 +268,15 @@ namespace SimpleWpf.UI.ViewModel.TreeView
 
             foreach (var item in items)
             {
-                // -> Recurse (Depth First)
-                item.SetTreeNumberingRecurse(item);
-
                 // Re-Number
                 item.ItemId = ++_TREE_ITEM_COUNTER;
                 item.IsNumbered = true;
 
                 // Children -> Add
                 _children.Add(item.ItemId, item);
+
+                // -> Recurse (Depth First)
+                item.SetTreeNumberingRecurse(item);
             }
         }
 
