@@ -145,6 +145,7 @@ namespace SimpleWpf.Extensions.ObservableCollection
             }
 
             _dictionary.Clear();
+            _indexDictionary.Clear();
 
             OnCollectionReset();
             OnPropertyChanged("Count");

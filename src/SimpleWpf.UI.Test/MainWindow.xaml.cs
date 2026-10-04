@@ -13,30 +13,36 @@ namespace SimpleWpf.UI.Test
         ObservableCollection<TreeViewModelBase> _selectedItems;
 
         public EnumTestViewModel EnumTest;
-        public TreeViewModel TreeViewModel;
+        public TreeViewModel TreeView;
 
         public MainWindow()
         {
             InitializeComponent();
 
-            this.TreeViewModel = new TreeViewModel(new TreeViewNodeModel("Root", 0));
+            this.TreeView = new TreeViewModel("Root", 0, null);
 
             for (int index = 0; index < 10; index++)
             {
-                var item = this.TreeViewModel.Add(new TreeViewNodeModel("Item " + index, 1));
+                var item = new TreeViewModel("Item " + index, 1, this.TreeView);
+                this.TreeView.Add(item);
 
                 for (int childIndex = 0; childIndex < 10; childIndex++)
                 {
-                    var child = item.Add(new TreeViewNodeModel("Child " + childIndex, 2));
+                    var child = new TreeViewModel("Child " + childIndex, 2, item);
+                    item.Add(child);
 
                     for (int grandChildIndex = 0; grandChildIndex < 10; grandChildIndex++)
                     {
-                        var grandChild = child.Add(new TreeViewNodeModel("Grand Child (CanHaveChildren = false) " + grandChildIndex, 3));
+                        var grandChild = new TreeViewModel("Grand Child (CanHaveChildren = false) " + grandChildIndex, 3, child);
+                        child.Add(grandChild);
 
-                        var grandChildTree = child.Add(new TreeViewNodeModel("Grand Child (CanHaveChildren = true) " + grandChildIndex, 3)
+
+                        var grandChildTree = new TreeViewModel("Grand Child (CanHaveChildren = true) " + grandChildIndex, 3, child)
                         {
                             CanHaveChildren = true
-                        });
+                        };
+
+                        child.Add(grandChildTree);
                     }
                 }
             }
@@ -51,7 +57,10 @@ namespace SimpleWpf.UI.Test
             this.SimpleEnumFC.DataContext = this.EnumTest;
             this.SimpleEnumRB.DataContext = this.EnumTest;
 
-            this.TheTreeView.ItemsSource = this.TreeViewModel;
+            this.TheTreeView.ItemsSource = this.TreeView;
+
+            // Multi-Selection
+            this.TreeView.SetTreeNumbering();
         }
 
         private void TheTreeView_SelectedItemsChanged(SimpleTreeView sender, IEnumerable<TreeViewModelBase> selectedItems)

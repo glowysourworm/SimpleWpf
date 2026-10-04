@@ -1,5 +1,4 @@
 ﻿using System.Collections;
-using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -8,7 +7,8 @@ using System.Windows.Media;
 
 using SimpleWpf.Extensions.Event;
 using SimpleWpf.UI.ViewModel.TreeView;
-using SimpleWpf.UI.ViewModel.TreeView.Interface;
+
+using Xceed.Wpf.Toolkit.Core.Utilities;
 
 namespace SimpleWpf.UI.Controls.TreeViewUI
 {
@@ -23,6 +23,9 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
 
         public static readonly DependencyProperty ItemExpanderOpenTemplateProperty =
             DependencyProperty.Register("ItemExpanderOpenTemplate", typeof(DataTemplate), typeof(SimpleTreeView));
+
+        public static readonly DependencyProperty ItemHeaderContentTemplateProperty =
+            DependencyProperty.Register("ItemHeaderContentTemplate", typeof(DataTemplate), typeof(SimpleTreeView));
 
         public static readonly DependencyProperty ItemIndentProperty =
             DependencyProperty.Register("ItemIndent", typeof(int), typeof(SimpleTreeView), new PropertyMetadata(0));
@@ -67,6 +70,11 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
         {
             get { return (DataTemplate)GetValue(ItemExpanderOpenTemplateProperty); }
             set { SetValue(ItemExpanderOpenTemplateProperty, value); }
+        }
+        public DataTemplate ItemHeaderContentTemplate
+        {
+            get { return (DataTemplate)GetValue(ItemHeaderContentTemplateProperty); }
+            set { SetValue(ItemHeaderContentTemplateProperty, value); }
         }
         public Thickness ItemPadding
         {
@@ -119,6 +127,9 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
         // Private collections
         private Dictionary<TreeViewModelBase, TreeViewModelBase> _selectedItems;
 
+        // Node Selection
+        TreeViewModel? _selectedNode;
+
         public SimpleTreeView()
         {
             InitializeComponent();
@@ -138,60 +149,166 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
         }
 
         // Occurs when a property on the UI (target) side changes
-        private void OnItemSourceItemPropertyChanged(TreeViewModelBase treeSender, ITreeViewNode item, PropertyChangedEventArgs eventArgs)
+        private void HandleTreeSelection(TreeViewModel tree, TreeViewModel nodeClicked)
         {
-            var viewModel = this.ItemsSource as TreeViewModelBase;
+            var ctrl = Keyboard.Modifiers == ModifierKeys.Control;
+            var shift = Keyboard.Modifiers == ModifierKeys.Shift;
 
-            // Selection:  Follow a pattern similar to most tree views (can select "sequentially")
-            //
-            if (viewModel != null && treeSender.NodeValue.RecursionDepth == item.RecursionDepth && eventArgs.PropertyName == "IsSelected")
+            // Ordinary Selection:  (options) Single Select; Recursive Select (down the tree)
+            if (!ctrl && !shift)
             {
-                // Begin Update:  Prevent further events from firing until the update is finished
-                viewModel.BeginUpdate();
+                // Single Select
+                //
+                // 1) Tree becomes de-selected
+                // 2) The selected node gets toggled
+                //
 
-                // Recurse Tree:  Set selection appropriately
-                viewModel.RecurseForEach(childItem =>
+                // Save Selection
+                var isSelected = nodeClicked.IsSelected;
+
+                // De-Select
+                tree.RecurseForEach<TreeViewModel>(treeNode =>
                 {
-                    var selected = childItem.NodeValue.IsSelected;
+                    treeNode.IsSelected = false;
 
-                    // Parent Items
-                    if (childItem.NodeValue.RecursionDepth < item.RecursionDepth)
-                        childItem.NodeValue.IsSelected = false;
-
-                    if (childItem.NodeValue.RecursionDepth == item.RecursionDepth)
-                        childItem.NodeValue.IsSelected = childItem.NodeValue.IsSelected && (treeSender.Parent == childItem.Parent);
-
-                    // Child Items
-                    else if (childItem.NodeValue.RecursionDepth > item.RecursionDepth)
-                    {
-                        if (!item.IsSelected)
-                            childItem.NodeValue.IsSelected = false;
-
-                        else
-                        {
-                            if (childItem.HasDirectAncestor(treeSender))
-                                childItem.NodeValue.IsSelected = item.IsSelected;
-
-                            else
-                                childItem.NodeValue.IsSelected = false;
-                        }
-                    }
-
-                    // Selection Changed
-                    if (childItem.NodeValue.IsSelected && !_selectedItems.ContainsKey(childItem))
-                        _selectedItems.Add(childItem, childItem);
-
-                    if (!childItem.NodeValue.IsSelected && _selectedItems.ContainsKey(childItem))
-                        _selectedItems.Remove(childItem);
-
+                    // Update Selection List
+                    UpdateSelection(treeNode);
                 });
 
-                viewModel.EndUpdate();
+                // Set Selection
+                nodeClicked.IsSelected = !isSelected;
 
-                // Selected Items Changed
-                if (this.SelectedItemsChanged != null)
-                    this.SelectedItemsChanged(this, _selectedItems.Values);
+                // Set Follower
+                _selectedNode = nodeClicked.IsSelected ? nodeClicked : null;
+
+                // Update Selection List
+                UpdateSelection(nodeClicked);
             }
+
+            // Ctrl + Select:  User Single Select 
+            else if (ctrl)
+            {
+                // User Single Select
+                //
+                // 1) Clicked node gets toggled
+                //
+
+                nodeClicked.IsSelected = !nodeClicked.IsSelected;
+
+                // Set Follower
+                _selectedNode = nodeClicked.IsSelected ? nodeClicked : null;
+
+                // Update Selection List
+                UpdateSelection(nodeClicked);
+            }
+
+            // Shift + Select:  Multiple Selection
+            else if (shift)
+            {
+                // Multiple Selection:  We have a trick for handling this. The nodes are first
+                //                      numbered going down the tree. Then, the item id's can
+                //                      be used to do contiguous select.
+                //
+
+                // Preivious Selected Node
+                if (_selectedNode != null)
+                {
+                    // First, check to see that tree has been numbered
+                    if (!tree.IsNumbered)
+                        throw new Exception("Must set tree numbering before using multi-selection");
+
+                    // Get two item numbers
+                    var numberLow = Math.Min(_selectedNode.ItemId, nodeClicked.ItemId);
+                    var numberHigh = Math.Max(_selectedNode.ItemId, nodeClicked.ItemId);
+
+                    tree.RecurseForEach(treeNode =>
+                    {
+                        if (treeNode.ItemId >= numberLow &&
+                            treeNode.ItemId <= numberHigh)
+                        {
+                            treeNode.IsSelected = true;
+                        }
+                        else
+                            treeNode.IsSelected = false;
+
+                        // Update Selection List
+                        UpdateSelection(treeNode);
+                    });
+                }
+
+                // Single Select
+                else
+                {
+                    nodeClicked.IsSelected = !nodeClicked.IsSelected;
+
+                    // Set Follower
+                    _selectedNode = nodeClicked.IsSelected ? nodeClicked : null;
+
+                    // Update Selection List
+                    UpdateSelection(nodeClicked);
+                }
+            }
+
+
+            //// Selection:  Follow a pattern similar to most tree views (can select "sequentially")
+            ////
+            //if (tree.RecursionDepth == sender.RecursionDepth)
+            //{
+            //    // Begin Update:  Prevent further events from firing until the update is finished
+            //    sender.BeginUpdate();
+
+            //    // Recurse Tree:  Set selection appropriately
+            //    tree.RecurseForEach<TreeViewModel>(childItem =>
+            //    {
+            //        var selected = childItem.IsSelected;
+
+            //        // Parent Items
+            //        if (childItem.RecursionDepth < sender.RecursionDepth)
+            //            childItem.IsSelected = false;
+
+            //        if (childItem.RecursionDepth == sender.RecursionDepth)
+            //            childItem.IsSelected = childItem.IsSelected && (sender.Parent == childItem.Parent);
+
+            //        // Child Items
+            //        else if (childItem.RecursionDepth > sender.RecursionDepth)
+            //        {
+            //            if (!sender.IsSelected)
+            //                childItem.IsSelected = false;
+
+            //            else
+            //            {
+            //                if (childItem.HasDirectAncestor(sender))
+            //                    childItem.IsSelected = sender.IsSelected;
+
+            //                else
+            //                    childItem.IsSelected = false;
+            //            }
+            //        }
+
+            //        // Selection Changed
+            //        if (childItem.IsSelected && !_selectedItems.ContainsKey(childItem))
+            //            _selectedItems.Add(childItem, childItem);
+
+            //        if (!childItem.IsSelected && _selectedItems.ContainsKey(childItem))
+            //            _selectedItems.Remove(childItem);
+
+            //    });
+
+            //    sender.EndUpdate();
+
+            // Selected Items Changed
+            if (this.SelectedItemsChanged != null)
+                this.SelectedItemsChanged(this, _selectedItems.Values);
+        }
+
+        private void UpdateSelection(TreeViewModelBase treeNode)
+        {
+            // Selection Changed
+            if (treeNode.IsSelected && !_selectedItems.ContainsKey(treeNode))
+                _selectedItems.Add(treeNode, treeNode);
+
+            if (!treeNode.IsSelected && _selectedItems.ContainsKey(treeNode))
+                _selectedItems.Remove(treeNode);
         }
 
         private void UpdateItemsSource()
@@ -200,7 +317,69 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
 
             if (viewModel != null)
             {
-                viewModel.ItemPropertyChangedTreeEvent += OnItemSourceItemPropertyChanged;
+                //viewModel.ItemPropertyChangedTreeEvent -= OnItemSourceItemPropertyChanged;
+                //viewModel.ItemPropertyChangedTreeEvent += OnItemSourceItemPropertyChanged;
+            }
+        }
+
+        protected override void OnPreviewMouseLeftButtonDown(MouseButtonEventArgs e)
+        {
+            if (e.OriginalSource is not DependencyObject)
+                base.OnPreviewMouseLeftButtonDown(e);
+
+            else
+            {
+                // Procedure: Prefer expander to selection first
+                //
+                // 1) Get TreeViewItem from the event data
+                // 2) Search for the ContentSource="Header" (ContentPresenter)
+                // 3) Check the header first for expander click
+                //
+
+                // Get topmost item
+                var treeViewItem = VisualTreeHelperEx.FindAncestorByType<TreeViewItem>(e.OriginalSource as DependencyObject);
+
+                if (treeViewItem == null)
+                {
+                    base.OnPreviewMouseLeftButtonDown(e);
+                    return;
+                }
+
+                // Get our data context
+                var viewModel = treeViewItem.DataContext as TreeViewModel;
+
+                if (viewModel == null)
+                {
+                    base.OnPreviewMouseLeftButtonDown(e);
+                    return;
+                }
+
+                // Get header
+                var header = VisualTreeHelperEx.FindAncestorByType<ContentPresenter>(e.OriginalSource as DependencyObject);
+
+                if (header != null)
+                {
+                    // Templated Parent will be the ContentPresenter that holds the template for the expander
+                    var headerPresenter = header.TemplatedParent as ContentPresenter;
+
+                    if (headerPresenter != null)
+                    {
+                        var inputElement = headerPresenter.InputHitTest(e.GetPosition(treeViewItem));
+
+                        // Expansion
+                        if (inputElement != null && inputElement.IsMouseOver)
+                        {
+                            viewModel.IsExpanded = !viewModel.IsExpanded;
+                            e.Handled = true;
+                            return;
+                        }
+                    }
+                }
+
+                // Selection (finally)
+                HandleTreeSelection(this.ItemsSource as TreeViewModel, viewModel);
+
+                e.Handled = true;
             }
         }
 

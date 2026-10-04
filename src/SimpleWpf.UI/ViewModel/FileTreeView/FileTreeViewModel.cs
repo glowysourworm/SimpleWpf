@@ -1,60 +1,106 @@
-﻿using SimpleWpf.UI.ViewModel.TreeView;
-using SimpleWpf.UI.ViewModel.TreeView.Interface;
+﻿using System.IO;
+
+using SimpleWpf.UI.ViewModel.TreeView;
 
 namespace SimpleWpf.UI.ViewModel.FileTreeView
 {
-    public class FileTreeViewModel : TreeViewModelBase
+    public class FileTreeViewModel : TreeViewModel
     {
-        /// <summary>
-        /// Returns node value casted up to the file tree view model.
-        /// </summary>
-        public FileTreeNodeViewModel GetNodeValue()
+        string _baseDirectory;
+        string _fullPath;
+        string _shortPath;
+        DateTime _creationUtc;
+        DateTime _lastAccessUtc;
+        DateTime _lastWriteUtc;
+        bool _isDirectory;
+        int _directoryFileCount;
+
+        public string BaseDirectory
         {
-            return this.NodeValue as FileTreeNodeViewModel;
+            get { return _baseDirectory; }
+            set { this.RaiseAndSetIfChanged(ref _baseDirectory, value); }
+        }
+        public string FullPath
+        {
+            get { return _fullPath; }
+            set { this.RaiseAndSetIfChanged(ref _fullPath, value); }
+        }
+        public string ShortPath
+        {
+            get { return _shortPath; }
+            set { this.RaiseAndSetIfChanged(ref _shortPath, value); }
+        }
+        public DateTime CreationUtc
+        {
+            get { return _creationUtc; }
+            set { this.RaiseAndSetIfChanged(ref _creationUtc, value); }
+        }
+        public DateTime LastAccessUtc
+        {
+            get { return _lastAccessUtc; }
+            set { this.RaiseAndSetIfChanged(ref _lastAccessUtc, value); }
+        }
+        public DateTime LastWriteUtc
+        {
+            get { return _lastWriteUtc; }
+            set { this.RaiseAndSetIfChanged(ref _lastWriteUtc, value); }
+        }
+        public bool IsDirectory
+        {
+            get { return _isDirectory; }
+            set { this.RaiseAndSetIfChanged(ref _isDirectory, value); }
+        }
+        public int DirectoryFileCount
+        {
+            get { return _directoryFileCount; }
+            set { this.RaiseAndSetIfChanged(ref _directoryFileCount, value); }
         }
 
-        public FileTreeViewModel(FileTreeNodeViewModel nodeValue,
-                                 TreeViewModelBase parent = null)
-            : base(nodeValue, parent)
+        public FileTreeViewModel(string baseDirectory, string path, int directoryFileCount, FileTreeViewModel? parent)
+            : base(path, GetDirectoryDepth(path) - GetDirectoryDepth(baseDirectory), parent)
         {
-        }
+            if (!Directory.Exists(baseDirectory))
+                throw new ArgumentException("Directory does not exist! Must create PathViewModel with valid directory");
 
-        protected override TreeViewModelBase Construct(ITreeViewNode nodeValue)
-        {
-            return new FileTreeViewModel(nodeValue as FileTreeNodeViewModel, this);
-        }
+            if (!System.IO.Path.Exists(path))
+                throw new ArgumentException("Path does not exist! Must create PathViewModel with valid path");
 
-        public int GetSelectedFileCount()
-        {
-            // Selected File Count
-            return RecursiveCount(node => node.IsSelected && !node.CanHaveChildren);
-        }
+            if (string.IsNullOrEmpty(System.IO.Path.GetRelativePath(path, baseDirectory)))
+                throw new ArgumentException("Path must be relative to base directory:  PathViewModel.cs");
 
-        public IEnumerable<FileTreeViewModel> GetSelection(bool includeDirectories)
-        {
-            var result = new List<FileTreeViewModel>();
+            // Is Directory?
+            this.IsDirectory = Directory.Exists(path);
+            this.CanHaveChildren = this.IsDirectory;
 
-            // current sub-tree
-            RecurseForEach(subTree =>
+            // This is sent in for performance purposes (also lazy loading)
+            this.DirectoryFileCount = this.IsDirectory ? directoryFileCount : 0;
+            this.IsLoaded = false;
+
+            this.BaseDirectory = baseDirectory;
+            this.FullPath = path;
+
+            if (this.IsDirectory)
+                this.ShortPath = new DirectoryInfo(path).Name;
+
+            else
             {
-                if (subTree.NodeValue.IsSelected)
-                {
-                    // File
-                    if (!subTree.NodeValue.CanHaveChildren)
-                        result.Add(subTree as FileTreeViewModel);
+                this.ShortPath = System.IO.Path.GetFileName(path);
+                this.CreationUtc = System.IO.File.GetCreationTimeUtc(path);
+                this.LastAccessUtc = System.IO.File.GetLastAccessTimeUtc(path);
+                this.LastWriteUtc = System.IO.File.GetLastWriteTimeUtc(path);
+            }
+        }
 
-                    // Directory
-                    else if (includeDirectories)
-                        result.Add(subTree as FileTreeViewModel);
-                }
-            });
+        private static int GetDirectoryDepth(string path)
+        {
+            var directory = System.IO.Path.GetDirectoryName(path);
 
-            return result;
+            return directory.Split("\\", StringSplitOptions.RemoveEmptyEntries).Length;
         }
 
         public override string ToString()
         {
-            return this.NodeValue.ToString();
+            return this.FullPath;
         }
     }
 }

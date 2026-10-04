@@ -33,6 +33,14 @@
                                 <shapes:Ellipse Margin="5" Fill="Black" Stroke="Black" Height="10" Width="10" />
                             </DataTemplate>
                         </treeviewUI:SimpleTreeView.ItemExpanderClosedTemplate>
+                        <treeviewUI:SimpleTreeView.ItemHeaderContentTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding DisplayName}" Foreground="Black" />
+                                    <TextBlock Text="{Binding ItemId, StringFormat='(Id={0})'}" Foreground="Black" Margin="10 0" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </treeviewUI:SimpleTreeView.ItemHeaderContentTemplate>
                     </treeviewUI:SimpleTreeView>
 
                     <ListBox x:Name="SelectedItemsLB" Grid.Column="1" />

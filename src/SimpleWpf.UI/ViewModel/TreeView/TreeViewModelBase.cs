@@ -2,98 +2,89 @@
 using System.Collections.Specialized;
 using System.ComponentModel;
 
-using SimpleWpf.Extensions.Event;
-
+using SimpleWpf.Extensions.Collection;
 using SimpleWpf.Extensions.ObservableCollection;
-using SimpleWpf.UI.ViewModel.TreeView.Interface;
 
 namespace SimpleWpf.UI.ViewModel.TreeView
 {
     /// <summary>
-    /// Base class for a recursive view model which handles recursive iteration using IList (IEnumerable).
+    /// Simple Tree View:  This is the base class for a recursive-friendly model that handles: selection; bubble-up selection;
+    ///                    lazy loading; and item property changed events (+ bubble-up handling); and, also, grouped property
+    ///                    events.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    public abstract class TreeViewModelBase : ViewModelBase, IDisposable, IEnumerable
+    public abstract class TreeViewModelBase : ViewModelBase, IEnumerable, IDisposable
     {
-        /// <summary>
-        /// Event that fires when collection's item property has changed. This event fires only at this level of the tree
-        /// </summary>
-        public event CollectionItemChangedHandler<ITreeViewNode> ItemPropertyChanged;
-
-        /// <summary>
-        /// (Bubble Up Event) Event that fires when collection has changed. This bubbles
-        ///                   up the tree. So, setting this at the root will forward all tree collection events.
-        /// </summary>
-        public event TreeViewDelegates.CollectionChangedTreeEventHandler CollectionChangedTreeEvent;
-
-        /// <summary>
-        /// (Bubble Up Event) Event that fires when collection's item property has changed. This bubbles
-        ///                   up the tree. So, setting this at the root will forward all tree item events.
-        /// </summary>
-        public event TreeViewDelegates.ItemPropertyChangedTreeEventHandler ItemPropertyChangedTreeEvent;
-
         // Parent Node
-        TreeViewModelBase _parent;
+        TreeViewModelBase? _parent;
 
         // Primary collection
-        NotifyingObservableCollection<TreeViewModelBase> _children;
+        KeyedObservableCollection<int, TreeViewModelBase> _children;
 
-        // Current node's value
-        ITreeViewNode _nodeValue;
+        // Basic Properties
+        bool _isLoaded;
+        bool _isExpanded;
+        bool _isSelected;
 
-        public TreeViewModelBase Parent
+        // Tree Ordering:  Tree item order may be applied to the tree to
+        //                 make multiple selection simple and more efficient.
+        //
+        //                 The method to do this should be called after 
+        //                 initializing the tree; or after inserting new
+        //                 nodes.
+        //
+        //                 This may be turned off
+        //
+        static int _TREE_ITEM_COUNTER = 0;
+
+        /// <summary>
+        /// ID set when numbering the tree
+        /// </summary>
+        public int ItemId { get; private set; }
+
+        /// <summary>
+        /// Check to see if the tree is numbered. This should be cascade-set starting from the root.
+        /// </summary>
+        public bool IsNumbered { get; private set; }
+
+        public TreeViewModelBase? Parent
         {
             get { return _parent; }
             set { this.RaiseAndSetIfChanged(ref _parent, value); }
         }
-        public NotifyingObservableCollection<TreeViewModelBase> Children
+        public IReadOnlyCollection<TreeViewModelBase> Children
         {
             get { return _children; }
         }
-        public ITreeViewNode NodeValue
+        public bool IsLoaded
         {
-            get { return _nodeValue; }
+            get { return _isLoaded; }
+            set { this.RaiseAndSetIfChanged(ref _isLoaded, value); }
         }
-        public bool CanHaveChildren
+        public bool IsExpanded
         {
-            get { return _nodeValue.CanHaveChildren; }
+            get { return _isExpanded; }
+            set { this.RaiseAndSetIfChanged(ref _isExpanded, value); }
+        }
+        public bool IsSelected
+        {
+            get { return _isSelected; }
+            set { this.RaiseAndSetIfChanged(ref _isSelected, value); }
         }
 
         // Begin / End Update (pattern)
         bool _updating;
 
-        public TreeViewModelBase(ITreeViewNode nodeValue, TreeViewModelBase parent = null)
+        public TreeViewModelBase(TreeViewModelBase? parent)
         {
-            _children = new NotifyingObservableCollection<TreeViewModelBase>();
-            _nodeValue = nodeValue;
+            _children = new KeyedObservableCollection<int, TreeViewModelBase>();
             _parent = parent;
-            _nodeValue = nodeValue;
 
             _updating = false;
 
-            _children.ItemPropertyChanged += OnItemPropertyChanged;
-            _nodeValue.PropertyChanged += OnNodeValuePropertyChanged;
-        }
-
-        /// <summary>
-        /// Constructs instance of the tree's node for the child collection
-        /// </summary>
-        protected abstract TreeViewModelBase Construct(ITreeViewNode nodeValue);
-
-        // Method used for recursive members (includes current node for action)
-        private void Recurse(Action<TreeViewModelBase> action, bool leafFirst = false, bool childrenOnly = false)
-        {
-            if (!leafFirst && !childrenOnly)
-                action(this);
-
-            // Recursive Iterator
-            foreach (var item in _children)
-            {
-                item.Recurse(action);
-            }
-
-            if (leafFirst && !childrenOnly)
-                action(this);
+            // The ItemId is set when calling "Add". The IsNumbered flag is set
+            // once the user calls "SetTreeNumbering" from the root.
+            this.ItemId = 0;
+            this.IsNumbered = false;
         }
 
         #region IEnumerable Methods
@@ -102,6 +93,40 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             return new TreeViewEnumerator(this);
         }
         #endregion
+
+        // Method used for recursive members (includes current node for action)
+        private void Recurse(Action<TreeViewModelBase> action, bool leafFirst = false, bool childrenOnly = false)
+        {
+            if (!leafFirst && !childrenOnly)
+                action(this);
+
+            // Recursive Iterator
+            foreach (TreeViewModelBase item in _children)
+            {
+                item.Recurse(action);
+            }
+
+            if (leafFirst && !childrenOnly)
+                action(this);
+        }
+
+        private void Recurse<T>(Action<T> action, bool leafFirst = false, bool childrenOnly = false) where T : TreeViewModelBase
+        {
+            if (this is not T)
+                throw new ArgumentException("Invalid cast of tree node");
+
+            if (!leafFirst && !childrenOnly)
+                action(this as T);
+
+            // Recursive Iterator
+            foreach (TreeViewModelBase item in _children)
+            {
+                item.Recurse(action);
+            }
+
+            if (leafFirst && !childrenOnly)
+                action(this as T);
+        }
 
         #region IList Methods
 
@@ -113,30 +138,62 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         {
             Recurse(action);
         }
+
+        /// <summary>
+        /// (Casted) Recursively iterates the collection. This method must not overlap with IEnumerable due to framework
+        /// usage. e.g. is the HierarchicalDataTemplate - which will then treat the tree as a flat list.
+        /// </summary>
+        public void RecurseForEach<T>(Action<T> action) where T : TreeViewModelBase
+        {
+            Recurse<T>(action);
+        }
+
         public int RecursiveCount()
         {
             var count = 0;
             Recurse(x => count++);
             return count;
         }
-        public int RecursiveCount(Func<ITreeViewNode, bool> predicate)
+        public int RecursiveCount(Func<TreeViewModelBase, bool> predicate)
         {
             var count = 0;
             Recurse(x =>
             {
-                if (predicate(x.NodeValue))
+                if (predicate(x))
                     count++;
             });
             return count;
         }
-        public IEnumerable<ITreeViewNode> RecursiveWhere(Func<ITreeViewNode, bool> predicate)
+        public int RecursiveCount<T>(Func<T, bool> predicate) where T : TreeViewModelBase
         {
-            var result = new List<ITreeViewNode>();
+            var count = 0;
+            Recurse<T>(x =>
+            {
+                if (predicate(x))
+                    count++;
+            });
+            return count;
+        }
+        public IEnumerable<TreeViewModelBase> RecursiveWhere(Func<TreeViewModelBase, bool> predicate)
+        {
+            var result = new List<TreeViewModelBase>();
 
             Recurse(x =>
             {
-                if (predicate(x.NodeValue))
-                    result.Add(x.NodeValue);
+                if (predicate(x))
+                    result.Add(x);
+            });
+
+            return result;
+        }
+        public IEnumerable<T> RecursiveWhere<T>(Func<T, bool> predicate) where T : TreeViewModelBase
+        {
+            var result = new List<T>();
+
+            Recurse<T>(x =>
+            {
+                if (predicate(x))
+                    result.Add(x);
             });
 
             return result;
@@ -157,23 +214,70 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         /// (Non-Recursive Method!) Adds an item to CURRENT DEPTH of the tree ONLY. Returns the new node.
         /// </summary>
         /// <exception cref="ArgumentException">Depths do not match for inserted item</exception>
-        public TreeViewModelBase Add(ITreeViewNode item)
+        public TreeViewModelBase Add(TreeViewModelBase item)
         {
             if (item == null)
                 throw new NullReferenceException("Trying to insert null value into recursive tree view model");
 
-            if (!this.CanHaveChildren)
-                throw new Exception("Trying to add a node to a sub-tree that has not set the proper CanHaveChildren value on its nodes");
+            //if (!this.CanHaveChildren)
+            //    throw new Exception("Trying to add a node to a sub-tree that has not set the proper CanHaveChildren value on its nodes");
 
-            // NEW NODE:  Use this opportunity to hook tree events
-            var node = Construct(item);
+            //item.ItemPropertyChanged += OnItemPropertyChanged;
+            //item.PropertyChanged += OnNodeValuePropertyChanged;
 
-            node.ItemPropertyChanged += OnItemPropertyChanged;
-            node.NodeValue.PropertyChanged += OnNodeValuePropertyChanged;
+            item.ItemId = _TREE_ITEM_COUNTER++;
 
-            _children.Add(node);
+            _children.Add(item.ItemId, item);
 
-            return node;
+            return item;
+        }
+
+        /// <summary>
+        /// Re-numbers tree and sets flag used during multi-select
+        /// </summary>
+        public void SetTreeNumbering()
+        {
+            if (_parent != null)
+                throw new Exception("Must call SetTreeNumbering at the root of the tree only");
+
+            // Procedure:  The numbering should be depth-first down the tree
+            //
+            // 1) Reset the counter
+            // 2) Clear child items
+            // 3) -> Recurse Downward
+            //       - Set ItemId
+            //       - Set IsNumbered = true
+            //
+
+            // RESET COUNTER
+            _TREE_ITEM_COUNTER = 0;
+
+            SetTreeNumberingRecurse(this);
+
+            this.IsNumbered = true;
+            this.ItemId = 0;
+        }
+
+        private void SetTreeNumberingRecurse(TreeViewModelBase treeNode)
+        {
+            // Save Items
+            var items = _children.Values.Actualize();
+
+            // Clear Children
+            _children.Clear();
+
+            foreach (var item in items)
+            {
+                // -> Recurse (Depth First)
+                item.SetTreeNumberingRecurse(item);
+
+                // Re-Number
+                item.ItemId = ++_TREE_ITEM_COUNTER;
+                item.IsNumbered = true;
+
+                // Children -> Add
+                _children.Add(item.ItemId, item);
+            }
         }
 
         /// <summary>
@@ -190,8 +294,8 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             // Unhook Events
             foreach (var node in _children)
             {
-                node.ItemPropertyChanged -= OnItemPropertyChanged;
-                node.NodeValue.PropertyChanged -= OnNodeValuePropertyChanged;
+                //node.ItemPropertyChanged -= OnItemPropertyChanged;
+                //node.PropertyChanged -= OnNodeValuePropertyChanged;
             }
 
             _children.Clear();
@@ -200,13 +304,13 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         /// <summary>
         /// (Recursive Method) Checks tree (from this depth downward) for the item
         /// </summary>
-        public bool Contains(ITreeViewNode item)
+        public bool Contains(TreeViewModelBase item)
         {
             var contains = false;
 
             Recurse(x =>
             {
-                if (x.NodeValue == item)
+                if (x == item)
                     contains = true;
             });
 
@@ -216,26 +320,12 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         /// <summary>
         /// Removes item (FROM THIS DEPTH ONLY!) This is a non-recursive method.
         /// </summary>
-        public bool Remove(ITreeViewNode item)
+        public bool Remove(TreeViewModelBase item)
         {
-            // NON-RECURSIVE
-            for (int index = _children.Count - 1; index >= 0; index--)
-            {
-                if (_children[index].NodeValue == item)
-                {
-                    var itemNode = _children[index];
+            if (!_children.ContainsKey(item.ItemId))
+                throw new ArgumentException("Item not contained within tree view children");
 
-                    // Unhook Events
-                    itemNode.ItemPropertyChanged -= OnItemPropertyChanged;
-                    itemNode.NodeValue.PropertyChanged -= OnNodeValuePropertyChanged;
-
-                    _children.RemoveAt(index);
-                    return true;
-                }
-            }
-
-            // Collection must contain the item
-            throw new Exception("Application Error: Item not found the tree (starting at this depth!):  RecursiveNodeViewModel.Remove");
+            return _children.Remove(item.ItemId);
         }
 
         #endregion
@@ -265,58 +355,44 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             if (_updating)
                 return;
 
-            // (There may be listeners at this level)
-            if (this.CollectionChangedTreeEvent != null)
-                this.CollectionChangedTreeEvent(treeSender, sender, e);
+            //// (There may be listeners at this level)
+            //if (this.CollectionChangedTreeEvent != null)
+            //    this.CollectionChangedTreeEvent(treeSender, sender, e);
 
-            // -> Bubble Up
-            //
-            if (this.Parent != null)
-                this.Parent.OnTreeItemCollectionChanged(treeSender, sender, e);
+            //// -> Bubble Up
+            ////
+            //if (this.Parent != null)
+            //    this.Parent.OnTreeItemCollectionChanged(treeSender, sender, e);
         }
 
         // Tree Item Events
-        private void OnTreeItemPropertyChanged(TreeViewModelBase treeSender, ITreeViewNode item, PropertyChangedEventArgs e)
+        private void OnTreeItemPropertyChanged(TreeViewModelBase treeSender, object item, PropertyChangedEventArgs e)
         {
             if (_updating)
                 return;
 
-            // (There may be listeners at this level)
-            if (this.ItemPropertyChangedTreeEvent != null)
-                this.ItemPropertyChangedTreeEvent(treeSender, item, e);
+            //// (There may be listeners at this level)
+            //if (this.ItemPropertyChangedTreeEvent != null)
+            //    this.ItemPropertyChangedTreeEvent(treeSender, item, e);
 
-            // -> Bubble Up
-            //
-            if (this.Parent != null)
-                this.Parent.OnTreeItemPropertyChanged(treeSender, item, e);
+            //// -> Bubble Up
+            ////
+            //if (this.Parent != null)
+            //    this.Parent.OnTreeItemPropertyChanged(treeSender, item, e);
         }
 
         // Item Events
-        private void OnItemPropertyChanged(ITreeViewNode item, PropertyChangedEventArgs propertyArgs)
+        private void OnItemPropertyChanged(object item, PropertyChangedEventArgs propertyArgs)
         {
             if (_updating)
                 return;
 
-            if (this.ItemPropertyChanged != null)
-                this.ItemPropertyChanged(item, propertyArgs);
+            //if (this.ItemPropertyChanged != null)
+            //    this.ItemPropertyChanged(item, propertyArgs);
 
-            // -> Bubble Up
-            //
-            OnTreeItemPropertyChanged(this, item, propertyArgs);
-        }
-
-        // Item Events
-        private void OnItemPropertyChanged(TreeViewModelBase item, PropertyChangedEventArgs propertyArgs)
-        {
-            if (_updating)
-                return;
-
-            if (this.ItemPropertyChanged != null)
-                this.ItemPropertyChanged(item.NodeValue, propertyArgs);
-
-            // -> Bubble Up
-            //
-            OnTreeItemPropertyChanged(this, item.NodeValue, propertyArgs);
+            //// -> Bubble Up
+            ////
+            //OnTreeItemPropertyChanged(this, item, propertyArgs);
         }
 
         // Item Events
@@ -325,12 +401,12 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             if (_updating)
                 return;
 
-            if (this.ItemPropertyChanged != null)
-                this.ItemPropertyChanged(sender as ITreeViewNode, e);
+            //if (this.ItemPropertyChanged != null)
+            //    this.ItemPropertyChanged(sender as TreeViewModelBase, e);
 
-            // -> Bubble Up
-            //
-            OnTreeItemPropertyChanged(this, sender as ITreeViewNode, e);
+            //// -> Bubble Up
+            ////
+            //OnTreeItemPropertyChanged(this, sender as TreeViewModelBase, e);
         }
 
         public void Dispose()
@@ -346,7 +422,6 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             {
                 Clear();
                 _children.ItemPropertyChanged -= OnItemPropertyChanged;
-                _nodeValue.PropertyChanged -= OnNodeValuePropertyChanged;
                 _children = null;
             }
         }

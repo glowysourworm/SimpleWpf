@@ -1,23 +1,41 @@
-﻿using SimpleWpf.UI.ViewModel.TreeView.Interface;
-
-namespace SimpleWpf.UI.ViewModel.TreeView
+﻿namespace SimpleWpf.UI.ViewModel.TreeView
 {
     public class TreeViewModel : TreeViewModelBase
     {
-        public TreeViewModel(TreeViewNodeModel nodeValue,
-                             TreeViewModel parent = null)
-            : base(nodeValue, parent)
+
+
+        bool _canHaveChildren;
+
+        int _recursionDepth;
+
+        string _displayName;
+
+        public bool CanHaveChildren
         {
+            get { return _canHaveChildren; }
+            set { this.RaiseAndSetIfChanged(ref _canHaveChildren, value); }
+        }
+        public int RecursionDepth
+        {
+            get { return _recursionDepth; }
+            set { this.RaiseAndSetIfChanged(ref _recursionDepth, value); }
+        }
+        public string DisplayName
+        {
+            get { return _displayName; }
+            set { this.RaiseAndSetIfChanged(ref _displayName, value); }
         }
 
-        protected override TreeViewModel Construct(ITreeViewNode nodeValue)
+        public TreeViewModel(string displayName, int recursionDepth, TreeViewModel? parent) : base(parent)
         {
-            return new TreeViewModel(nodeValue as TreeViewNodeModel, this);
+            this.DisplayName = displayName;
+            this.RecursionDepth = recursionDepth;
+            this.CanHaveChildren = true;
         }
 
         public override string ToString()
         {
-            return this.NodeValue?.ToString();
+            return this.DisplayName;
         }
     }
 }

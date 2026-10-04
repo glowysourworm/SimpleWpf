@@ -14,4 +14,9 @@ namespace SimpleWpf.Extensions.Event
     /// Delegate for collection item changed for the NotifyingObservableCollection
     /// </summary>
     public delegate void CollectionItemChangedHandler<T>(T item, PropertyChangedEventArgs propertyArgs) where T : INotifyPropertyChanged;
+
+    /// <summary>
+    /// Delegate for collection item changed for the NotifyingObservableCollection
+    /// </summary>
+    public delegate void CollectionItemChangedHandler(object item, PropertyChangedEventArgs propertyArgs);
 }
