@@ -1,8 +1,8 @@
 ﻿using System.Collections;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 
 using SimpleWpf.Extensions.Collection;
-using SimpleWpf.Extensions.ObservableCollection;
 
 namespace SimpleWpf.UI.ViewModel.TreeView
 {
@@ -32,7 +32,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         TreeViewNodeModelBase? _parent;
 
         // Primary collection
-        KeyedObservableCollection<int, TreeViewNodeModelBase> _children;
+        ObservableCollection<TreeViewNodeModelBase> _children;
 
         // Basic Properties
         bool _isLoaded;
@@ -100,7 +100,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView
 
         public TreeViewNodeModelBase(int recursionDepth, TreeViewNodeModelBase? parent)
         {
-            _children = new KeyedObservableCollection<int, TreeViewNodeModelBase>();
+            _children = new ObservableCollection<TreeViewNodeModelBase>();
             _parent = parent;
 
             _updating = false;
@@ -316,7 +316,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView
 
             item.ItemId = _TREE_ITEM_COUNTER++;
 
-            _children.Add(item.ItemId, item);
+            _children.Add(item);
 
             OnPropertyChanged(nameof(ChildCount));
 
@@ -352,7 +352,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         private void SetTreeNumberingRecurse(TreeViewNodeModelBase treeNode)
         {
             // Save Items
-            var items = _children.Values.Actualize();
+            var items = _children.Actualize();
 
             // Clear Children
             _children.Clear();
@@ -364,7 +364,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView
                 item.IsNumbered = true;
 
                 // Children -> Add
-                _children.Add(item.ItemId, item);
+                _children.Add(item);
 
                 // -> Recurse (Depth First)
                 item.SetTreeNumberingRecurse(item);
@@ -435,10 +435,10 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         /// </summary>
         public bool Remove(TreeViewNodeModelBase item)
         {
-            if (!_children.ContainsKey(item.ItemId))
+            if (!_children.Contains(item))
                 throw new ArgumentException("Item not contained within tree view children");
 
-            var result = _children.Remove(item.ItemId);
+            var result = _children.Remove(item);
 
             OnPropertyChanged(nameof(ChildCount));
 

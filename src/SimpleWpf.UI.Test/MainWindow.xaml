@@ -21,7 +21,7 @@
                                                ItemSelectionBrush="#1F000000"
                                                ItemBorder="LightGray"
                                                ItemBorderThickness="1"
-                                               ItemPadding="3"
+                                               ItemPadding="1"
                                                FontSize="14">
                         <treeviewUI:SimpleTreeView.ItemExpanderOpenTemplate>
                             <DataTemplate>

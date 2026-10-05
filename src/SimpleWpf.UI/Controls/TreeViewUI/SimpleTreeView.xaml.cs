@@ -240,6 +240,10 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
             // Selected Items Changed
             if (this.SelectedItemsChanged != null)
                 this.SelectedItemsChanged(this, _selectedItems.Values);
+
+            // UI-Direct:  This is another way to get the update through the view model
+            //
+            tree.SetSelection(_selectedItems.Values);
         }
 
         private void UpdateSelection(TreeViewNodeModelBase treeNode)
@@ -284,26 +288,21 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
                     return;
                 }
 
-                // Get header
-                var header = VisualTreeHelperEx.FindAncestorByType<ContentPresenter>(e.OriginalSource as DependencyObject);
+                // Get input element
+                var inputElement = this.InputHitTest(e.GetPosition(this));
 
-                if (header != null)
+                // Look up the tree to get the content presenter for the expander
+                var header = VisualTreeHelperEx.FindAncestorByType<ContentPresenter>(inputElement as DependencyObject);
+
+                // Templated Parent will be the ContentPresenter that holds the template for the expander
+                var headerParent = header.TemplatedParent as ContentPresenter;
+
+                // Expansion
+                if (headerParent != null && headerParent.ContentSource == "Header")
                 {
-                    // Templated Parent will be the ContentPresenter that holds the template for the expander
-                    var headerPresenter = header.TemplatedParent as ContentPresenter;
-
-                    if (headerPresenter != null)
-                    {
-                        var inputElement = headerPresenter.InputHitTest(e.GetPosition(treeViewItem));
-
-                        // Expansion
-                        if (inputElement != null && inputElement.IsMouseOver)
-                        {
-                            viewModel.IsExpanded = !viewModel.IsExpanded;
-                            e.Handled = true;
-                            return;
-                        }
-                    }
+                    viewModel.IsExpanded = !viewModel.IsExpanded;
+                    e.Handled = true;
+                    return;
                 }
 
                 // Selection (finally)

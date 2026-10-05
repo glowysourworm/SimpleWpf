@@ -2,6 +2,8 @@
 using System.Collections.Specialized;
 using System.ComponentModel;
 
+using static SimpleWpf.UI.ViewModel.TreeView.TreeViewDelegates;
+
 namespace SimpleWpf.UI.ViewModel.TreeView
 {
     public class SimpleTreeViewModel : ViewModelBase, IEnumerable, INotifyCollectionChanged
@@ -15,6 +17,11 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         /// Notify Collection Changed:  Fires once for a reset at the EndUpdate call
         /// </summary>
         public event NotifyCollectionChangedEventHandler? CollectionChanged;
+
+        /// <summary>
+        /// Occurs when the tree view's selected item collection has changed (maintained by the SimpleTreeView)
+        /// </summary>
+        public event TreeSelectionChangedEventHandler TreeSelectionChangedEvent;
 
         // Root
         TreeViewNodeModelBase? _root;
@@ -49,7 +56,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView
 
             _updadting = true;
         }
-        public void EndUpdate()
+        public virtual void EndUpdate()
         {
             if (!_updadting)
                 throw new Exception("Trying to end update before calling BeginUpdate");
@@ -83,15 +90,35 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         }
 
         /// <summary>
-        /// Gets count of nodes in the tree. This may only be called before / after an
-        /// update!
+        /// Returns branch of the tree by tracing upward starting from the provided node. The
+        /// nodes are ordered forwards - starting from the root.
         /// </summary>
-        public int GetCount()
+        public IEnumerable<TreeViewNodeModelBase> GetBranch(TreeViewNodeModelBase node)
         {
-            if (_updadting)
-                throw new Exception("The tree node count is not set during an update");
+            if (node == null)
+                throw new ArgumentNullException("Node not set to an instance of the node class");
 
-            return _count;
+            var stack = new Stack<TreeViewNodeModelBase>();
+            var result = new List<TreeViewNodeModelBase>();
+            var currentNode = node;
+
+            do
+            {
+                // Stack these up from the leaf-er node
+                stack.Push(currentNode);
+
+                // Trace upwards towards the root
+                currentNode = currentNode.Parent;
+
+            } while (currentNode != null);
+
+            // Arrange these starting with the root
+            while (stack.Any())
+            {
+                result.Add(stack.Pop());
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -157,10 +184,17 @@ namespace SimpleWpf.UI.ViewModel.TreeView
                 _count = 0;
             }
         }
+        public bool Contains<T>(T node) where T : TreeViewNodeModelBase
+        {
+            return RecursiveAny<T>(item =>
+            {
+                return item == node;
+            });
+        }
         public void Clear()
         {
-            if (_updadting)
-                throw new Exception("Trying to clear the tree during an update");
+            if (!_updadting)
+                throw new Exception("Must first call BeginUpdate before removing tree nodes");
 
             if (_root == null)
                 return;
@@ -171,42 +205,49 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         public bool IsNumberingSet()
         {
             if (_root == null)
-                throw new NullReferenceException("Must first add nodes to the tree before calling any access methods");
+                return false;
 
             return _numberingSet;
         }
         public bool RecursiveAny<T>(Func<T, bool> predicate) where T : TreeViewNodeModelBase
         {
             if (_root == null)
-                throw new NullReferenceException("Must first add nodes to the tree before calling any access methods");
+                return false;
 
             return _root.RecursiveAny(predicate);
         }
         public void RecursiveForEach(Action<TreeViewNodeModelBase> action)
         {
             if (_root == null)
-                throw new NullReferenceException("Must first add nodes to the tree before calling any access methods");
+                return;
 
             _root.RecurseForEach(action);
         }
         public void RecursiveForEach<T>(Action<T> action) where T : TreeViewNodeModelBase
         {
             if (_root == null)
-                throw new NullReferenceException("Must first add nodes to the tree before calling any access methods");
+                return;
 
             _root.RecurseForEach<T>(action);
         }
         public int RecursiveCount<T>(Func<T, bool> predicate) where T : TreeViewNodeModelBase
         {
             if (_root == null)
-                throw new NullReferenceException("Must first add nodes to the tree before calling any access methods");
+                return 0;
 
             return _root.RecursiveCount<T>(predicate);
+        }
+        public T? RecursiveFirst<T>(Func<T, bool> predicate) where T : TreeViewNodeModelBase
+        {
+            if (_root == null)
+                return null;
+
+            return _root.RecursiveFirst<T>(predicate);
         }
         public IEnumerable<T> RecursiveWhere<T>(Func<T, bool> predicate) where T : TreeViewNodeModelBase
         {
             if (_root == null)
-                throw new NullReferenceException("Must first add nodes to the tree before calling any access methods");
+                return Enumerable.Empty<T>();
 
             return _root.RecursiveWhere(predicate);
         }
@@ -216,6 +257,13 @@ namespace SimpleWpf.UI.ViewModel.TreeView
                 return Enumerable.Empty<TreeViewNodeModelBase>().GetEnumerator();
 
             return _root.GetEnumerator();
+        }
+        internal void SetSelection(IEnumerable<TreeViewNodeModelBase> selectedNodes)
+        {
+            // This is exposing the selection event forwarding for use in the UI tree (which is hidden in the base class)
+            //
+            if (this.TreeSelectionChangedEvent != null)
+                this.TreeSelectionChangedEvent(selectedNodes);
         }
         private void OnItemPropertyChanged(TreeViewNodeModelBase treeSender, object item, PropertyChangedEventArgs eventArgs)
         {
