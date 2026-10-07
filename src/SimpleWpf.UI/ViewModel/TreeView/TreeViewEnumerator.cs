@@ -2,7 +2,7 @@
 
 namespace SimpleWpf.UI.ViewModel.TreeView
 {
-    internal class TreeViewEnumerator : IEnumerator
+    public class TreeViewEnumerator : IEnumerator
     {
         private object _treeView;
 

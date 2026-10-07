@@ -12,7 +12,7 @@ namespace SimpleWpf.Extensions.ObservableCollection
     {
         // Hash support for performance
         SimpleDictionary<K, V> _dictionary;
-        SimpleDictionary<K, int> _indexDictionary;
+
 
         public int Count { get { return _dictionary.Count; } }
         public IEnumerable<K> Keys { get { return _dictionary.Keys; } }
@@ -35,7 +35,6 @@ namespace SimpleWpf.Extensions.ObservableCollection
         public KeyedObservableCollection()
         {
             _dictionary = new SimpleDictionary<K, V>();
-            _indexDictionary = new SimpleDictionary<K, int>();
             _updating = false;
 
             OnCollectionReset();
@@ -86,13 +85,9 @@ namespace SimpleWpf.Extensions.ObservableCollection
 
             value.PropertyChanged -= OnItemPropertyChanged;
 
-            var index = _indexDictionary[key];
-
             var returnValue = _dictionary.Remove(key);
 
-            _indexDictionary.Remove(key);
-
-            OnCollectionRemove(value, index);
+            OnCollectionRemove(value);       // UI Notification
             OnPropertyChanged("Count");
 
             return returnValue;
@@ -109,10 +104,11 @@ namespace SimpleWpf.Extensions.ObservableCollection
             {
                 pair.Value.PropertyChanged -= OnItemPropertyChanged;
 
-                _indexDictionary.Remove(pair.Key);
+                _dictionary.Remove(pair.Key);
+
+                OnCollectionRemove(pair.Value);       // UI Notification
             }
 
-            OnCollectionReset();
             OnPropertyChanged("Count");
 
             return true;
@@ -126,7 +122,6 @@ namespace SimpleWpf.Extensions.ObservableCollection
             value.PropertyChanged += OnItemPropertyChanged;
 
             _dictionary.Add(key, value);
-            _indexDictionary.Add(key, _indexDictionary.Count);
 
             OnCollectionAdd(value);
             OnPropertyChanged("Count");
@@ -145,7 +140,6 @@ namespace SimpleWpf.Extensions.ObservableCollection
             }
 
             _dictionary.Clear();
-            _indexDictionary.Clear();
 
             OnCollectionReset();
             OnPropertyChanged("Count");
@@ -184,13 +178,13 @@ namespace SimpleWpf.Extensions.ObservableCollection
                 this.CollectionChanged(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, item));
         }
 
-        private void OnCollectionRemove(V item, int index)
+        private void OnCollectionRemove(V item)
         {
             if (_updating)
                 return;
 
             if (this.CollectionChanged != null)
-                this.CollectionChanged(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, item, index));
+                this.CollectionChanged(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, item));
         }
 
         private void OnCollectionReplace(V oldItem, V newItem)

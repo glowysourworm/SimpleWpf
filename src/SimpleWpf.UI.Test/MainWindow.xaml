@@ -37,7 +37,7 @@
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="{Binding DisplayName}" Foreground="Black" />
-                                    <TextBlock Text="{Binding ItemId, StringFormat='(Id={0})'}" Foreground="Black" Margin="10 0" />
+                                    <TextBlock Text="{Binding ItemNumber, StringFormat='(Id={0})'}" Foreground="Black" Margin="10 0" />
                                 </StackPanel>
                             </DataTemplate>
                         </treeviewUI:SimpleTreeView.ItemHeaderContentTemplate>

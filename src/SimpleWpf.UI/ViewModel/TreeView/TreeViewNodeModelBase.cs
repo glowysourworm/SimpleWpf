@@ -1,8 +1,7 @@
 ﻿using System.Collections;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 
-using SimpleWpf.Extensions.Collection;
+using SimpleWpf.Extensions.ObservableCollection;
 
 namespace SimpleWpf.UI.ViewModel.TreeView
 {
@@ -11,7 +10,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView
     ///                    lazy loading; and item property changed events (+ bubble-up handling); and, also, grouped property
     ///                    events.
     /// </summary>
-    public abstract class TreeViewNodeModelBase : ViewModelBase, IEnumerable
+    public abstract class TreeViewNodeModelBase : ViewModelBase
     {
         /// <summary>
         /// Notifies to the iterator code what to do with actions and predicates for
@@ -32,7 +31,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         TreeViewNodeModelBase? _parent;
 
         // Primary collection
-        ObservableCollection<TreeViewNodeModelBase> _children;
+        KeyedObservableCollection<object, TreeViewNodeModelBase> _children;
 
         // Basic Properties
         bool _isLoaded;
@@ -49,22 +48,30 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         //
         //                 This may be turned off
         //
-        static int _TREE_ITEM_COUNTER = 0;
 
         /// <summary>
         /// ID set when numbering the tree
         /// </summary>
-        public int ItemId { get; private set; }
+        public int ItemNumber { get; private set; }
 
         /// <summary>
         /// Check to see if the tree is numbered. This should be cascade-set starting from the root.
         /// </summary>
         public bool IsNumbered { get; private set; }
 
+        /// <summary>
+        /// Key for the object (provided by inherited classes)
+        /// </summary>
+        public abstract object Key { get; }
+
         public TreeViewNodeModelBase? Parent
         {
             get { return _parent; }
             set { this.RaiseAndSetIfChanged(ref _parent, value); }
+        }
+        public IEnumerator Enumerator
+        {
+            get { return new TreeViewEnumerator(this); }
         }
         public IReadOnlyCollection<TreeViewNodeModelBase> Children
         {
@@ -100,25 +107,18 @@ namespace SimpleWpf.UI.ViewModel.TreeView
 
         public TreeViewNodeModelBase(int recursionDepth, TreeViewNodeModelBase? parent)
         {
-            _children = new ObservableCollection<TreeViewNodeModelBase>();
+            _children = new KeyedObservableCollection<object, TreeViewNodeModelBase>();
             _parent = parent;
 
             _updating = false;
 
-            // The ItemId is set when calling "Add". The IsNumbered flag is set
+            // The ItemNumber is set when calling "SetTreeNumbering". The IsNumbered flag is set
             // once the user calls "SetTreeNumbering" from the root.
-            this.ItemId = 0;
+            this.ItemNumber = 0;
             this.IsNumbered = false;
 
             OnPropertyChanged(nameof(ChildCount));
         }
-
-        #region IEnumerable Methods
-        public IEnumerator GetEnumerator()
-        {
-            return new TreeViewEnumerator(this);
-        }
-        #endregion
 
         // Method used for recursive members (includes current node for action)
         private void Recurse(Func<TreeViewNodeModelBase, IteratorContinuation> userFunc, bool leafFirst = false, bool childrenOnly = false)
@@ -292,6 +292,21 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             return result;
         }
 
+        public bool RecursiveContains(TreeViewNodeModelBase item)
+        {
+            return RecursiveAny(node =>
+            {
+                if (node == this.Parent)
+                    return true;
+
+                // Performance
+                if (node._children.ContainsKey(item.Key))
+                    return true;
+
+                else
+                    return false;
+            });
+        }
         public bool HasDirectAncestor(TreeViewNodeModelBase subTree)
         {
             if (subTree == this)
@@ -314,9 +329,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView
 
             item.PropertyChanged += OnItemPropertyChanged;
 
-            item.ItemId = _TREE_ITEM_COUNTER++;
-
-            _children.Add(item);
+            _children.Add(item.Key, item);
 
             OnPropertyChanged(nameof(ChildCount));
 
@@ -324,50 +337,37 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         }
 
         /// <summary>
-        /// Re-numbers tree and sets flag used during multi-select
+        /// Re-numbers tree and sets flag used during multi-select. The counter is used to handle multiple branches.
         /// </summary>
-        public void SetTreeNumbering()
+        public void SetTreeNumbering(ref int counter)
         {
             if (_parent != null)
                 throw new Exception("Must call SetTreeNumbering at the root of the tree only");
 
             // Procedure:  The numbering should be depth-first down the tree
             //
-            // 1) Reset the counter
-            // 2) Clear child items
-            // 3) -> Recurse Downward
-            //       - Set ItemId
+            // 1) Reset the counter (ONLY FOR THE CONTAINER)
+            // 2) -> Recurse Downward
+            //       - Set ItemNumber
             //       - Set IsNumbered = true
             //
 
-            // RESET COUNTER
-            _TREE_ITEM_COUNTER = 0;
-
-            SetTreeNumberingRecurse(this);
-
             this.IsNumbered = true;
-            this.ItemId = 0;
+            this.ItemNumber = ++counter;
+
+            SetTreeNumberingRecurse(this, ref counter);
         }
 
-        private void SetTreeNumberingRecurse(TreeViewNodeModelBase treeNode)
+        private void SetTreeNumberingRecurse(TreeViewNodeModelBase treeNode, ref int counter)
         {
-            // Save Items
-            var items = _children.Actualize();
-
-            // Clear Children
-            _children.Clear();
-
-            foreach (var item in items)
+            foreach (var item in _children.Values)
             {
                 // Re-Number
-                item.ItemId = ++_TREE_ITEM_COUNTER;
+                item.ItemNumber = ++counter;
                 item.IsNumbered = true;
 
-                // Children -> Add
-                _children.Add(item);
-
                 // -> Recurse (Depth First)
-                item.SetTreeNumberingRecurse(item);
+                item.SetTreeNumberingRecurse(item, ref counter);
             }
         }
 

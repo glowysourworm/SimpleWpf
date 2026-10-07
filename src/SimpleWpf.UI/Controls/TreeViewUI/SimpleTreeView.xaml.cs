@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -15,7 +14,7 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
     {
         #region (public) Dependency Properties
         public static readonly DependencyProperty ItemsSourceProperty =
-            DependencyProperty.Register("ItemsSource", typeof(IEnumerable), typeof(SimpleTreeView), new PropertyMetadata(OnItemsSourceChanged));
+            DependencyProperty.Register("ItemsSource", typeof(SimpleTreeViewModel), typeof(SimpleTreeView), new PropertyMetadata(OnItemsSourceChanged));
 
         public static readonly DependencyProperty ItemExpanderClosedTemplateProperty =
             DependencyProperty.Register("ItemExpanderClosedTemplate", typeof(DataTemplate), typeof(SimpleTreeView));
@@ -50,9 +49,9 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
         public static readonly DependencyProperty ItemBorderThicknessProperty =
             DependencyProperty.Register("ItemBorderThickness", typeof(Thickness), typeof(SimpleTreeView));
 
-        public IEnumerable ItemsSource
+        public SimpleTreeViewModel ItemsSource
         {
-            get { return (IEnumerable)GetValue(ItemsSourceProperty); }
+            get { return (SimpleTreeViewModel)GetValue(ItemsSourceProperty); }
             set { SetValue(ItemsSourceProperty, value); }
         }
         public int ItemIndent
@@ -155,7 +154,7 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
                 var isSelected = nodeClicked.IsSelected;
 
                 // De-Select
-                tree.RecursiveForEach(treeNode =>
+                tree.ForEach<TreeViewNodeModelBase>(treeNode =>
                 {
                     treeNode.IsSelected = false;
 
@@ -202,17 +201,17 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
                 if (_selectedNode != null)
                 {
                     // First, check to see that tree has been numbered
-                    if (!tree.IsNumberingSet())
+                    if (tree.IsInvalid())
                         throw new Exception("Must set tree numbering before using multi-selection");
 
                     // Get two item numbers
-                    var numberLow = Math.Min(_selectedNode.ItemId, nodeClicked.ItemId);
-                    var numberHigh = Math.Max(_selectedNode.ItemId, nodeClicked.ItemId);
+                    var numberLow = Math.Min(_selectedNode.ItemNumber, nodeClicked.ItemNumber);
+                    var numberHigh = Math.Max(_selectedNode.ItemNumber, nodeClicked.ItemNumber);
 
-                    tree.RecursiveForEach(treeNode =>
+                    tree.ForEach<TreeViewNodeModelBase>(treeNode =>
                     {
-                        if (treeNode.ItemId >= numberLow &&
-                            treeNode.ItemId <= numberHigh)
+                        if (treeNode.ItemNumber >= numberLow &&
+                            treeNode.ItemNumber <= numberHigh)
                         {
                             treeNode.IsSelected = true;
                         }
@@ -325,7 +324,7 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
                 // that fires from the SimpleTreeViewModel class hierarchy will get caught here without
                 // worrying about binding settings, templates, etc...
                 //
-                control.TheTreeView.ItemsSource = source;
+                control.TheTreeView.ItemsSource = source.Collection;
             }
         }
     }

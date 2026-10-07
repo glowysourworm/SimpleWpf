@@ -55,6 +55,10 @@ namespace SimpleWpf.UI.ViewModel.FileTreeView
             get { return _directoryFileCount; }
             set { this.RaiseAndSetIfChanged(ref _directoryFileCount, value); }
         }
+        public override object Key
+        {
+            get { return _fullPath; }
+        }
 
         public FileTreeNodeViewModel(string baseDirectory, string path, int directoryFileCount, FileTreeNodeViewModel? parent)
             : base(GetDirectoryDepth(path) - GetDirectoryDepth(baseDirectory), parent)

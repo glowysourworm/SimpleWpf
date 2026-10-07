@@ -10,7 +10,10 @@
             set { this.RaiseAndSetIfChanged(ref _displayName, value); }
         }
 
-        public TreeViewNodeModel(string displayName, int recursionDepth, TreeViewNodeModelBase? parent) : base(recursionDepth, parent)
+        public override object Key => this.DisplayName;
+
+        public TreeViewNodeModel(string displayName, int recursionDepth, TreeViewNodeModelBase? parent)
+            : base(recursionDepth, parent)
         {
             _displayName = displayName;
         }

@@ -1,12 +1,13 @@
-﻿using System.Collections;
-using System.Collections.Specialized;
+﻿using System.Collections.Specialized;
 using System.ComponentModel;
+
+using SimpleWpf.Extensions.Collection;
 
 using static SimpleWpf.UI.ViewModel.TreeView.TreeViewDelegates;
 
 namespace SimpleWpf.UI.ViewModel.TreeView
 {
-    public class SimpleTreeViewModel : ViewModelBase, IEnumerable, INotifyCollectionChanged
+    public class SimpleTreeViewModel : ViewModelBase
     {
         /// <summary>
         /// (Bubble Up Event) Occurs (once) when an item in the tree changes
@@ -23,102 +24,34 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         /// </summary>
         public event TreeSelectionChangedEventHandler TreeSelectionChangedEvent;
 
-        // Root
-        TreeViewNodeModelBase? _root;
-
-        // Begin / End Update:  The primary issue with this tree view is multi-select. The numbering scheme
-        //                      was used as a simple solution of getting contiguous select to work. It just
-        //                      requires that we have a Begin / End update process to show users that the
-        //                      tree will need to undergo a bigger change after it gets modified.
-        //
-        bool _updadting;
-        bool _numberingSet;
-        int _count;
+        // Collection
+        SimpleTreeCollectionViewModel _collection;
 
         /// <summary>
-        /// This may be required for binding on the UI's backend
+        /// Primary binding collection for the tree - hides IEnumerable, which doesn't work for handling the
+        /// recursive enumeration; but it is necessary for the ItemsSource binding.
         /// </summary>
-        public int Count
+        public SimpleTreeCollectionViewModel Collection
         {
-            get { return _count; }
+            get { return _collection; }
+            set { this.RaiseAndSetIfChanged(ref _collection, value); }
         }
 
         public SimpleTreeViewModel()
         {
-            _root = null;
-            _updadting = false;
-            _numberingSet = false;
-            _count = 0;
+            this.Collection = new SimpleTreeCollectionViewModel(SimpleTreeViewBranchStrategy.CommonParent);
         }
         public void BeginUpdate()
         {
-            // Must be allowed to call this to add nodes
-
-            _updadting = true;
+            _collection.BeginUpdate();
         }
         public virtual void EndUpdate()
         {
-            if (!_updadting)
-                throw new Exception("Trying to end update before calling BeginUpdate");
-
-            // User has removed the root
-            if (_root != null)
-            {
-                _root.SetTreeNumbering();
-
-                _updadting = false;
-                _numberingSet = _root.RecursiveAll(x => x.IsNumbered);
-                _count = _root.RecursiveCount();
-            }
-
-            // Empty
-            else
-            {
-                _updadting = false;
-                _numberingSet = false;
-                _count = 0;
-            }
-
-            if (this.CollectionChanged != null)
-                this.CollectionChanged(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
-
-            OnPropertyChanged(nameof(Count));
+            _collection.EndUpdate();
         }
         public bool IsUpdating()
         {
-            return _updadting;
-        }
-
-        /// <summary>
-        /// Returns branch of the tree by tracing upward starting from the provided node. The
-        /// nodes are ordered forwards - starting from the root.
-        /// </summary>
-        public IEnumerable<TreeViewNodeModelBase> GetBranch(TreeViewNodeModelBase node)
-        {
-            if (node == null)
-                throw new ArgumentNullException("Node not set to an instance of the node class");
-
-            var stack = new Stack<TreeViewNodeModelBase>();
-            var result = new List<TreeViewNodeModelBase>();
-            var currentNode = node;
-
-            do
-            {
-                // Stack these up from the leaf-er node
-                stack.Push(currentNode);
-
-                // Trace upwards towards the root
-                currentNode = currentNode.Parent;
-
-            } while (currentNode != null);
-
-            // Arrange these starting with the root
-            while (stack.Any())
-            {
-                result.Add(stack.Pop());
-            }
-
-            return result;
+            return _collection.IsUpdating();
         }
 
         /// <summary>
@@ -126,29 +59,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         /// </summary>
         public T Add<T>(T node) where T : TreeViewNodeModelBase
         {
-            if (!_updadting)
-                throw new Exception("Must first call BeginUpdate before adding tree nodes");
-
-            if (_root == null)
-                _root = node;
-
-            else if (node.Parent == null)
-                throw new Exception("Trying to add node with no parent! The parent must first be set so that the tree can find which child collection to utilize");
-
-            else
-            {
-                // Find Parent Node
-                var parentNode = _root.RecursiveFirst(x => x == node.Parent);
-
-                if (parentNode == null)
-                    throw new Exception("Cannot find parent node for ancestor! Make sure that you've connected nodes properly before adding them to the tree");
-
-                parentNode.Add(node);
-
-                // These get reset once the nodes are added / removed
-                _numberingSet = false;
-                _count = 0;
-            }
+            _collection.SimpleTreeAdd(node);
 
             return node;
         }
@@ -158,105 +69,39 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         /// </summary>
         public void Remove<T>(T node) where T : TreeViewNodeModelBase
         {
-            if (!_updadting)
-                throw new Exception("Must first call BeginUpdate before removing tree nodes");
-
-            if (_root == null)
-                throw new Exception("Tree has no nodes! Must have first added nodes to the tree");
-
-            else
-            {
-                // Find Parent Node
-                var parentNode = _root.RecursiveFirst(x => x == node.Parent);
-
-                if (parentNode == null)
-                    throw new Exception("Cannot find parent node for ancestor! Make sure that you've connected nodes properly before adding them to the tree");
-
-                // Root:  Just set root to null. The user has called for root to be removed; but may use the node in their code
-                //
-                if (parentNode == _root)
-                    _root = null;
-                else
-                    parentNode.Remove(node);
-
-                // This gets reset once the nodes are added
-                _numberingSet = false;
-                _count = 0;
-            }
+            _collection.SimpleTreeRemove(node);
         }
         public bool Contains<T>(T node) where T : TreeViewNodeModelBase
         {
-            return RecursiveAny<T>(item =>
-            {
-                return item == node;
-            });
+            return _collection.SimpleTreeContains(node);
         }
         public void Clear()
         {
-            if (!_updadting)
-                throw new Exception("Must first call BeginUpdate before removing tree nodes");
-
-            if (_root == null)
-                return;
-
-            _root.Clear();
-            _numberingSet = false;
+            _collection.SimpleTreeClear();
         }
-        public bool IsNumberingSet()
+        public bool IsInvalid()
         {
-            if (_root == null)
-                return false;
-
-            return _numberingSet;
+            return _collection.IsInvalid();
         }
-        public bool RecursiveAny<T>(Func<T, bool> predicate) where T : TreeViewNodeModelBase
+        public bool Any<T>(Func<T, bool> predicate) where T : TreeViewNodeModelBase
         {
-            if (_root == null)
-                return false;
-
-            return _root.RecursiveAny(predicate);
+            return _collection.Any(predicate);
         }
-        public void RecursiveForEach(Action<TreeViewNodeModelBase> action)
+        public void ForEach<T>(Action<T> action) where T : TreeViewNodeModelBase
         {
-            if (_root == null)
-                return;
-
-            _root.RecurseForEach(action);
+            _collection.SimpleTreeForEach(action);
         }
-        public void RecursiveForEach<T>(Action<T> action) where T : TreeViewNodeModelBase
+        public int Count<T>(Func<T, bool> predicate) where T : TreeViewNodeModelBase
         {
-            if (_root == null)
-                return;
-
-            _root.RecurseForEach<T>(action);
+            return _collection.SimpleTreeCount(predicate);
         }
-        public int RecursiveCount<T>(Func<T, bool> predicate) where T : TreeViewNodeModelBase
+        public T? First<T>(Func<T, bool> predicate) where T : TreeViewNodeModelBase
         {
-            if (_root == null)
-                return 0;
-
-            return _root.RecursiveCount<T>(predicate);
+            return _collection.SimpleTreeFirst(predicate);
         }
-        public T? RecursiveFirst<T>(Func<T, bool> predicate) where T : TreeViewNodeModelBase
+        public IEnumerable<T> Where<T>(Func<T, bool> predicate) where T : TreeViewNodeModelBase
         {
-            if (_root == null)
-                return null;
-
-            return _root.RecursiveFirst<T>(predicate);
-        }
-        public IEnumerable<T> RecursiveWhere<T>(Func<T, bool> predicate) where T : TreeViewNodeModelBase
-        {
-            if (_root == null)
-                return Enumerable.Empty<T>();
-
-            return _root.RecursiveWhere(predicate);
-        }
-        public IEnumerator GetEnumerator()
-        {
-            if (_root == null)
-                return Enumerable.Empty<TreeViewNodeModelBase>().GetEnumerator();
-
-            return _root.GetEnumerator();
+            return _collection.SimpleTreeWhere(predicate);
         }
         internal void SetSelection(IEnumerable<TreeViewNodeModelBase> selectedNodes)
         {
