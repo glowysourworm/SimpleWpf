@@ -61,6 +61,15 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             return node;
         }
 
+        public T? GetNode<T>(object key) where T : TreeViewNodeModelBase
+        {
+            return _collection.SimpleTreeGetNode<T>(key);
+        }
+        public T? GetNode<T>(int recursionDepth, object key) where T : TreeViewNodeModelBase
+        {
+            return _collection.SimpleTreeGetNode<T>(recursionDepth, key);
+        }
+
         /// <summary>
         /// Removes the tree view node from the tree. Must be done during an update!
         /// </summary>

@@ -10,6 +10,12 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         // The base of the tree is a collection of root nodes - which is itself observable
         KeyedObservableCollection<object, TreeViewNodeModelBase> _rootNodes;
 
+        // Nodes by Recursion Depth
+        KeyedObservableCollection<int, KeyedObservableCollection<object, TreeViewNodeModelBase>> _depthNodes;
+
+        int _minRecursionDepth;
+        int _maxRecursionDepth;
+
         /// <summary>
         /// Collection changed event for the root nodes (tree nodes are automatically bound to the tree); and
         /// there are tree-wide item changed events that bubble up to the roots.
@@ -33,6 +39,9 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         public SimpleTreeCollectionViewModel(SimpleTreeViewBranchingStrategy branchStrategy)
         {
             _branchStrategy = branchStrategy;
+            _minRecursionDepth = 0;
+            _maxRecursionDepth = 0;
+            _depthNodes = new KeyedObservableCollection<int, KeyedObservableCollection<object, TreeViewNodeModelBase>>();
             _rootNodes = new KeyedObservableCollection<object, TreeViewNodeModelBase>();
             _rootNodes.CollectionChanged += OnCollectionChanged;
         }
@@ -47,9 +56,6 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         {
             if (!_updating)
                 throw new Exception("Trying to end update before calling BeginUpdate");
-
-            // Fix nodes that were placed as roots improperly
-            CheckImproperRoots();
 
             var treeCounter = 0;
 
@@ -134,19 +140,71 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             if (SimpleTreeContains(node))
                 throw new Exception("Node already contained in the tree");
 
-            var parent = GetCommonParent(node);
+            if (node.Parent != null && !SimpleTreeContains(node.Parent))
+                throw new Exception("Parent node not contained in the tree");
+
+            // Procedure:  Add
+            // 
+            // 0) Check node integrity with the tree
+            // 1) Check Parent
+            //      -> If (Null), Add to root nodes
+            //      -> If (Not in Tree), throw exception
+            //      -> If (Child not in collection), throw exception
+            //
+            // 2) Add to depth node collection
+            //
 
             // New Branch
-            if (parent == null)
+            if (node.Parent == null)
             {
                 // -> CollectionChanged
                 _rootNodes.Add(node.Key, node);
             }
+
+            // Check integrity of the parent:  (options) 1) throw exception, 2) Hook up the parent for the user (??)
+            else if (!node.Parent.Children.Contains(node))
+            {
+                node.Parent.Add(node);
+            }
+
             else
             {
-                // -> ... -> Children.CollectionChanged
-                parent.Add(node);
+                // Nothing to do 
             }
+
+            // Finally, keep our internal depth collection (performance!)
+            if (!_depthNodes.ContainsKey(node.RecursionDepth))
+                _depthNodes.Add(node.RecursionDepth, new KeyedObservableCollection<object, TreeViewNodeModelBase>());
+
+            _depthNodes[node.RecursionDepth].Add(node.Key, node);
+
+            // Update Recursion Depth
+            _minRecursionDepth = _depthNodes.Keys.Min();
+            _maxRecursionDepth = _depthNodes.Keys.Max();
+        }
+
+        public T? SimpleTreeGetNode<T>(object key) where T : TreeViewNodeModelBase
+        {
+            for (int depth = _minRecursionDepth; depth <= _maxRecursionDepth; depth++)
+            {
+                if (_depthNodes.ContainsKey(depth) &&
+                    _depthNodes[depth].ContainsKey(key))
+                {
+                    return (T)_depthNodes[depth][key];
+                }
+            }
+
+            return null;
+        }
+        public T? SimpleTreeGetNode<T>(int recursionDepth, object key) where T : TreeViewNodeModelBase
+        {
+            if (_depthNodes.ContainsKey(recursionDepth) &&
+                _depthNodes[recursionDepth].ContainsKey(key))
+            {
+                return (T)_depthNodes[recursionDepth][key];
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -164,18 +222,20 @@ namespace SimpleWpf.UI.ViewModel.TreeView
                 {
                     _rootNodes.Remove(node.Key);
                 }
-                else
+                else if (node.Parent != null && SimpleTreeContains(node.Parent))
                 {
-                    // Find Parent Node
-                    var parentNode = GetCommonParent(node);
-
-                    if (parentNode == null)
-                        throw new Exception("Cannot locate node in the tree");
-
-                    parentNode.Remove(node);
+                    // Remove this node from the children
+                    node.Parent.Remove(node);
                 }
 
-                // -> Unhook events and clear children
+                // Remove from depth collection
+                _depthNodes[node.RecursionDepth].Remove(node.Key);
+
+                // Update Recursion Depth
+                _minRecursionDepth = _depthNodes.Keys.Min();
+                _maxRecursionDepth = _depthNodes.Keys.Max();
+
+                // -> (Recursive) Unhook events and clear children
                 node.Clear();
 
                 // This gets reset once the nodes are added
@@ -189,16 +249,13 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         }
         public bool SimpleTreeContains<T>(T node) where T : TreeViewNodeModelBase
         {
-            foreach (var rootNode in _rootNodes.Values)
-            {
-                if (rootNode.Key == node.Key)
-                    return true;
+            // Recursion Depth
+            if (!_depthNodes.ContainsKey(node.RecursionDepth))
+                return false;
 
-                if (rootNode.RecursiveContains(node))
-                    return true;
-            }
+            var nodesAtDepth = _depthNodes[node.RecursionDepth];
 
-            return false;
+            return nodesAtDepth.ContainsKey(node.Key);
         }
         public bool SimpleTreeAll<T>(Func<T, bool> predicate) where T : TreeViewNodeModelBase
         {
@@ -269,51 +326,6 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             {
                 // Unhook nodes and clear children
                 rootNode.Clear();
-            }
-        }
-        private TreeViewNodeModelBase? GetCommonParent(TreeViewNodeModelBase item)
-        {
-            if (item.Parent == null)
-                return null;
-
-            TreeViewNodeModelBase? result = null;
-
-            foreach (var rootNode in _rootNodes.Values)
-            {
-                rootNode.RecurseForEach(node =>
-                {
-                    // Reference -> Value (comparison) (??)
-                    if (node.Key == item.Parent.Key)
-                    {
-                        result = node;
-                        return;
-                    }
-                });
-            }
-
-            return result;
-        }
-        // There could be pieces of the tree that were added improperly. The easiest way to know is
-        // to check for root nodes with parents that aren't null.
-        //
-        private void CheckImproperRoots()
-        {
-            if (!_updating)
-                throw new Exception("Must first call BeginUpdate before fixing improper nodes");
-
-            var improperRoots = _rootNodes.Values.Where(x => x.Parent != null);
-
-            foreach (var improperRoot in improperRoots)
-            {
-                // Find Parent
-                var parent = GetCommonParent(improperRoot);
-
-                if (parent != null)
-                {
-                    _rootNodes.Remove(improperRoot.Key);
-
-                    parent.Add(improperRoot);
-                }
             }
         }
         private void OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)

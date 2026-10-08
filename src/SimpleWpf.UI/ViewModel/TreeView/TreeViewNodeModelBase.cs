@@ -84,7 +84,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         public bool IsLoaded
         {
             get { return _isLoaded; }
-            set { this.RaiseAndSetIfChanged(ref _isLoaded, value); }
+            protected set { this.RaiseAndSetIfChanged(ref _isLoaded, value); }
         }
         public bool IsExpanded
         {
@@ -99,7 +99,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         public int RecursionDepth
         {
             get { return _recursionDepth; }
-            set { this.RaiseAndSetIfChanged(ref _recursionDepth, value); }
+            protected set { this.RaiseAndSetIfChanged(ref _recursionDepth, value); }
         }
 
         // Begin / End Update (pattern)
@@ -118,6 +118,18 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             this.IsNumbered = false;
 
             OnPropertyChanged(nameof(ChildCount));
+        }
+
+        /// <summary>
+        /// Sets the node "IsLoaded=true". This will indicate that there is no more loading to do; and that
+        /// a repeat call will throw an exception to the user code
+        /// </summary>
+        public void SetLoaded()
+        {
+            if (this.IsLoaded)
+                throw new Exception("Node has already been loaded");
+
+            this.IsLoaded = true;
         }
 
         // Method used for recursive members (includes current node for action)
