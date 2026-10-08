@@ -49,6 +49,9 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
         public static readonly DependencyProperty ItemBorderThicknessProperty =
             DependencyProperty.Register("ItemBorderThickness", typeof(Thickness), typeof(SimpleTreeView));
 
+        public static readonly DependencyProperty SelectionModeProperty =
+            DependencyProperty.Register("SelectionMode", typeof(SimpleTreeViewSelectionMode), typeof(SimpleTreeView));
+
         public SimpleTreeViewModel ItemsSource
         {
             get { return (SimpleTreeViewModel)GetValue(ItemsSourceProperty); }
@@ -109,6 +112,11 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
             get { return (Thickness)GetValue(ItemBorderThicknessProperty); }
             set { SetValue(ItemBorderThicknessProperty, value); }
         }
+        public SimpleTreeViewSelectionMode SelectionMode
+        {
+            get { return (SimpleTreeViewSelectionMode)GetValue(SelectionModeProperty); }
+            set { SetValue(SelectionModeProperty, value); }
+        }
         #endregion
 
         /// <summary>
@@ -162,14 +170,7 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
                     UpdateSelection(treeNode);
                 });
 
-                // Set Selection
-                nodeClicked.IsSelected = !isSelected;
-
-                // Set Follower
-                _selectedNode = nodeClicked.IsSelected ? nodeClicked : null;
-
-                // Update Selection List
-                UpdateSelection(nodeClicked);
+                ProcessSingleSelect(nodeClicked);
             }
 
             // Ctrl + Select:  User Single Select 
@@ -180,13 +181,7 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
                 // 1) Clicked node gets toggled
                 //
 
-                nodeClicked.IsSelected = !nodeClicked.IsSelected;
-
-                // Set Follower
-                _selectedNode = nodeClicked.IsSelected ? nodeClicked : null;
-
-                // Update Selection List
-                UpdateSelection(nodeClicked);
+                ProcessSingleSelect(nodeClicked);
             }
 
             // Shift + Select:  Multiple Selection
@@ -226,13 +221,7 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
                 // Single Select
                 else
                 {
-                    nodeClicked.IsSelected = !nodeClicked.IsSelected;
-
-                    // Set Follower
-                    _selectedNode = nodeClicked.IsSelected ? nodeClicked : null;
-
-                    // Update Selection List
-                    UpdateSelection(nodeClicked);
+                    ProcessSingleSelect(nodeClicked);
                 }
             }
 
@@ -243,6 +232,29 @@ namespace SimpleWpf.UI.Controls.TreeViewUI
             // UI-Direct:  This is another way to get the update through the view model
             //
             tree.SetSelection(_selectedItems.Values);
+        }
+
+        private void ProcessSingleSelect(TreeViewNodeModelBase nodeClicked)
+        {
+            nodeClicked.IsSelected = !nodeClicked.IsSelected;
+
+            // Set Follower
+            _selectedNode = nodeClicked.IsSelected ? nodeClicked : null;
+
+            // Include Descendants
+            if (nodeClicked != null &&
+                nodeClicked.ChildCount > 0 &&
+                this.SelectionMode == SimpleTreeViewSelectionMode.IncludeDescendants)
+            {
+                nodeClicked.RecurseForEach(node =>
+                {
+                    node.IsSelected = nodeClicked.IsSelected;
+                    UpdateSelection(node);
+                });
+            }
+
+            // Update Selection List
+            UpdateSelection(nodeClicked);
         }
 
         private void UpdateSelection(TreeViewNodeModelBase treeNode)

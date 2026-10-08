@@ -1,8 +1,6 @@
 ﻿using System.Collections.Specialized;
 using System.ComponentModel;
 
-using SimpleWpf.Extensions.Collection;
-
 using static SimpleWpf.UI.ViewModel.TreeView.TreeViewDelegates;
 
 namespace SimpleWpf.UI.ViewModel.TreeView
@@ -24,7 +22,6 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         /// </summary>
         public event TreeSelectionChangedEventHandler TreeSelectionChangedEvent;
 
-        // Collection
         SimpleTreeCollectionViewModel _collection;
 
         /// <summary>
@@ -39,7 +36,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView
 
         public SimpleTreeViewModel()
         {
-            this.Collection = new SimpleTreeCollectionViewModel(SimpleTreeViewBranchStrategy.CommonParent);
+            this.Collection = new SimpleTreeCollectionViewModel(SimpleTreeViewBranchingStrategy.CommonParent);
         }
         public void BeginUpdate()
         {
@@ -79,13 +76,17 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         {
             _collection.SimpleTreeClear();
         }
+        public IEnumerable<TreeViewNodeModelBase> GetBranch(TreeViewNodeModelBase node, bool includeDescendants = false)
+        {
+            return _collection.GetBranch(node, includeDescendants);
+        }
         public bool IsInvalid()
         {
             return _collection.IsInvalid();
         }
         public bool Any<T>(Func<T, bool> predicate) where T : TreeViewNodeModelBase
         {
-            return _collection.Any(predicate);
+            return _collection.SimpleTreeAny(predicate);
         }
         public void ForEach<T>(Action<T> action) where T : TreeViewNodeModelBase
         {

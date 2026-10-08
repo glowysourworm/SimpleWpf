@@ -296,10 +296,8 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         {
             return RecursiveAny(node =>
             {
-                if (node == this.Parent)
-                    return true;
-
-                // Performance
+                // Performance:  1) Check recursion depth, 2) Use key comparison
+                //
                 if (node._children.ContainsKey(item.Key))
                     return true;
 

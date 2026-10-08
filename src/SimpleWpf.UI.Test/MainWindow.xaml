@@ -14,6 +14,7 @@
                 <Grid ColumnDefinitions="*, 300">
                     <treeviewUI:SimpleTreeView x:Name="TheTreeView"  
                                                SelectedItemsChanged="TheTreeView_SelectedItemsChanged"
+                                               SelectionMode="IncludeDescendants"
                                                ItemIndent="20"
                                                ItemBackground="White"
                                                ItemBackgroundAlternation="AliceBlue"

@@ -23,14 +23,14 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         }
 
         // Branch Strategy
-        SimpleTreeViewBranchStrategy _branchStrategy;
+        SimpleTreeViewBranchingStrategy _branchStrategy;
 
         // Begin / End Update Pattern
         bool _updating;
         bool _invalid;
         int _count;
 
-        public SimpleTreeCollectionViewModel(SimpleTreeViewBranchStrategy branchStrategy)
+        public SimpleTreeCollectionViewModel(SimpleTreeViewBranchingStrategy branchStrategy)
         {
             _branchStrategy = branchStrategy;
             _rootNodes = new KeyedObservableCollection<object, TreeViewNodeModelBase>();
@@ -47,6 +47,9 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         {
             if (!_updating)
                 throw new Exception("Trying to end update before calling BeginUpdate");
+
+            // Fix nodes that were placed as roots improperly
+            CheckImproperRoots();
 
             var treeCounter = 0;
 
@@ -73,6 +76,55 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         public bool IsInvalid()
         {
             return _invalid;
+        }
+
+        /// <summary>
+        /// Returns branch of the tree by tracing upward starting from the provided node. The
+        /// nodes are ordered forwards - starting from the root.
+        /// </summary>
+        public IEnumerable<TreeViewNodeModelBase> GetBranch(TreeViewNodeModelBase node, bool includeDescendants = false)
+        {
+            if (node == null)
+                throw new ArgumentNullException("Node not set to an instance of the node class");
+
+            var stack = new Stack<TreeViewNodeModelBase>();
+            var result = new List<TreeViewNodeModelBase>();
+            var descendants = new List<TreeViewNodeModelBase>();
+            var currentNode = node;
+
+            // Include Descendants
+            if (includeDescendants)
+            {
+                currentNode.RecurseForEach(descendant =>
+                {
+                    if (descendant == currentNode)
+                        return;
+
+                    descendants.Add(descendant);
+                });
+            }
+
+            do
+            {
+                // Stack these up from the leaf-er node
+                stack.Push(currentNode);
+
+                // Trace upwards towards the root
+                currentNode = currentNode.Parent;
+
+            } while (currentNode != null);
+
+            // Arrange these starting with the root
+            while (stack.Any())
+            {
+                result.Add(stack.Pop());
+            }
+
+            // Descendants
+            if (includeDescendants)
+                result.AddRange(descendants);
+
+            return result;
         }
         public void SimpleTreeAdd(TreeViewNodeModelBase node)
         {
@@ -139,6 +191,9 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         {
             foreach (var rootNode in _rootNodes.Values)
             {
+                if (rootNode.Key == node.Key)
+                    return true;
+
                 if (rootNode.RecursiveContains(node))
                     return true;
             }
@@ -237,6 +292,29 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             }
 
             return result;
+        }
+        // There could be pieces of the tree that were added improperly. The easiest way to know is
+        // to check for root nodes with parents that aren't null.
+        //
+        private void CheckImproperRoots()
+        {
+            if (!_updating)
+                throw new Exception("Must first call BeginUpdate before fixing improper nodes");
+
+            var improperRoots = _rootNodes.Values.Where(x => x.Parent != null);
+
+            foreach (var improperRoot in improperRoots)
+            {
+                // Find Parent
+                var parent = GetCommonParent(improperRoot);
+
+                if (parent != null)
+                {
+                    _rootNodes.Remove(improperRoot.Key);
+
+                    parent.Add(improperRoot);
+                }
+            }
         }
         private void OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
