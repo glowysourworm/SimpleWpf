@@ -29,7 +29,9 @@ namespace SimpleWpf.Extensions.Collection
             // Batches
             while (index < count)
             {
-                batchAction(index, index + size - 1, collection.Skip(batchIndex++ * size).Take(size));
+                var endIndex = Math.Min(index + size - 1, count - 1);
+
+                batchAction(index, endIndex, collection.Skip(batchIndex++ * size).Take(size));
 
                 index += size;
             }
@@ -549,13 +551,16 @@ namespace SimpleWpf.Extensions.Collection
         }
 
         /// <summary>
-        /// Returns the next item in the collection after the specified one. If it's the last item - then 
-        /// the first item is returned
+        /// Returns:  1) (Null) The first item in the list, 2) (Item) The next item, and 3) (Last Item) Returns (by default)
+        /// the first item; and null if [cycle = false].
         /// </summary>
-        public static T Next<T>(this IEnumerable<T> collection, T item) where T : class
+        public static T? Next<T>(this IEnumerable<T> collection, T item, bool cycle = true) where T : class
         {
             if (!collection.Any())
                 throw new ArgumentException("Collection is empty");
+
+            if (ReferenceEquals(item, null))
+                return collection.First();
 
             var found = false;
 
@@ -568,15 +573,25 @@ namespace SimpleWpf.Extensions.Collection
                     found = true;
             }
 
-            return collection.First();
+            if (cycle)
+                return collection.First();
+
+            else
+                return null;
         }
 
         /// <summary>
-        /// Returns the previous item in the collection before the specified one. If it's the first item, then
-        /// the last item is returned.
+        /// Returns:  1) (Null) The last item in the list, 2) (Item) The previous item, and 3) (First Item) Returns (by default)
+        /// the last item; and null if [cycle = false].
         /// </summary>
-        public static T Previous<T>(this IEnumerable<T> collection, T item) where T : class
+        public static T? Previous<T>(this IEnumerable<T> collection, T item, bool cycle = true) where T : class
         {
+            if (!collection.Any())
+                throw new ArgumentException("Collection is empty");
+
+            if (ReferenceEquals(item, null))
+                return collection.Last();
+
             var found = false;
 
             foreach (var otherItem in collection.Reverse())
@@ -588,7 +603,11 @@ namespace SimpleWpf.Extensions.Collection
                     found = true;
             }
 
-            return collection.Last();
+            if (cycle)
+                return collection.Last();
+
+            else
+                return null;
         }
 
         public static IEnumerable<V> OfType<T, V>(this IEnumerable<T> collection)
