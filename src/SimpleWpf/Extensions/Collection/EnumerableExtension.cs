@@ -11,6 +11,31 @@ namespace SimpleWpf.Extensions.Collection
     public static class EnumerableExtension
     {
         /// <summary>
+        /// Executions actions on batches of elements using a delegate callback
+        /// </summary>
+        public static void Batch<T>(this IEnumerable<T> collection, int size, Action<int, int, IEnumerable<T>> batchAction)
+        {
+            var batchIndex = 0;
+            var index = 0;
+            var count = collection.Count();
+
+            // Single Collection
+            if (size > count)
+            {
+                batchAction(0, count - 1, collection);
+                return;
+            }
+
+            // Batches
+            while (index < count)
+            {
+                batchAction(index, index + size - 1, collection.Skip(batchIndex++ * size).Take(size));
+
+                index += size;
+            }
+        }
+
+        /// <summary>
         /// Selects all distinct pairs of elements from both collections - based on a common key - ignoring both ordering, and duplicates. 
         /// Example:  { 1, 2, 3 } X { 1, 3, 5 }  produces { (1, 3), (1, 5), (2, 1), (2, 3), (5, 2), (5, 3) }
         /// </summary>
