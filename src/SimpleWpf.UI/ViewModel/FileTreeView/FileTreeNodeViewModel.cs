@@ -60,13 +60,22 @@ namespace SimpleWpf.UI.ViewModel.FileTreeView
             get { return _fullPath; }
         }
 
-        public FileTreeNodeViewModel(string baseDirectory, string path, int directoryFileCount, FileTreeNodeViewModel? parent)
-            : base(GetDirectoryDepth(path) - GetDirectoryDepth(baseDirectory), parent)
+        /// <summary>
+        /// Constructor to specify a different recursion depth than the standard file structure.
+        /// </summary>
+        /// <param name="recursionDepth">Specific custom recursion depth</param>
+        /// <param name="baseDirectory">Base directory (required)</param>
+        /// <param name="path">Full path to file or directory (required)</param>
+        /// <param name="directoryFileCount">Number of files in the directory</param>
+        /// <param name="parent">Parent node</param>
+        /// <exception cref="ArgumentException">Improper file or directory path information given</exception>
+        public FileTreeNodeViewModel(int recursionDepth, string baseDirectory, string path, int directoryFileCount, TreeViewNodeModelBase? parent)
+            : base(recursionDepth, parent)
         {
-            if (!Directory.Exists(baseDirectory))
-                throw new ArgumentException("Directory does not exist! Must create PathViewModel with valid directory");
+            if (string.IsNullOrWhiteSpace(baseDirectory) || !System.IO.Path.Exists(baseDirectory))
+                throw new ArgumentException("Base Directory does not exist! Must create PathViewModel with valid path");
 
-            if (!System.IO.Path.Exists(path))
+            if (string.IsNullOrWhiteSpace(path) || !System.IO.Path.Exists(path))
                 throw new ArgumentException("Path does not exist! Must create PathViewModel with valid path");
 
             if (string.IsNullOrEmpty(System.IO.Path.GetRelativePath(path, baseDirectory)))
@@ -92,6 +101,12 @@ namespace SimpleWpf.UI.ViewModel.FileTreeView
                 this.LastAccessUtc = System.IO.File.GetLastAccessTimeUtc(path);
                 this.LastWriteUtc = System.IO.File.GetLastWriteTimeUtc(path);
             }
+        }
+
+        public FileTreeNodeViewModel(string baseDirectory, string path, int directoryFileCount, TreeViewNodeModelBase? parent)
+            : this(GetDirectoryDepth(path) - GetDirectoryDepth(baseDirectory), baseDirectory, path, directoryFileCount, parent)
+        {
+
         }
 
         private static int GetDirectoryDepth(string path)

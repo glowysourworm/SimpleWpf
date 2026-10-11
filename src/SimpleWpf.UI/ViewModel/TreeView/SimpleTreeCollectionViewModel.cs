@@ -2,13 +2,14 @@
 using System.Collections.Specialized;
 
 using SimpleWpf.Extensions.ObservableCollection;
+using SimpleWpf.UI.ViewModel.TreeView.Interface;
 
 namespace SimpleWpf.UI.ViewModel.TreeView
 {
-    public class SimpleTreeCollectionViewModel : ViewModelBase, IEnumerable, INotifyCollectionChanged
+    public class SimpleTreeCollectionViewModel : ViewModelBase, ISimpleTreeCollection, INotifyCollectionChanged
     {
-        // The base of the tree is a collection of root nodes - which is itself observable
-        KeyedObservableCollection<object, TreeViewNodeModelBase> _rootNodes;
+        // Recursion depth for the root nodes
+        const int ROOT_DEPTH = 0;
 
         // Nodes by Recursion Depth
         KeyedObservableCollection<int, KeyedObservableCollection<object, TreeViewNodeModelBase>> _depthNodes;
@@ -25,7 +26,17 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         public int Count
         {
             get { return _count; }
-            set { this.RaiseAndSetIfChanged(ref _count, value); }
+            private set { this.RaiseAndSetIfChanged(ref _count, value); }
+        }
+
+        /// <summary>
+        /// Returns node collection at specified depth:  NOTE*** THESE ARE FOR READ ONLY PURPOSES!
+        /// </summary>
+        /// <param name="depthIndex">Depth of recursion</param>
+        /// <returns>A keyed observable collection for readonly purposes</returns>
+        protected KeyedObservableCollection<object, TreeViewNodeModelBase> GetDepthNodes(int depthIndex)
+        {
+            return _depthNodes[depthIndex];
         }
 
         // Branch Strategy
@@ -42,8 +53,6 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             _minRecursionDepth = 0;
             _maxRecursionDepth = 0;
             _depthNodes = new KeyedObservableCollection<int, KeyedObservableCollection<object, TreeViewNodeModelBase>>();
-            _rootNodes = new KeyedObservableCollection<object, TreeViewNodeModelBase>();
-            _rootNodes.CollectionChanged += OnCollectionChanged;
         }
 
         public void BeginUpdate()
@@ -52,7 +61,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView
 
             _updating = true;
         }
-        public virtual void EndUpdate()
+        public void EndUpdate()
         {
             if (!_updating)
                 throw new Exception("Trying to end update before calling BeginUpdate");
@@ -60,7 +69,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             var treeCounter = 0;
 
             // Set Numbering (multi-selection)
-            foreach (var rootNode in _rootNodes.Values)
+            foreach (var rootNode in GetSafeRootCollection())
                 rootNode.SetTreeNumbering(ref treeCounter);    // Set node numbers (ItemNumber)
 
             // Set Invalid Flag (this is for tree multi-selection)
@@ -132,6 +141,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView
 
             return result;
         }
+
         public void SimpleTreeAdd(TreeViewNodeModelBase node)
         {
             if (!_updating)
@@ -152,21 +162,19 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             //      -> If (Child not in collection), throw exception
             //
             // 2) Add to depth node collection
+            // 3) Set Invalid
             //
 
-            // New Branch
+            // Check integrity of the parent:  (options) 1) throw exception, 2) Hook up the parent for the user (??) (option??)
+            //
             if (node.Parent == null)
             {
-                // -> CollectionChanged
-                _rootNodes.Add(node.Key, node);
+                // Root (nothing to do)
             }
-
-            // Check integrity of the parent:  (options) 1) throw exception, 2) Hook up the parent for the user (??)
             else if (!node.Parent.Children.Contains(node))
             {
-                node.Parent.Add(node);
+                node.Parent.Add(node);  // optional ??
             }
-
             else
             {
                 // Nothing to do 
@@ -181,6 +189,8 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             // Update Recursion Depth
             _minRecursionDepth = _depthNodes.Keys.Min();
             _maxRecursionDepth = _depthNodes.Keys.Max();
+
+            _invalid = true;
         }
 
         public T? SimpleTreeGetNode<T>(object key) where T : TreeViewNodeModelBase
@@ -215,18 +225,29 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             if (!_updating)
                 throw new Exception("Must first call BeginUpdate before removing tree nodes");
 
+            // ~ O(1)
+            else if (!SimpleTreeContains(node))
+                throw new Exception("Node not contained in the tree");
+
             else
             {
-                // Check Root(s)
-                if (_rootNodes.ContainsKey(node.Key))
-                {
-                    _rootNodes.Remove(node.Key);
-                }
-                else if (node.Parent != null && SimpleTreeContains(node.Parent))
+                // Procedure:  Remove
+                //
+                // 0) Check Contains
+                // 1) Detach Parent
+                // 2) Detach Children (recursive)
+                // 3) Maintain Depth Collection
+                // 4) Set Invalid
+                //
+
+                if (node.Parent != null && SimpleTreeContains(node.Parent))
                 {
                     // Remove this node from the children
                     node.Parent.Remove(node);
                 }
+
+                // -> (Recursive) Unhook events and clear children
+                node.Clear();
 
                 // Remove from depth collection
                 _depthNodes[node.RecursionDepth].Remove(node.Key);
@@ -235,9 +256,6 @@ namespace SimpleWpf.UI.ViewModel.TreeView
                 _minRecursionDepth = _depthNodes.Keys.Min();
                 _maxRecursionDepth = _depthNodes.Keys.Max();
 
-                // -> (Recursive) Unhook events and clear children
-                node.Clear();
-
                 // This gets reset once the nodes are added
                 _invalid = true;
                 _count = 0;
@@ -245,7 +263,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         }
         public IEnumerator GetEnumerator()
         {
-            return _rootNodes.Values.GetEnumerator();
+            return GetSafeRootCollection().GetEnumerator();
         }
         public bool SimpleTreeContains<T>(T node) where T : TreeViewNodeModelBase
         {
@@ -259,7 +277,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         }
         public bool SimpleTreeAll<T>(Func<T, bool> predicate) where T : TreeViewNodeModelBase
         {
-            foreach (var rootNode in _rootNodes.Values)
+            foreach (var rootNode in GetSafeRootCollection())
             {
                 if (rootNode.RecursiveAll(predicate))
                     return true;
@@ -269,7 +287,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         }
         public bool SimpleTreeAny<T>(Func<T, bool> predicate) where T : TreeViewNodeModelBase
         {
-            foreach (var rootNode in _rootNodes.Values)
+            foreach (var rootNode in GetSafeRootCollection())
             {
                 if (rootNode.RecursiveAny(predicate))
                     return true;
@@ -281,7 +299,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         {
             var result = 0;
 
-            foreach (var rootNode in _rootNodes.Values)
+            foreach (var rootNode in GetSafeRootCollection())
             {
                 result += rootNode.RecursiveCount(predicate);
             }
@@ -292,7 +310,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         {
             T? result = null;
 
-            foreach (var rootNode in _rootNodes.Values)
+            foreach (var rootNode in GetSafeRootCollection())
             {
                 result = rootNode.RecursiveFirst<T>(predicate);
 
@@ -306,7 +324,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         {
             var result = new List<T>();
 
-            foreach (var rootNode in _rootNodes.Values)
+            foreach (var rootNode in GetSafeRootCollection())
             {
                 result.AddRange(rootNode.RecursiveWhere(predicate));
             }
@@ -315,18 +333,23 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         }
         public void SimpleTreeForEach<T>(Action<T> action) where T : TreeViewNodeModelBase
         {
-            foreach (var rootNode in _rootNodes.Values)
+            foreach (var rootNode in GetSafeRootCollection())
             {
                 rootNode.RecurseForEach(action);
             }
         }
         public void SimpleTreeClear()
         {
-            foreach (var rootNode in _rootNodes.Values)
+            foreach (var rootNode in GetSafeRootCollection())
             {
                 // Unhook nodes and clear children
                 rootNode.Clear();
             }
+        }
+        private IEnumerable<TreeViewNodeModelBase> GetSafeRootCollection()
+        {
+            return !_depthNodes.ContainsKey(ROOT_DEPTH) ? Enumerable.Empty<TreeViewNodeModelBase>()
+                                                        : _depthNodes[ROOT_DEPTH].Values;
         }
         private void OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {

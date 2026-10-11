@@ -19,7 +19,7 @@ namespace SimpleWpf.UI.Test
         {
             InitializeComponent();
 
-            this.TreeView = new SimpleTreeViewModel();
+            this.TreeView = new SimpleTreeViewModel(new SimpleTreeCollectionViewModel(SimpleTreeViewBranchingStrategy.CommonParent));
             this.TreeView.BeginUpdate();
 
             // Use SimpleTreeViewModel to add nodes (or) can also just chain nodes together to the already added one(s)

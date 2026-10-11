@@ -109,7 +109,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         {
             _children = new KeyedObservableCollection<object, TreeViewNodeModelBase>();
             _parent = parent;
-
+            _recursionDepth = recursionDepth;
             _updating = false;
 
             // The ItemNumber is set when calling "SetTreeNumbering". The IsNumbered flag is set

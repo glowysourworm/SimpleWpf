@@ -1,11 +1,13 @@
 ﻿using System.Collections.Specialized;
 using System.ComponentModel;
 
+using SimpleWpf.UI.ViewModel.TreeView.Interface;
+
 using static SimpleWpf.UI.ViewModel.TreeView.TreeViewDelegates;
 
 namespace SimpleWpf.UI.ViewModel.TreeView
 {
-    public class SimpleTreeViewModel : ViewModelBase
+    public class SimpleTreeViewModel : ViewModelBase, ISimpleTree
     {
         /// <summary>
         /// (Bubble Up Event) Occurs (once) when an item in the tree changes
@@ -22,21 +24,21 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         /// </summary>
         public event TreeSelectionChangedEventHandler TreeSelectionChangedEvent;
 
-        SimpleTreeCollectionViewModel _collection;
+        ISimpleTreeCollection _collection;
 
         /// <summary>
         /// Primary binding collection for the tree - hides IEnumerable, which doesn't work for handling the
         /// recursive enumeration; but it is necessary for the ItemsSource binding.
         /// </summary>
-        public SimpleTreeCollectionViewModel Collection
+        public ISimpleTreeCollection Collection
         {
             get { return _collection; }
-            set { this.RaiseAndSetIfChanged(ref _collection, value); }
+            private set { this.RaiseAndSetIfChanged(ref _collection, value); }
         }
 
-        public SimpleTreeViewModel()
+        public SimpleTreeViewModel(ISimpleTreeCollection collection)
         {
-            this.Collection = new SimpleTreeCollectionViewModel(SimpleTreeViewBranchingStrategy.CommonParent);
+            this.Collection = collection;
         }
         public void BeginUpdate()
         {
