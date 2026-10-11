@@ -84,9 +84,9 @@
                             <!-- Item Header Expander -->
                             <Border Background="{TemplateBinding Background}"
                                     BorderBrush="{TemplateBinding BorderBrush}"
-                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                    Padding="{TemplateBinding Padding}"
-                                    Margin="{TemplateBinding Margin}">
+                                    BorderThickness="0"
+                                    Padding="0"
+                                    Margin="0">
 
                                 <ContentPresenter ContentSource="Header" 
                                                   VerticalAlignment="Center"
@@ -101,9 +101,9 @@
                             <!-- Item Header Content-->
                             <Border Background="{TemplateBinding Background}"
                                     BorderBrush="{TemplateBinding BorderBrush}"
-                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                    Padding="{TemplateBinding Padding}"
-                                    Margin="{TemplateBinding Margin}"
+                                    BorderThickness="0"
+                                    Padding="0"
+                                    Margin="0"
                                     VerticalAlignment="Center"
                                     Grid.Column="1">
                                 <ContentPresenter Content="{Binding}" ContentTemplate="{Binding ItemHeaderContentTemplate, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource AncestorType={x:Type treeviewUI:SimpleTreeView}}}" />
@@ -113,6 +113,11 @@
                             <ItemsPresenter 
                                     Grid.Row="1"
                                     Grid.Column="1"
+                                    ScrollViewer.CanContentScroll="False"
+                                    VirtualizingPanel.IsVirtualizing="True"
+                                    VirtualizingPanel.VirtualizationMode="Recycling"
+                                    VirtualizingPanel.CacheLength="3"
+                                    VirtualizingPanel.CacheLengthUnit="Item"
                                     Visibility="{Binding IsExpanded, NotifyOnSourceUpdated=True, Converter={StaticResource BoolVisibilityCollapseConverter}}" />
 
                         </Grid>
