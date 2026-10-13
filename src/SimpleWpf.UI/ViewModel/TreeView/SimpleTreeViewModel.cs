@@ -25,6 +25,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         public event TreeSelectionChangedEventHandler TreeSelectionChangedEvent;
 
         ISimpleTreeCollection _collection;
+        int _depth;
 
         /// <summary>
         /// Primary binding collection for the tree - hides IEnumerable, which doesn't work for handling the
@@ -34,6 +35,11 @@ namespace SimpleWpf.UI.ViewModel.TreeView
         {
             get { return _collection; }
             private set { this.RaiseAndSetIfChanged(ref _collection, value); }
+        }
+
+        public int Depth
+        {
+            get { return _collection.MaxDepth; }
         }
 
         public SimpleTreeViewModel(ISimpleTreeCollection collection)

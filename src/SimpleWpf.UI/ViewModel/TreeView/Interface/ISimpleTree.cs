@@ -28,6 +28,11 @@ namespace SimpleWpf.UI.ViewModel.TreeView.Interface
         ISimpleTreeCollection Collection { get; }
 
         /// <summary>
+        /// Returns the depth of the tree
+        /// </summary>
+        int Depth { get; }
+
+        /// <summary>
         /// Adds the tree view node to the tree by matching its parent. Returns the node that was sent.
         /// </summary>
         public T Add<T>(T node) where T : TreeViewNodeModelBase;

@@ -4,6 +4,7 @@ namespace SimpleWpf.UI.ViewModel.TreeView.Interface
 {
     public interface ISimpleTreeCollection : ISimpleUpdater, ISimpleValidator, IEnumerable
     {
+        public int MaxDepth { get; }
         public IEnumerable<TreeViewNodeModelBase> GetBranch(TreeViewNodeModelBase node, bool includeDescendants = false);
         public void SimpleTreeAdd(TreeViewNodeModelBase node);
         public T? SimpleTreeGetNode<T>(object key) where T : TreeViewNodeModelBase;

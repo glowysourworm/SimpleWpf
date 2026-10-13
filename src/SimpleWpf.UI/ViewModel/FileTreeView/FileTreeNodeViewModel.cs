@@ -6,7 +6,6 @@ namespace SimpleWpf.UI.ViewModel.FileTreeView
 {
     public class FileTreeNodeViewModel : TreeViewNodeModelBase
     {
-        string _baseDirectory;
         string _fullPath;
         string _shortPath;
         DateTime _creationUtc;
@@ -15,11 +14,6 @@ namespace SimpleWpf.UI.ViewModel.FileTreeView
         bool _isDirectory;
         int _directoryFileCount;
 
-        public string BaseDirectory
-        {
-            get { return _baseDirectory; }
-            set { this.RaiseAndSetIfChanged(ref _baseDirectory, value); }
-        }
         public string FullPath
         {
             get { return _fullPath; }
@@ -64,22 +58,15 @@ namespace SimpleWpf.UI.ViewModel.FileTreeView
         /// Constructor to specify a different recursion depth than the standard file structure.
         /// </summary>
         /// <param name="recursionDepth">Specific custom recursion depth</param>
-        /// <param name="baseDirectory">Base directory (required)</param>
         /// <param name="path">Full path to file or directory (required)</param>
         /// <param name="directoryFileCount">Number of files in the directory</param>
         /// <param name="parent">Parent node</param>
         /// <exception cref="ArgumentException">Improper file or directory path information given</exception>
-        public FileTreeNodeViewModel(int recursionDepth, string baseDirectory, string path, int directoryFileCount, TreeViewNodeModelBase? parent)
+        public FileTreeNodeViewModel(int recursionDepth, string path, int directoryFileCount, TreeViewNodeModelBase? parent)
             : base(recursionDepth, parent)
         {
-            if (string.IsNullOrWhiteSpace(baseDirectory) || !System.IO.Path.Exists(baseDirectory))
-                throw new ArgumentException("Base Directory does not exist! Must create PathViewModel with valid path");
-
             if (string.IsNullOrWhiteSpace(path) || !System.IO.Path.Exists(path))
                 throw new ArgumentException("Path does not exist! Must create PathViewModel with valid path");
-
-            if (string.IsNullOrEmpty(System.IO.Path.GetRelativePath(path, baseDirectory)))
-                throw new ArgumentException("Path must be relative to base directory:  PathViewModel.cs");
 
             // Is Directory?
             this.IsDirectory = Directory.Exists(path);
@@ -88,7 +75,6 @@ namespace SimpleWpf.UI.ViewModel.FileTreeView
             this.DirectoryFileCount = this.IsDirectory ? directoryFileCount : 0;
             this.IsLoaded = false;
 
-            this.BaseDirectory = baseDirectory;
             this.FullPath = path;
 
             if (this.IsDirectory)
@@ -101,19 +87,6 @@ namespace SimpleWpf.UI.ViewModel.FileTreeView
                 this.LastAccessUtc = System.IO.File.GetLastAccessTimeUtc(path);
                 this.LastWriteUtc = System.IO.File.GetLastWriteTimeUtc(path);
             }
-        }
-
-        public FileTreeNodeViewModel(string baseDirectory, string path, int directoryFileCount, TreeViewNodeModelBase? parent)
-            : this(GetDirectoryDepth(path) - GetDirectoryDepth(baseDirectory), baseDirectory, path, directoryFileCount, parent)
-        {
-
-        }
-
-        private static int GetDirectoryDepth(string path)
-        {
-            var directory = System.IO.Path.GetDirectoryName(path);
-
-            return directory.Split("\\", StringSplitOptions.RemoveEmptyEntries).Length;
         }
 
         public override string ToString()

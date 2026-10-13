@@ -28,6 +28,10 @@ namespace SimpleWpf.UI.ViewModel.TreeView
             get { return _count; }
             private set { this.RaiseAndSetIfChanged(ref _count, value); }
         }
+        public int MaxDepth
+        {
+            get { return _maxRecursionDepth; }
+        }
 
         /// <summary>
         /// Returns node collection at specified depth:  NOTE*** THESE ARE FOR READ ONLY PURPOSES!

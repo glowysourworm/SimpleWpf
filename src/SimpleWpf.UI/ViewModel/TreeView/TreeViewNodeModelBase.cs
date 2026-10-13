@@ -327,6 +327,21 @@ namespace SimpleWpf.UI.ViewModel.TreeView
 
             return false;
         }
+        public TreeViewNodeModelBase? GetAncestor(int recursionDepth)
+        {
+            if (recursionDepth >= this.RecursionDepth)
+                throw new ArgumentException("Improper Recursion Depth: Trying to get ancestor with as great or equal recursion depth");
+
+            TreeViewNodeModelBase? parentNode = null;
+
+            do
+            {
+                parentNode = this.Parent;
+
+            } while (parentNode != null && parentNode.RecursionDepth > recursionDepth);
+
+            return parentNode;
+        }
 
         /// <summary>
         /// (Non-Recursive Method!) Adds an item to CURRENT DEPTH of the tree ONLY. Returns the new node.
