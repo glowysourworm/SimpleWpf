@@ -38,6 +38,25 @@ namespace SimpleWpf.Extensions.Collection
         }
 
         /// <summary>
+        /// Returns all indices where the predicate was matched
+        /// </summary>
+        public static IEnumerable<int> AllIndices<T>(this IEnumerable<T> collection, Func<T, bool> predicate)
+        {
+            var result = new List<int>();
+            var counter = 0;
+
+            foreach (var item in collection)
+            {
+                if (predicate(item))
+                    result.Add(counter);
+
+                counter++;
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// Selects all distinct pairs of elements from both collections - based on a common key - ignoring both ordering, and duplicates. 
         /// Example:  { 1, 2, 3 } X { 1, 3, 5 }  produces { (1, 3), (1, 5), (2, 1), (2, 3), (5, 2), (5, 3) }
         /// </summary>

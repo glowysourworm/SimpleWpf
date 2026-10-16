@@ -1,11 +1,24 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using SimpleWpf.Extensions.Collection;
 
 namespace SimpleWpf.Extensions
 {
     public static class EnumExtension
     {
+        public static T GetValue<T>(this Enum theEnum, string enumName) where T : Enum
+        {
+            if (string.IsNullOrWhiteSpace(enumName))
+                throw new ArgumentException("Invalid enum name");
+
+            Array enumValues = Enum.GetValues(typeof(T));
+
+            foreach (var value in enumValues)
+            {
+                if (value.ToString() == enumName)
+                    return (T)value;
+            }
+
+            throw new Exception("Enum name not found");
+        }
         public static T GetAttribute<T>(this Enum value) where T : Attribute
         {
             var member = value.GetType()
@@ -52,7 +65,7 @@ namespace SimpleWpf.Extensions
             foreach (var enumValue in Enum.GetValues(typeof(T)).Cast<int>())
             {
                 // Has Flag
-                if ((valueInt & enumValue) > 0 || 
+                if ((valueInt & enumValue) > 0 ||
                     (valueInt == 0 && enumValue == 0))
                     valueNames.Add(Enum.GetName(typeof(T), enumValue));
             }

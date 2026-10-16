@@ -1,7 +1,64 @@
-﻿namespace SimpleWpf.Extensions
+﻿using System.Text.RegularExpressions;
+
+namespace SimpleWpf.Extensions
 {
     public static class StringExtension
     {
+        /// <summary>
+        /// Returns all indices of the search string occurrence
+        /// </summary>
+        public static IEnumerable<int> AllIndices(this string str, string search)
+        {
+            var regex = new Regex(search);
+
+            return regex.Matches(str).Select(x => x.Index);
+        }
+
+        /// <summary>
+        /// Returns string with replaced search pattern for the first occurrence only
+        /// </summary>
+        public static string ReplaceFirst(this string str, string search, string replacement)
+        {
+            var regex = new Regex(search);
+
+            var match = regex.Matches(str).FirstOrDefault();
+
+            if (match != null)
+            {
+                var str1 = str.Substring(0, match.Index + 1);
+                var str2 = replacement;
+                var str3 = str.Substring(match.Index + match.Length, str.Length - (match.Index + match.Length));
+
+                return str1 + str2 + str3;
+            }
+
+            return str;
+        }
+
+        /// <summary>
+        /// Returns string array split by the first occurrence of the search provided - which will produce several
+        /// parts of the split string. (e.g.  "this split spring" (split on "sp") would produce ["this ", "sp", "lit spring"].
+        /// 
+        /// Returns a single element array if the split was unsuccessful.
+        /// </summary>
+        public static string[] SplitFirst(this string str, string search)
+        {
+            var regex = new Regex(search);
+
+            var match = regex.Matches(str).FirstOrDefault();
+
+            if (match != null)
+            {
+                var str1 = str.Substring(0, match.Index + 1);
+                var str2 = search;
+                var str3 = str.Substring(match.Index + match.Length, str.Length - (match.Index + match.Length));
+
+                return new string[] { str1, str2, str3 };
+            }
+
+            return new string[] { str };
+        }
+
         /// <summary>
         /// Returns the string with a capitalized first letter - the rest being lower case.
         /// </summary>
